@@ -1,10 +1,24 @@
 # Mapa ITC · INP · Atención Primaria (SMS)
 
-Matriz interactiva de interconsultas de Atención Primaria por especialidad y área sanitaria.
-Cada casilla muestra dos cuadrados: borde azul = INP (no presencial), borde verde = ITC (presencial gestionada).
-Relleno verde = abierta; rojo con aspa = cerrada. Al pulsar un cuadrado se abre o cierra la modalidad y se anota fecha, usuario y observaciones.
+Matriz interactiva de interconsultas de Atención Primaria por especialidad y área sanitaria del Servicio Murciano de Salud.
 
-- `index.html`: la aplicación completa (sin dependencias de servidor).
-- `estado.json` (opcional): si existe en el sitio, la página lo carga al abrir y toma de él los cambios más recientes. Se genera con el botón **Guardar estado (JSON)**.
+Cada casilla muestra tres cuadrados, uno por modalidad:
 
-Publicado con GitHub Pages. Los cambios hechos en el navegador se guardan en ese navegador; para compartirlos, guarda el estado en JSON y súbelo aquí como `estado.json`.
+| Modalidad | Borde | Significado |
+|---|---|---|
+| **INP** | azul | Interconsulta no presencial (INPAP) |
+| **ITC** | verde | Interconsulta presencial gestionada |
+| **INPc** | morado | INP Citable, también llamada ITC abierta |
+
+Relleno verde = abierta. Rojo con aspa = cerrada. Al pulsar un cuadrado se abre o cierra la modalidad y se registra fecha, usuario y observaciones.
+
+## Estructura
+
+- Rama `main`: `index.html`, la aplicación completa. No necesita servidor.
+- Rama `datos`: `estado.json`, el estado compartido (cambios, fechas y reclasificaciones), cifrado con la contraseña de acceso.
+
+## Publicar cambios para todo el equipo
+
+La página guarda siempre en el navegador de cada persona. Para publicar hace falta un token de GitHub de grano fino con acceso solo a este repositorio y permiso `Contents: Read and write`. Se introduce una vez en la propia página, que lo guarda cifrado en ese navegador y nunca lo publica.
+
+Publicado con GitHub Pages: https://idoctor2000.github.io/mapa-itc-inp/
