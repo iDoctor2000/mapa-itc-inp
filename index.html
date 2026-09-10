@@ -390,7 +390,7 @@ form.edit .full{grid-column:1/-1}
   <div class="legend">
     <span><i class="sq most open"></i> CM abierta · existe cita mostrador</span>
     <span><i class="sq most"></i> CM cerrada · no existe</span>
-    <span class="escala">uso de la CM en 2026: <i data-n="0"></i><i data-n="5" class="pocos">5</i><i data-n="50"></i><i data-n="500"></i><i data-n="9487"></i> de ninguno a máximo · por debajo de 9 se escribe la cifra</span>
+    <span class="escala">uso de la CM en 2026: <i data-n="0"></i><i data-n="5" class="pocos">5</i><i data-n="50"></i><i data-n="500"></i><i data-n="9487"></i> de ninguno a máximo · hasta 9 se escribe la cifra</span>
     <span><i class="sq inp open"></i> INP abierta</span>
     <span><i class="sq inp"></i> INP cerrada</span>
     <span><i class="sq itc open"></i> ITC abierta</span>
@@ -479,7 +479,7 @@ function rankUso(k, a) {
 }
 const USOMAX = Math.max(1, ...Object.values(USO));
 // escala logarítmica: con mediana 5 y máximo 9.487 una lineal dejaría casi todo en blanco
-const POCOS = 9;                    // por debajo de 9 usos: casi blanco y con la cifra dentro
+const POCOS = 10;                   // hasta 9 usos incluido: casi blanco y con la cifra dentro
 function intensidad(n) {
   if (!n) return 0;
   if (n < POCOS) return 0.07;       // apenas teñido, para distinguirlo del cero sin que compita
