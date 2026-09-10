@@ -35,7 +35,7 @@
   --accent:#1F5F8B; --accent-ink:#FFFFFF; --accent-soft:#E3EEF6;
   --open:#2FA35A; --closed:#D7443E; --inp:#1290C9; --itc:#137A3B; --inpc:#D94F8C; --most:#E0851C; --most-soft:#FBEBD7;
   --vin-b:#8A6E4B; --vin-bg:#F6EDDA; --vin-pal:#EAE3D3; --vin-x:#6B5334; --vin-suave:#F3E9D6;
-  --inp-pal:#94CDE7; --itc-pal:#95C3A7; --inpc-pal:#EEB0CB; --borde-sq:#6B6862; --aspa:#3C3A36;
+  --inp-pal:#94CDE7; --itc-pal:#95C3A7; --inpc-pal:#EEB0CB; --borde-sq:#6B6862; --aspa:#3C3A36; --halo:#E8A33D;
   --warn-soft:#FFF4D6; --warn-ink:#7A5200; --ok-soft:#DFF3E5; --ok-ink:#155E33; --bad-soft:#FBE1DF; --bad-ink:#8B1F1A; --inpc-soft:#FBE7F1; --inp-soft:#E2F3FB;
   --shadow:0 10px 30px rgba(24,36,31,.14);
   --sq:16px;
@@ -46,7 +46,7 @@
     --accent:#6FB1E0; --accent-ink:#0F1512; --accent-soft:#1B2C39;
     --open:#37B865; --closed:#E2544E; --inp:#63C3ED; --itc:#3CBE72; --inpc:#F18BBE; --most:#F0993C; --most-soft:#3A2A16;
     --vin-b:#BCA07A; --vin-bg:#3B3327; --vin-pal:#2C271E; --vin-x:#E0CCA6; --vin-suave:#332C21;
-    --inp-pal:#39697A; --itc-pal:#2B6742; --inpc-pal:#795064; --borde-sq:#8A857B; --aspa:#E8E4DA;
+    --inp-pal:#39697A; --itc-pal:#2B6742; --inpc-pal:#795064; --borde-sq:#8A857B; --aspa:#E8E4DA; --halo:#F2B457;
     --warn-soft:#3A3010; --warn-ink:#F3D27A; --ok-soft:#173523; --ok-ink:#9FE0B6; --bad-soft:#3E1B19; --bad-ink:#F3A9A4; --inpc-soft:#3A1E2C; --inp-soft:#14303D;
     --shadow:0 10px 30px rgba(0,0,0,.5);
   }
@@ -56,7 +56,7 @@
   --accent:#6FB1E0; --accent-ink:#0F1512; --accent-soft:#1B2C39;
   --open:#37B865; --closed:#E2544E; --inp:#63C3ED; --itc:#3CBE72; --inpc:#F18BBE; --most:#F0993C; --most-soft:#3A2A16;
   --vin-b:#BCA07A; --vin-bg:#3B3327; --vin-pal:#2C271E; --vin-x:#E0CCA6; --vin-suave:#332C21;
-    --inp-pal:#39697A; --itc-pal:#2B6742; --inpc-pal:#795064; --borde-sq:#8A857B; --aspa:#E8E4DA;
+    --inp-pal:#39697A; --itc-pal:#2B6742; --inpc-pal:#795064; --borde-sq:#8A857B; --aspa:#E8E4DA; --halo:#F2B457;
   --warn-soft:#3A3010; --warn-ink:#F3D27A; --ok-soft:#173523; --ok-ink:#9FE0B6; --bad-soft:#3E1B19; --bad-ink:#F3A9A4; --inpc-soft:#3A1E2C; --inp-soft:#14303D;
   --shadow:0 10px 30px rgba(0,0,0,.5);
 }
@@ -185,6 +185,7 @@ table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:1
 .sq.most.open{background:var(--relleno);background-image:repeating-linear-gradient(45deg,rgba(138,110,75,.10) 0 2px,transparent 2px 5px)}
 .sq::before{content:'';position:absolute;inset:-5px}
 .sq:hover{transform:scale(1.18)}
+.sq.auto{box-shadow:0 0 0 1px var(--surface), 0 0 0 3px var(--halo)}
 .sq.chg::after{content:"";position:absolute;right:-5px;top:-5px;width:6px;height:6px;border-radius:50%;background:var(--ink);border:1.5px solid var(--surface)}
 .pair .d{font:400 9px/1 "IBM Plex Mono",monospace;color:var(--muted);display:none}
 body.show-dates .pair .d{display:block}
@@ -208,6 +209,7 @@ table.rg.cat{min-width:640px}
 .pill.itc{background:var(--ok-soft);color:var(--itc);border:1px solid var(--itc)}
 .pill.inpc{background:var(--inpc-soft);color:var(--inpc);border:1px solid var(--inpc)}
 .pill.most{background:var(--vin-suave);color:var(--vin-x);border:1px solid var(--vin-b)}
+.pill.au{background:color-mix(in srgb, var(--halo) 18%, transparent);color:var(--vin-x);border:1px solid var(--halo)}
 .pill.ap{background:var(--ok-soft);color:var(--ok-ink)} .pill.ci{background:var(--bad-soft);color:var(--bad-ink)} .pill.rs{background:var(--surface-2);color:var(--muted)} .pill.base{background:var(--warn-soft);color:var(--warn-ink)}
 .help{margin:0 18px 10px;color:var(--muted);font-size:13px;max-width:900px}
 
@@ -239,11 +241,18 @@ form.edit label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:
 form.edit input,form.edit textarea{padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
 form.edit textarea{grid-column:1/-1;min-height:56px;resize:vertical}
 form.edit .full{grid-column:1/-1}
+.auto-chk{flex-direction:row !important;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--halo);
+  border-radius:8px;background:color-mix(in srgb, var(--halo) 12%, transparent);cursor:pointer}
+.auto-chk input{accent-color:var(--halo);margin-top:2px;flex:none}
+.auto-chk span{display:flex;flex-direction:column;gap:2px}
+.auto-chk b{color:var(--ink);font-size:13px}
+.auto-chk small{color:var(--muted);font-size:12px;line-height:1.4}
 .seg{grid-column:1/-1;display:flex;gap:0;border:1px solid var(--line-strong);border-radius:6px;overflow:hidden}
 .seg label{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:9px;cursor:pointer;font-weight:500;color:var(--muted);flex-direction:row}
 .seg input{position:absolute;opacity:0}
 .seg label.ap:has(input:checked){background:var(--ok-soft);color:var(--ok-ink)}
 .seg label.ci:has(input:checked){background:var(--bad-soft);color:var(--bad-ink)}
+.seg label.sc:has(input:checked){background:var(--surface-2);color:var(--ink)}
 .actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;grid-column:1/-1;flex-wrap:wrap}
 .actions .spacer{flex:1}
 .firma{font:600 12px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;color:var(--accent);text-align:center}
@@ -369,6 +378,7 @@ form.edit .full{grid-column:1/-1}
       <option value="brecha-inp">Brecha INP (abierta en unas áreas, no en todas)</option>
       <option value="sin-citable">Sin ITC ni ITCa en ninguna área</option>
       <option value="solo-inp">Solo INP · la no presencial es la única vía</option>
+      <option value="auto">Con cita automática</option>
       <option value="mostrador">Con mostrador pendiente</option>
     </select>
     <div class="ms">
@@ -376,7 +386,7 @@ form.edit .full{grid-column:1/-1}
       <div class="ms-panel" id="msModPanel" hidden>
         <label><input type="checkbox" data-m="most" checked><i class="sq most open"></i> CM · cita mostrador</label>
         <label><input type="checkbox" data-m="inp" checked><i class="sq inp open"></i> INP · no presencial</label>
-        <label><input type="checkbox" data-m="itc" checked><i class="sq itc open"></i> ITC · presencial gestionada</label>
+        <label><input type="checkbox" data-m="itc" checked><i class="sq itc open"></i> ITC · Presencial</label>
         <label><input type="checkbox" data-m="inpc" checked><i class="sq inpc open"></i> ITCa · ITC abierta</label>
       </div>
     </div>
@@ -395,6 +405,7 @@ form.edit .full{grid-column:1/-1}
     <span><i class="sq inp"></i> INP cerrada</span>
     <span><i class="sq itc open"></i> ITC abierta</span>
     <span><i class="sq itc"></i> ITC cerrada</span>
+    <span><i class="sq itc open auto"></i> ITC con cita automática</span>
     <span><i class="sq inpc open"></i> ITCa abierta</span>
     <span><i class="sq inpc"></i> ITCa cerrada</span>
     <span><i class="sq itc open chg"></i> cambiada tras el extracto</span>
@@ -447,7 +458,7 @@ const REMOTE = DATA.remoto || null;            // {owner,repo,branch,path} o nul
 const CHECK = DATA.check || null;              // centinela cifrado para validar la contraseña sin red
 const AREAS = [1,2,3,4,5,6,7,8,9];
 const MODS = ['most','inp','itc','inpc'];
-const MOD_LABEL = { most: 'CM · cita mostrador, la vía analógica (incluye las citas con centro concreto)', inp: 'INP · no presencial', itc: 'ITC · presencial gestionada', inpc: 'ITCa · ITC abierta' };
+const MOD_LABEL = { most: 'CM · cita mostrador, la vía analógica (incluye las citas con centro concreto)', inp: 'INP · no presencial', itc: 'ITC · Presencial', inpc: 'ITCa · ITC abierta' };
 const ML = { most: 'CM', inp: 'INP', itc: 'ITC', inpc: 'ITCa' };
 const BASE_GRUPOS = [...new Set(CAT.map(c => c.g))];
 const BYK = Object.fromEntries(CAT.map(c => [c.k, c]));
@@ -470,6 +481,7 @@ const changed = (k, a, mod) => { const r = rec(k, a, mod); return !!(r && typeof
 const lastDate = (k, a, mod) => { const r = rec(k, a, mod); return (r && r.hist && r.hist[0]) ? r.hist[0].fecha : null; };
 const USO = DATA.uso || {};
 const USOINFO = DATA.usoInfo || null;
+const esAuto = (k, a) => !!(rec(k, a, 'itc') || {}).auto;   // marca manual de «cita automática»
 const usoCM = (k, a) => USO[`${k}|${a}`] || 0;
 const miles = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 let _rank = null;
@@ -711,6 +723,7 @@ function rowVisible(c) {
     if (F.modo === 'sin-citable') return !AREAS.some(a => citable(c.k, a));
     if (F.modo === 'mostrador') return as.some(a => pendiente(c.k, a) > 0);
     if (F.modo === 'solo-inp') return as.some(a => soloInp(c.k, a));
+    if (F.modo === 'auto') return as.some(a => esAuto(c.k, a));
   }
   return true;
 }
@@ -797,7 +810,8 @@ function renderMatrix() {
           const est = m === 'most' && o ? tintaCM(nu) : '';   // el degradado solo tiñe la CM abierta
           const tUso = m === 'most' ? (o ? ` · ${miles(nu)} interconsultas en 2026` : ' · sin uso, no existe') : '';
           const pocos = m === 'most' && o && nu > 0 && nu < POCOS;
-          const b = `<button class="sq ${m}${o ? ' open' : ''}${ch ? ' chg' : ''}${pocos ? ' pocos' : ''}"${est ? ` style="${est}"` : ''} data-k="${c.k}" data-a="${a}" data-m="${m}" aria-label="${esc(c.e)} · Área ${a} · ${ML[m]} ${o ? 'abierta' : 'cerrada'}${tUso}" title="${esc(c.e)} · Área ${a} · ${ML[m]}: ${o ? 'abierta' : 'cerrada'}${d ? ' · ' + fmt(d) : ''}${tUso}">${pocos ? nu : ''}</button>`;
+          const auto = m === 'itc' && esAuto(c.k, a);
+          const b = `<button class="sq ${m}${o ? ' open' : ''}${ch ? ' chg' : ''}${pocos ? ' pocos' : ''}${auto ? ' auto' : ''}"${est ? ` style="${est}"` : ''} data-k="${c.k}" data-a="${a}" data-m="${m}" aria-label="${esc(c.e)} · Área ${a} · ${ML[m]} ${o ? 'abierta' : 'cerrada'}${tUso}" title="${esc(c.e)} · Área ${a} · ${ML[m]}: ${o ? 'abierta' : 'cerrada'}${d ? ' · ' + fmt(d) : ''}${tUso}${auto ? ' · cita automática' : ''}">${pocos ? nu : ''}</button>`;
           h += showDates ? `<span class="u">${b}<span class="d">${d ? fmt(d).slice(0, 5) : '·'}</span></span>` : b;
         });
         h += '</span></td>';
@@ -820,7 +834,7 @@ function allEntries(includeBase) {
   return out;
 }
 const R = { q: '', a: '', m: '', base: false };
-const ACC = { abrir: ['Apertura', 'ap'], cerrar: ['Cierre', 'ci'], reset: ['Restablecido al extracto', 'rs'], base: ['Situación inicial', 'base'] };
+const ACC = { abrir: ['Apertura', 'ap'], cerrar: ['Cierre', 'ci'], 'auto-si': ['Pasa a cita automática', 'au'], 'auto-no': ['Deja de ser automática', 'rs'], reset: ['Restablecido al extracto', 'rs'], base: ['Situación inicial', 'base'] };
 function renderReg() {
   if ($('#viewRegistro').hidden) return;
   let es = allEntries(R.base);
@@ -878,9 +892,12 @@ function openDlg(k, a, m) {
     ${hist.length ? `<div class="box hist"><h3>Historial</h3><ul>${hist.map(x => `<li><span class="mono">${fmt(x.fecha)}</span><span class="pill ${(ACC[x.accion] || ['', 'rs'])[1]}">${(ACC[x.accion] || [x.accion])[0]}</span><span class="n">${esc(x.usuario || '')}${x.nota ? ' — ' + esc(x.nota) : ''}</span></li>`).join('')}</ul></div>` : ''}
     <form class="edit" id="editForm">
       <div class="seg">
-        <label class="ap"><input type="radio" name="acc" value="abrir" ${o ? '' : 'checked'}><i class="sq ${m} open" style="width:12px;height:12px"></i> Abrir</label>
-        <label class="ci"><input type="radio" name="acc" value="cerrar" ${o ? 'checked' : ''}><i class="sq ${m}" style="width:12px;height:12px"></i> Cerrar</label>
+        <label class="ap"><input type="radio" name="acc" value="abrir"><i class="sq ${m} open" style="width:12px;height:12px"></i> Abrir</label>
+        <label class="ci"><input type="radio" name="acc" value="cerrar"><i class="sq ${m}" style="width:12px;height:12px"></i> Cerrar</label>
+        <label class="sc"><input type="radio" name="acc" value="igual" checked> Dejar como está</label>
       </div>
+      ${m === 'itc' ? `<label class="auto-chk full"><input type="checkbox" name="auto" ${esAuto(k, a) ? 'checked' : ''}>
+        <span><b>Cita automática</b><small>El paciente sale de la consulta con la cita ya dada, sin ninguna gestión. Se marca con un halo ámbar en el mapa.</small></span></label>` : ''}
       <label>Fecha del cambio <input type="date" name="fecha" value="${today()}" required></label>
       <label>Quién lo registra <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
       <textarea name="nota" placeholder="Observaciones (opcional): motivo, agenda creada, incidencia…"></textarea>
@@ -906,7 +923,15 @@ function openDlg(k, a, m) {
     try { localStorage.setItem('sms-itc-user', usuario); } catch (e) {}
     $('#userName').value = usuario;
     const nota = String(fd.get('nota') || '').trim();
-    persist(a, key(k, m), { abierta: acc === 'abrir', fecha: fd.get('fecha'), usuario, nota, ts, hist: [{ accion: acc, fecha: fd.get('fecha'), usuario, nota, ts }, ...hist].slice(0, 60) });
+    const nuevoAuto = m === 'itc' ? !!fd.get('auto') : undefined;
+    const cambiaAuto = m === 'itc' && nuevoAuto !== esAuto(k, a);
+    const previa = (r && typeof r.abierta === 'boolean') ? r.abierta : null;
+    const entradas = [];
+    if (acc !== 'igual') entradas.push({ accion: acc, fecha: fd.get('fecha'), usuario, nota, ts });
+    if (cambiaAuto) entradas.unshift({ accion: nuevoAuto ? 'auto-si' : 'auto-no', fecha: fd.get('fecha'), usuario, nota: '', ts });
+    if (!entradas.length) { toast('No has cambiado nada: elige Abrir o Cerrar, o marca la cita automática.'); return; }
+    persist(a, key(k, m), { abierta: acc === 'igual' ? previa : (acc === 'abrir'), fecha: fd.get('fecha'), usuario, nota, ts,
+      ...(m === 'itc' ? { auto: nuevoAuto } : {}), hist: [...entradas, ...hist].slice(0, 60) });
     dlg.close();
   };
 }
