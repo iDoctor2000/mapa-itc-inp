@@ -143,6 +143,7 @@ body.plegado .wrap,body.plegado .reg{max-height:calc(100vh - 62px);margin-top:12
 .legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:0 18px 10px;font-size:12px;color:var(--muted)}
 .legend .sq{cursor:default}
 .legend .escala i{display:inline-block;width:15px;height:15px;border:2px solid var(--vin-b);border-radius:1px;margin-right:2px;vertical-align:-3px}
+.legend .escala i.pocos{display:inline-flex;align-items:center;justify-content:center;font:600 9px/1 "IBM Plex Mono",monospace;color:var(--vin-x);font-style:normal}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 
 /* ---------- matrix ---------- */
@@ -179,6 +180,8 @@ table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:1
 .sq.most{--relleno:var(--vin-bg);--pal:var(--vin-pal);--x:var(--vin-x);
   border-color:var(--vin-b);border-radius:1px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.45), 0 1px 0 rgba(107,83,52,.2)}
 .sq.open{background:var(--relleno);background-image:none}
+.sq.pocos{display:inline-flex;align-items:center;justify-content:center;
+  font:600 9px/1 "IBM Plex Mono",ui-monospace,monospace;color:var(--vin-x);letter-spacing:-.5px}
 .sq.most.open{background:var(--relleno);background-image:repeating-linear-gradient(45deg,rgba(138,110,75,.10) 0 2px,transparent 2px 5px)}
 .sq::before{content:'';position:absolute;inset:-5px}
 .sq:hover{transform:scale(1.18)}
@@ -387,7 +390,7 @@ form.edit .full{grid-column:1/-1}
   <div class="legend">
     <span><i class="sq most open"></i> CM abierta · existe cita mostrador</span>
     <span><i class="sq most"></i> CM cerrada · no existe</span>
-    <span class="escala">uso de la CM en 2026: <i data-n="0"></i><i data-n="5"></i><i data-n="50"></i><i data-n="500"></i><i data-n="9487"></i> de ninguno a máximo</span>
+    <span class="escala">uso de la CM en 2026: <i data-n="0"></i><i data-n="5" class="pocos">5</i><i data-n="50"></i><i data-n="500"></i><i data-n="9487"></i> de ninguno a máximo · por debajo de 9 se escribe la cifra</span>
     <span><i class="sq inp open"></i> INP abierta</span>
     <span><i class="sq inp"></i> INP cerrada</span>
     <span><i class="sq itc open"></i> ITC abierta</span>
@@ -476,9 +479,12 @@ function rankUso(k, a) {
 }
 const USOMAX = Math.max(1, ...Object.values(USO));
 // escala logarítmica: con mediana 5 y máximo 9.487 una lineal dejaría casi todo en blanco
+const POCOS = 9;                    // por debajo de 9 usos: casi blanco y con la cifra dentro
 function intensidad(n) {
   if (!n) return 0;
-  return Math.min(1, 0.10 + 0.90 * Math.log1p(n) / Math.log1p(USOMAX));
+  if (n < POCOS) return 0.07;       // apenas teñido, para distinguirlo del cero sin que compita
+  const t = (Math.log1p(n) - Math.log1p(POCOS - 1)) / (Math.log1p(USOMAX) - Math.log1p(POCOS - 1));
+  return Math.min(1, 0.18 + 0.82 * t);
 }
 function tintaCM(n) {
   const i = intensidad(n);          // 0 usos: blanco puro, como pidió el usuario
@@ -790,7 +796,8 @@ function renderMatrix() {
           const nu = m === 'most' && o ? usoCM(c.k, a) : 0;
           const est = m === 'most' && o ? tintaCM(nu) : '';   // el degradado solo tiñe la CM abierta
           const tUso = m === 'most' ? (o ? ` · ${miles(nu)} interconsultas en 2026` : ' · sin uso, no existe') : '';
-          const b = `<button class="sq ${m}${o ? ' open' : ''}${ch ? ' chg' : ''}"${est ? ` style="${est}"` : ''} data-k="${c.k}" data-a="${a}" data-m="${m}" aria-label="${esc(c.e)} · Área ${a} · ${ML[m]} ${o ? 'abierta' : 'cerrada'}${tUso}" title="${esc(c.e)} · Área ${a} · ${ML[m]}: ${o ? 'abierta' : 'cerrada'}${d ? ' · ' + fmt(d) : ''}${tUso}"></button>`;
+          const pocos = m === 'most' && o && nu > 0 && nu < POCOS;
+          const b = `<button class="sq ${m}${o ? ' open' : ''}${ch ? ' chg' : ''}${pocos ? ' pocos' : ''}"${est ? ` style="${est}"` : ''} data-k="${c.k}" data-a="${a}" data-m="${m}" aria-label="${esc(c.e)} · Área ${a} · ${ML[m]} ${o ? 'abierta' : 'cerrada'}${tUso}" title="${esc(c.e)} · Área ${a} · ${ML[m]}: ${o ? 'abierta' : 'cerrada'}${d ? ' · ' + fmt(d) : ''}${tUso}">${pocos ? nu : ''}</button>`;
           h += showDates ? `<span class="u">${b}<span class="d">${d ? fmt(d).slice(0, 5) : '·'}</span></span>` : b;
         });
         h += '</span></td>';
