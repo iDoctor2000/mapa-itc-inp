@@ -196,6 +196,8 @@ table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:1
 .tg.desv{color:var(--warn-ink);background:var(--warn-soft)}
 .tg.sindest{color:var(--bad-ink);background:var(--bad-soft)}
 .tg.recibe{color:var(--muted);background:var(--surface-2)}
+.tg.prep{color:var(--muted);background:transparent;box-shadow:inset 0 0 0 1px var(--line-strong);border-radius:3px}
+#bx .pair .tg + .tg{margin-left:-2px}
 #bx td.cell{min-width:118px} #bx .pair{align-items:center}
 #bx th.esp .cod{font:400 10px/1 "IBM Plex Mono",monospace;color:var(--muted);margin-left:6px}
 #bx th.esp.hijo{padding-left:24px}
@@ -471,6 +473,7 @@ form.edit .full{grid-column:1/-1}
       <option value="sindest">Sin destino · no llega a ningún buzón</option>
       <option value="recibe">Buzón que recibe de otras áreas</option>
       <option value="buzsin">Buzón sin envío de ninguna primaria</option>
+      <option value="prep">Rutas preparadas · la primaria aún no la ofrece</option>
       <option value="excep">Con rutas por centro en el COMPAS</option>
       <option value="auto">Buzón con cita automática</option>
       <option value="bloq">Cita automática que bloquea el hueco</option>
@@ -496,6 +499,7 @@ form.edit .full{grid-column:1/-1}
     <span><i class="tg desv">↗HGRS</i> desviada</span>
     <span><i class="tg sindest">sin buzón</i> sin destino</span>
     <span><i class="tg recibe">←3</i> recibe de 3 áreas</span>
+    <span><i class="tg prep">→HCUVA</i> ruta preparada en el COMPAS, sin oferta en la primaria</span>
     <span><i class="sq inpc open"></i> ITCa · INP citable</span>
     <span><i class="sq buz open chg"></i> cambiada tras el Excel</span>
   </div>
@@ -942,8 +946,19 @@ const SIG = a => HOS[a] ? HOS[a].s : 'Área ' + a;
 const FILAS = INP ? INP.filas : [];
 const BYF = Object.fromEntries(FILAS.map(f => [f.id, f]));
 const INC_BY = INP ? Object.fromEntries(INP.inc.map(i => [i.id, i])) : {};
-const AP_IDX = {};   // "slug|área" -> filas que la primaria ofrece en esa casilla del mapa
-if (INP) Object.entries(INP.ap).forEach(([kk, v]) => { const [f, a] = kk.split('|'); (AP_IDX[`${v[0]}|${a}`] = AP_IDX[`${v[0]}|${a}`] || []).push(f); });
+// Si la especialidad del mapa solo tiene esta prueba INP, abrir la INP en el mapa equivale a ofrecerla,
+// aunque no viniera en el extracto (p. ej. Cirugía Pediátrica en el Área 3).
+const UNICA = {};
+if (INP) {
+  const porSlug = {};
+  Object.entries(INP.ap).forEach(([kk, v]) => { (porSlug[`${v[0]}|${v[1]}`] = porSlug[`${v[0]}|${v[1]}`] || new Set()).add(kk.split('|')[0]); });
+  FILAS.forEach(f => { const s = porSlug[`${f.k}|inp`]; if (f.k && s && s.size === 1 && s.has(f.id)) UNICA[f.id] = [f.k, 'inp']; });
+}
+const AP_IDX = {};   // "slug|área" -> filas que la primaria ofrece (o puede ofrecer) en esa casilla del mapa
+if (INP) AREAS.forEach(a => FILAS.forEach(f => {
+  const v = INP.ap[`${f.id}|${a}`] || UNICA[f.id]; if (!v) return;
+  (AP_IDX[`${v[0]}|${a}`] = AP_IDX[`${v[0]}|${a}`] || []).push(f.id);
+}));
 const EST = {
   propio: ['Circuito propio', 'La primaria del área la envía y el hospital de su área tiene el buzón.'],
   deriv: ['Derivada', 'El hospital del área no tiene buzón: el COMPAS la dirige a otro hospital.'],
@@ -959,7 +974,8 @@ const espDe = f => f.k ? BYK[f.k].e : f.e;
 const grupoF = f => f.k ? grupoDe(f.k) : f.g;
 const hk = (id, t) => `h-${id}|${t}`;
 const hrec = (id, a, t) => ov[a][hk(id, t)];
-const apInfo = (f, a) => INP.ap[`${f.id}|${a}`];
+const apBase = (f, a) => INP.ap[`${f.id}|${a}`];
+const apInfo = (f, a) => apBase(f, a) || UNICA[f.id];
 const apOn = (f, a) => { const x = apInfo(f, a); return !!x && isOpen(x[0], a, x[1]); };
 const baseBuz = (f, h) => INP.buz[`${f.id}|${h}`] || [];
 const ES_CITA = m => m === 'Automática' || m === 'Manual';
@@ -1006,6 +1022,7 @@ function destinos(f, a) {
     return { manual: false, sinRuta: !rs.length, g };
   });
 }
+const rutaPreparada = (f, a) => apOn(f, a) ? [] : [...new Set((INP.rut[`${f.id}|${a}`] || []).map(x => x[2]))].filter(h => h !== a);
 const recibeDe = (f, h) => memo(`r|${f.id}|${h}`, () => AREAS.filter(b => b !== h && apOn(f, b) && destinos(f, b).g.some(g => g.h === h && g.ok)));
 function estadoB(f, a) {
   return memo(`e|${f.id}|${a}`, () => {
@@ -1060,6 +1077,7 @@ function enFiltroB(f, a) {
   if (m === 'bloq') return buzOn(f, a) && modoDe(f, a) === 'Automática' && tipoDe(f, a) === 'BLOQUEA';
   if (m === 'cambios') return cambiadoBuz(f, a) || !!(hrec(f.id, a, 'dest') || {}).dest;
   if (m === 'excep') return (INP.rut[`${f.id}|${a}`] || []).some(x => x[1] !== '*');
+  if (m === 'prep') return rutaPreparada(f, a).length > 0;
   const st = estadoB(f, a);
   if (m === 'fuera') return st === 'deriv' || st === 'desv';
   return st === m;
@@ -1156,7 +1174,9 @@ function filaBuz(f, as, hijo) {
       tag = `<i class="tg ${st}">${st === 'deriv' ? '→' : '↗'}${SIG(fuera[0].h)}${fuera.length > 1 ? '+' + (fuera.length - 1) : ''}</i>`;
     } else if (st === 'sindest') tag = '<i class="tg sindest">sin buzón</i>';
     else if (st === 'recibe') tag = `<i class="tg recibe">←${recibeDe(f, a).length}</i>`;
-    const tAP = `${f.n} · Área ${a} · AP: ${ap ? 'la primaria la ofrece' : 'la primaria no la ofrece'}${mod === 'inpc' ? ' (ITCa)' : ''} · ${EST[st][0]}${chAP ? ' · destino corregido a mano' : ''}`;
+    const prep = rutaPreparada(f, a);
+    if (prep.length) tag += `<i class="tg prep" title="Ruta preparada en el COMPAS hacia ${prep.map(SIG).join(', ')}: la primaria del área no ofrece esta INP">→${SIG(prep[0])}${prep.length > 1 ? '+' + (prep.length - 1) : ''}</i>`;
+    const tAP = `${f.n} · Área ${a} · AP: ${ap ? 'la primaria la ofrece' : 'la primaria no la ofrece'}${prep.length ? ' · ruta preparada a ' + prep.map(SIG).join(', ') : ''}${mod === 'inpc' ? ' (ITCa)' : ''} · ${EST[st][0]}${chAP ? ' · destino corregido a mano' : ''}`;
     const tH = `${f.n} · ${SIG(a)} · H: ${hb ? 'buzón montado · ' + mo.toLowerCase() + (ES_CITA(mo) ? ' · ' + tipoTxt(ti) : '') : 'sin buzón'}${chH ? ' · corregido a mano' : ''}`;
     h += `<td class="cell${F.a ? ' hl' : ''}"><span class="pair">`
       + `<button class="sq ${mod}${ap ? ' open' : ''}${chAP ? ' chg' : ''}" data-f="${f.id}" data-a="${a}" title="${esc(tAP)}" aria-label="${esc(tAP)}"></button>`
@@ -1240,12 +1260,12 @@ function openBuzDlg(id, a) {
     <div class="meta"><span class="pill buz">${esc(f.c.join(' · '))}</span><span>Área ${a} · ${esc(HOS[a].n)}</span><span>${esc(espDe(f))} · ${esc(grupoF(f))}</span></div>
     <div class="state"><span class="pair"><i class="sq ${mod}${ap ? ' open' : ''}"></i><i class="sq buz${hb ? ' open' : ''}${mo === 'Automática' ? ' auto' : ''}${mo === 'Manual' ? ' man' : ''}"></i></span><div><span class="pill est-${st}">${EST[st][0]}</span> ${esc(EST[st][1])}</div></div>
     <div class="box"><h3>Primaria · Área ${a} (OMI-AP)</h3>
-      ${x ? `<div>${ap ? 'La primaria del área <b>ofrece</b> esta INP' : 'La INP está <b>cerrada en el mapa</b>: la primaria del área ya no la ofrece'} dentro de <b>${esc(BYK[x[0]].e)}</b>${mod === 'inpc' ? ' como ITCa' : ''}. <button type="button" class="lnk" data-ir-mapa="${x[0]}">Ver en el mapa</button></div>`
+      ${x ? `<div>${ap ? `La primaria del área <b>ofrece</b> esta INP${apBase(f, a) ? '' : ' (abierta en el mapa después del extracto)'}` : (apBase(f, a) ? 'La INP está <b>cerrada en el mapa</b>: la primaria del área ya no la ofrece' : `La primaria del área <b>no ofrece</b> esta INP: no venía en el extracto de OMI-AP del ${fmt(FECHA_BASE)}. Si ya está disponible, ábrela en <b>${esc(BYK[x[0]].e)}</b> en el mapa y aquí contará al momento`)}${ap || apBase(f, a) ? ` dentro de <b>${esc(BYK[x[0]].e)}</b>${mod === 'inpc' ? ' como ITCa' : ''}` : ''}. <button type="button" class="lnk" data-ir-mapa="${x[0]}">Ver en el mapa</button></div>`
         : '<div style="color:var(--muted)">La primaria del área no ofrece esta INP en el extracto de OMI-AP.</div>'}
     </div>
     <div class="box"><h3>Destino${D.manual ? ' · corregido a mano' : ' según el COMPAS'}</h3>
       ${!hayDest ? `<div style="color:var(--muted)">No hay rutas desde el Área ${a}.</div>` : `
-      ${!ap ? '<div style="color:var(--muted);margin-bottom:4px">Rutas preparadas: hoy la primaria del área no la ofrece.</div>' : ''}
+      ${!ap ? `<div style="color:var(--muted);margin-bottom:4px">Ruta preparada: hoy la primaria del área no la ofrece${rutas.length ? '' : ', y no hay ruta en el COMPAS'}.</div>` : ''}
       ${D.sinRuta ? `<div style="color:var(--muted);margin-bottom:4px">No hay ruta en el COMPAS: va al hospital de su área.</div>` : ''}
       ${D.g.map(g => `<div class="dest"><span class="h ${g.ok ? 'ok' : 'ko'}">→ ${SIG(g.h)}</span><span>${esc(HOS[g.h].n)}${g.sd.length ? ' · servicio ' + g.sd.map(s => esc(svN(s))).join(', ') : ''}${g.c.length ? ` · <span class="mono">${esc(g.c.join(', '))}</span>` : ''}<br>
         <small>${g.todos ? `Todos los emisores del área (${g.n})` : `${g.n} de ${(INP.emi[a] || []).length} emisores del área`} · ${g.ok ? `buzón montado · ${esc(modoDe(f, g.h).toLowerCase())}${ES_CITA(modoDe(f, g.h)) ? ' · ' + tipoTxt(tipoDe(f, g.h)) : ''}` : '<b style="color:var(--bad-ink)">sin buzón montado</b>'}${g.ok && g.codMal.length ? ` · el código ${esc(g.codMal.join(', '))} no tiene buzón` : ''}</small></span>
