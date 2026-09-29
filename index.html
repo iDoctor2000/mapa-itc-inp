@@ -36,6 +36,7 @@
   --open:#2FA35A; --closed:#D7443E; --inp:#1290C9; --itc:#137A3B; --inpc:#D94F8C; --most:#E0851C; --most-soft:#FBEBD7;
   --vin-b:#8A6E4B; --vin-bg:#F6EDDA; --vin-pal:#EAE3D3; --vin-x:#6B5334; --vin-suave:#F3E9D6;
   --inp-pal:#94CDE7; --itc-pal:#95C3A7; --inpc-pal:#EEB0CB; --borde-sq:#6B6862; --aspa:#3C3A36; --halo:#E8A33D; --buz:#27508F; --buz-pal:#AFC0DA;
+  --d1:#2F6FBF; --d2:#0E8A7D; --d3:#C05A3E; --d4:#7A5AA8; --d5:#A07B00; --d6:#C2557A; --d7:#5C8A1E; --d8:#566E8C; --d9:#8A6B2F;
   --warn-soft:#FFF4D6; --warn-ink:#7A5200; --ok-soft:#DFF3E5; --ok-ink:#155E33; --bad-soft:#FBE1DF; --bad-ink:#8B1F1A; --inpc-soft:#FBE7F1; --inp-soft:#E2F3FB;
   --shadow:0 10px 30px rgba(24,36,31,.14);
   --sq:16px;
@@ -47,6 +48,7 @@
     --open:#37B865; --closed:#E2544E; --inp:#63C3ED; --itc:#3CBE72; --inpc:#F18BBE; --most:#F0993C; --most-soft:#3A2A16;
     --vin-b:#BCA07A; --vin-bg:#3B3327; --vin-pal:#2C271E; --vin-x:#E0CCA6; --vin-suave:#332C21;
     --inp-pal:#39697A; --itc-pal:#2B6742; --inpc-pal:#795064; --borde-sq:#8A857B; --aspa:#E8E4DA; --halo:#F2B457; --buz:#8F98F5; --buz-pal:#3C3F6E;
+  --d1:#78B4F5; --d2:#4FD0BE; --d3:#F0997C; --d4:#B79BE8; --d5:#E0C34D; --d6:#F094B2; --d7:#A9D257; --d8:#9FB6D4; --d9:#D7AC70;
     --warn-soft:#3A3010; --warn-ink:#F3D27A; --ok-soft:#173523; --ok-ink:#9FE0B6; --bad-soft:#3E1B19; --bad-ink:#F3A9A4; --inpc-soft:#3A1E2C; --inp-soft:#14303D;
     --shadow:0 10px 30px rgba(0,0,0,.5);
   }
@@ -57,6 +59,7 @@
   --open:#37B865; --closed:#E2544E; --inp:#63C3ED; --itc:#3CBE72; --inpc:#F18BBE; --most:#F0993C; --most-soft:#3A2A16;
   --vin-b:#BCA07A; --vin-bg:#3B3327; --vin-pal:#2C271E; --vin-x:#E0CCA6; --vin-suave:#332C21;
     --inp-pal:#39697A; --itc-pal:#2B6742; --inpc-pal:#795064; --borde-sq:#8A857B; --aspa:#E8E4DA; --halo:#F2B457; --buz:#8F98F5; --buz-pal:#3C3F6E;
+  --d1:#78B4F5; --d2:#4FD0BE; --d3:#F0997C; --d4:#B79BE8; --d5:#E0C34D; --d6:#F094B2; --d7:#A9D257; --d8:#9FB6D4; --d9:#D7AC70;
   --warn-soft:#3A3010; --warn-ink:#F3D27A; --ok-soft:#173523; --ok-ink:#9FE0B6; --bad-soft:#3E1B19; --bad-ink:#F3A9A4; --inpc-soft:#3A1E2C; --inp-soft:#14303D;
   --shadow:0 10px 30px rgba(0,0,0,.5);
 }
@@ -1368,7 +1371,9 @@ function openBuzDlg(id, a) {
 // ---------------- circuito del COMPAS dibujado ----------------
 // Un diagrama por prueba INP: a la izquierda la primaria de cada área, a la derecha el hospital
 // que recibe, y una flecha por cada ruta del COMPAS (o por el hospital propio cuando no hay ruta).
-const COL = { propio: 'var(--itc)', deriv: 'var(--accent)', desv: 'var(--halo)', sindest: 'var(--closed)', prep: 'var(--muted)' };
+const DCOL = h => `var(--d${h})`;   // cada hospital de destino tiene su color
+const ETQ = { propio: 'va al hospital de su área', deriv: 'derivada: su hospital no tiene buzón', desv: 'desviada: hay buzón propio',
+  sindest: 'el destino no tiene ese buzón', prep: 'ruta preparada, la primaria no la ofrece' };
 function arcosDe(f) {
   const E = a => (INP.emi[a] || []).length;
   const arcos = [];
@@ -1390,48 +1395,29 @@ function svgFlujo(f) {
   const W = 560, dy = 36, top = 34, H = top + 9 * dy + 14, xA = 10, wA = 132, xH = W - 156, wH = 146;
   const yy = a => top + (a - 1) * dy;
   const arcos = arcosDe(f);
-  // Cuando varias rutas acaban en el mismo hospital, cada una entra por su propio punto,
-  // con su trazo y con el número de su área: así se pueden seguir una a una.
-  const TRAZO = ['', '14 5', '7 4', '20 6', '3 4'];   // trazos suaves: el carril y la etiqueta ya las distinguen
+  // El color dice a qué hospital va: todas las rutas con el mismo destino se dibujan igual.
   const porDestino = {};
   arcos.forEach(x => { (porDestino[x.h] = porDestino[x.h] || []).push(x); });
   Object.values(porDestino).forEach(g => { g.sort((p, q) => p.a - q.a); g.forEach((x, i) => { x.i = i; x.de = g.length; }); });
-  // cada ruta que cambia de fila baja por su propio carril vertical, como en un circuito
-  const cambian = arcos.filter(x => x.a !== x.h);
-  cambian.sort((p, q) => (p.h - q.h) || (p.a - q.a)).forEach((x, i) => { x.carril = i; });
-  const nCarr = Math.max(1, cambian.length);
-  const marca = t => `<marker id="fl-${t}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="${COL[t]}"/></marker>`;
+  const marca = h => `<marker id="fl-h${h}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="${DCOL(h)}"/></marker>`;
   const caja = (x, y, w, txt, sub, cls, marcas) => `
     <rect x="${x}" y="${y - 13}" width="${w}" height="26" rx="6" fill="var(--surface)" stroke="${cls}" stroke-width="1.5"/>
     <text x="${x + 9}" y="${y + 4}" font-size="12" font-weight="600" fill="var(--ink)">${esc(txt)}</text>
     <text x="${x + w - 8}" y="${y + 4}" font-size="10" text-anchor="end" fill="var(--muted)">${esc(sub)}</text>${marcas || ''}`;
-  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Circuito del COMPAS de ${esc(f.n)}"><defs>${Object.keys(COL).map(marca).join('')}</defs>
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Circuito del COMPAS de ${esc(f.n)}"><defs>${Object.keys(porDestino).map(marca).join('')}</defs>
     <text x="${xA}" y="16" font-size="10" fill="var(--muted)" letter-spacing=".06em">PRIMARIA · ÁREA</text>
     <text x="${xH + wH}" y="16" font-size="10" text-anchor="end" fill="var(--muted)" letter-spacing=".06em">HOSPITAL QUE RECIBE</text>`;
   // flechas primero, para que las cajas queden encima
   arcos.forEach(x => {
     const x1 = xA + wA + 4, x2 = xH - 7, y1 = yy(x.a);
-    const reparto = Math.min(18, 5 * (x.de - 1));                       // la llegada se reparte por la altura de la caja
+    const reparto = Math.min(16, 4.5 * (x.de - 1));          // llegada repartida por la altura de la caja
     const y2 = yy(x.h) + (x.de > 1 ? -reparto / 2 + reparto * x.i / (x.de - 1) : 0);
-    const gr = Math.min(3.2, 1.2 + 2 * (x.tot ? x.n / x.tot : 1));
-    const dash = x.tipo === 'prep' ? '4 3' : (x.de > 1 ? TRAZO[x.i % TRAZO.length] : '');
-    const carr = x1 + 30 + (x2 - x1 - 58) * (x.carril === undefined ? 0 : x.carril) / Math.max(1, nCarr - 1);
-    let d, lx = (x1 + x2) / 2, ly = y1;
-    if (x.a === x.h) { d = `M${x1},${y1} H${x2}`; }
-    else {
-      const dir = y2 > y1 ? 1 : -1, r = Math.min(7, Math.abs(y2 - y1) / 2);
-      d = `M${x1},${y1} H${(carr - r).toFixed(1)} Q${carr.toFixed(1)},${y1} ${carr.toFixed(1)},${(y1 + dir * r).toFixed(1)}`
-        + ` V${(y2 - dir * r).toFixed(1)} Q${carr.toFixed(1)},${y2.toFixed(1)} ${(carr + r).toFixed(1)},${y2.toFixed(1)} H${x2}`;
-      lx = carr; ly = (y1 + y2) / 2;
-    }
-    s += `<path d="${d}" fill="none" stroke="${COL[x.tipo]}" stroke-width="${x.tipo === 'prep' ? 1.2 : gr}"${dash ? ` stroke-dasharray="${dash}"` : ''}
-      stroke-linecap="round" marker-end="url(#fl-${x.tipo})" opacity="${x.tipo === 'prep' ? .85 : .95}"><title>${esc(`Área ${x.a} → ${SIG(x.h)} · ${x.todos ? 'todos los centros del área' : x.n + ' de ' + x.tot + ' emisores'}${x.tipo === 'prep' ? ' · ruta preparada, sin oferta en primaria' : ''}`)}</title></path>`;
-    const rot = [x.a === x.h ? '' : `A${x.a}`, !x.todos && x.n ? `${x.n} centro${x.n === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ');
-    if (rot) {
-      const izq = x.a === x.h ? null : lx > (x1 + x2) / 2;        // en la mitad derecha la etiqueta se pone a la izquierda del carril
-      const ax = x.a === x.h ? lx : lx + (izq ? -5 : 5), an = x.a === x.h ? 'middle' : (izq ? 'end' : 'start');
-      s += `<text x="${ax.toFixed(1)}" y="${(ly + (x.a === x.h ? -4 : 3)).toFixed(1)}" font-size="8.5" font-weight="600" text-anchor="${an}" fill="${COL[x.tipo]}" stroke="var(--surface)" stroke-width="2.6" paint-order="stroke" stroke-linejoin="round">${esc(rot)}</text>`;
-    }
+    const gr = Math.min(3.2, 1.3 + 1.9 * (x.tot ? x.n / x.tot : 1));
+    const cx = 60 + Math.min(72, Math.abs(y2 - y1) / 2);
+    const col = DCOL(x.h);
+    s += `<path d="M${x1},${y1} C${x1 + cx},${y1} ${x2 - cx},${y2.toFixed(1)} ${x2},${y2.toFixed(1)}" fill="none" stroke="${col}"
+      stroke-width="${x.tipo === 'prep' ? 1.3 : gr}"${x.tipo === 'prep' ? ' stroke-dasharray="5 4"' : ''} stroke-linecap="round" marker-end="url(#fl-h${x.h})" opacity="${x.tipo === 'prep' ? .7 : .92}"><title>${esc(`Área ${x.a} → ${SIG(x.h)} · ${ETQ[x.tipo]} · ${x.todos ? 'todos los centros del área' : x.n + ' de ' + x.tot + ' emisores'}`)}</title></path>`;
+    if (!x.todos && x.n) s += `<text x="${((x1 + x2) / 2).toFixed(1)}" y="${((y1 + y2) / 2 - 4).toFixed(1)}" font-size="8.5" font-weight="600" text-anchor="middle" fill="${col}" stroke="var(--surface)" stroke-width="2.6" paint-order="stroke" stroke-linejoin="round">${x.n} centro${x.n === 1 ? '' : 's'}</text>`;
   });
   AREAS.forEach(a => {
     const ap = apOn(f, a), hb = buzOn(f, a), mo = hb ? modoDe(f, a) : '';
@@ -1439,7 +1425,7 @@ function svgFlujo(f) {
     const aut = mo === 'Automática', man = mo === 'Manual';
     const extra = (aut || man) ? `<circle cx="${xH + wH - 10}" cy="${yy(a) - 7}" r="4" fill="${aut ? 'var(--halo)' : 'none'}" stroke="var(--halo)" stroke-width="1.5"/>`
       + (tipoDe(f, a) === 'BLOQUEA' ? `<rect x="${xH + wH - 8}" y="${yy(a) + 3}" width="5" height="5" fill="var(--ink)"/>` : '') : '';
-    s += caja(xH, yy(a), wH, SIG(a), hb ? (aut ? 'automática' : man ? 'manual' : 'buzón') : 'sin buzón', hb ? 'var(--buz)' : 'var(--line-strong)', extra);
+    s += caja(xH, yy(a), wH, SIG(a), hb ? (aut ? 'automática' : man ? 'manual' : 'buzón') : 'sin buzón', porDestino[a] ? DCOL(a) : (hb ? 'var(--buz)' : 'var(--line-strong)'), extra);
   });
   return s + '</svg>';
 }
@@ -1449,19 +1435,18 @@ function openFlujoDlg(k, fid) {
   const f = fs.find(x => x.id === fid) || fs.slice().sort((x, y) => AREAS.filter(a => apOn(y, a)).length - AREAS.filter(a => apOn(x, a)).length)[0];
   const arcos = arcosDe(f);
   const conta = t => arcos.filter(x => x.tipo === t).length;
+  const dest = [...arcos.reduce((m, x) => m.set(x.h, (m.get(x.h) || 0) + 1), new Map())].sort((p, q) => q[1] - p[1] || p[0] - q[0]);
   $('#dlgIn').innerHTML = `
     <h2>Circuito del COMPAS</h2>
-    <div class="meta"><span>${esc(BYK[k].e)}</span><span class="pill buz">${esc(f.c.join(' · '))}</span></div>
+    <div class="meta"><span>${esc(BYK[k].e)}</span><span class="pill buz" title="${esc(f.c.join(' · '))}">${esc(f.c.length > 4 ? `${f.c.slice(0, 3).join(' · ')} y ${f.c.length - 3} códigos más` : f.c.join(' · '))}</span></div>
     ${fs.length > 1 ? `<div class="chips" style="display:flex;padding:0">${fs.map(x => `<button data-flu="${x.id}" aria-pressed="${x.id === f.id}">${esc(x.n)}</button>`).join('')}</div>` : ''}
     <div class="box" style="padding:6px 8px">${svgFlujo(f)}</div>
     <div class="legend" style="padding:0;font-size:11px">
-      <span><i class="ln" style="background:var(--itc)"></i> va al hospital de su área (${conta('propio')})</span>
-      <span><i class="ln" style="background:var(--accent)"></i> derivada: su hospital no tiene buzón (${conta('deriv')})</span>
-      <span><i class="ln" style="background:var(--halo)"></i> desviada: hay buzón propio (${conta('desv')})</span>
-      <span><i class="ln" style="background:var(--closed)"></i> no llega a ningún buzón (${conta('sindest')})</span>
-      <span><i class="ln pun"></i> ruta preparada, sin oferta en primaria (${conta('prep')})</span>
-      <span>Cada flecha es una ruta; el grosor va con el número de centros que la usan. Las que acaban en el mismo hospital entran por puntos distintos y llevan su trazo y el número de su área.</span>
+      ${dest.map(([h, n]) => `<span><i class="ln" style="background:${DCOL(h)}"></i> ${SIG(h)} · ${n} ruta${n === 1 ? '' : 's'}</span>`).join('')}
+      ${conta('prep') ? '<span><i class="ln pun"></i> discontinua: ruta preparada, sin oferta en primaria</span>' : ''}
     </div>
+    <p class="help" style="margin:0;font-size:11.5px">Todas las rutas con el mismo destino se dibujan igual; el grosor va con el número de centros que la usan.
+      ${[[conta('propio'), 'al hospital de su área'], [conta('deriv'), 'derivadas'], [conta('desv'), 'desviadas'], [conta('sindest'), 'sin buzón de destino'], [conta('prep'), 'preparadas']].filter(x => x[0]).map(x => `<b>${x[0]}</b> ${x[1]}`).join(' · ')}.</p>
     <div class="actions"><span class="spacer"></span><button type="button" class="btn" id="fluCerrar">Cerrar</button>
       <button type="button" class="btn primary" data-ir-buz="${f.id}">Ver en Buzones INP</button></div>`;
   const dlg = $('#dlg'); dlg.showModal();
