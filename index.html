@@ -167,6 +167,19 @@ table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:1
 .mx td.cell.fuera{background:repeating-linear-gradient(45deg,transparent 0 5px,var(--surface-2) 5px 10px)}
 .mx tr.row:hover td,.mx tr.row:hover th.esp{background:var(--surface-2)}
 .mx tr.row:hover td.cell.hl{background:var(--accent-soft)}
+.mx td.res{max-width:360px;min-width:250px;padding:5px 10px;font-size:11.5px;line-height:1.45;color:var(--muted);text-align:left;vertical-align:middle}
+.mx td.res button{display:block;width:100%;text-align:left;border:0;background:none;padding:0;color:inherit;font:inherit}
+.mx td.res button:hover{color:var(--ink)}
+.mx td.res b{font-weight:600} .mx td.res .b{color:var(--buz)} .mx td.res .u{color:var(--vin-x)}
+.mx td.res .f{color:var(--accent)} .mx td.res .s{color:var(--closed)} .mx td.res .n{color:var(--warn-ink)}
+.mx td.res .nota{color:var(--itc);font-weight:600}
+.mx thead th.res{min-width:250px;text-align:left}
+ul.res-l{margin:0;padding-left:16px} ul.res-l li{margin:3px 0}
+table.fic{border-collapse:collapse;width:100%;font-size:12px;margin-top:2px}
+table.fic th{text-align:left;font:600 10px/1.2 "IBM Plex Sans Condensed",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:3px 6px;border-bottom:1px solid var(--line)}
+table.fic td{padding:4px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.fic .sq{vertical-align:-1px;cursor:default} table.fic .sq:hover{transform:none}
+.pill.nota{background:var(--ok-soft);color:var(--ok-ink)}
 .mx td.tot{min-width:96px;text-align:center;font:500 12px/1.2 "IBM Plex Mono",monospace;color:var(--muted);padding:0 8px;white-space:nowrap}
 .pair{display:inline-flex;gap:5px;align-items:flex-start}
 .pair .u{display:flex;flex-direction:column;align-items:center;gap:2px}
@@ -333,7 +346,8 @@ form.edit .full{grid-column:1/-1}
   .mx.mods-2 td.cell{min-width:56px} .mx.mods-1 td.cell{min-width:42px}
   .ms-btn{width:100%} .ms{flex:1 1 45%}
   .ms-panel{right:0;left:auto}
-  .mx td.tot{display:none} .mx thead th:last-child{display:none}
+  .mx td.tot,.mx thead th:nth-last-child(2){display:none}
+  .mx td.res{min-width:180px;max-width:230px;font-size:11px} .mx thead th.res{min-width:180px}
   #bx td.cell{min-width:100px}
   #bx th.esp .cod{display:none} #bx th.esp.hijo{padding-left:14px}
   .dest details ul{columns:1}
@@ -420,6 +434,7 @@ form.edit .full{grid-column:1/-1}
       <option value="sin-citable">Sin ITC ni ITCa en ninguna área</option>
       <option value="solo-inp">Solo INP · la no presencial es la única vía</option>
       <option value="auto">Con cita automática</option>
+      <option value="nota">Con nota del equipo</option>
       <option value="mostrador">Con mostrador pendiente</option>
     </select>
     <div class="ms">
@@ -512,7 +527,7 @@ form.edit .full{grid-column:1/-1}
   <div class="tools">
     <input type="search" id="rq" placeholder="Buscar en el registro…" aria-label="Buscar en el registro">
     <select id="rArea" aria-label="Área"><option value="">Todas las áreas</option></select>
-    <select id="rMod" aria-label="Modalidad"><option value="">Todas las modalidades</option><option value="most">Solo CM (mostrador)</option><option value="inp">Solo INP</option><option value="itc">Solo ITC</option><option value="inpc">Solo ITCa</option><option value="buz">Solo buzones INP</option></select>
+    <select id="rMod" aria-label="Modalidad"><option value="">Todas las modalidades</option><option value="most">Solo CM (mostrador)</option><option value="inp">Solo INP</option><option value="itc">Solo ITC</option><option value="inpc">Solo ITCa</option><option value="buz">Solo buzones INP</option><option value="nota">Solo notas del equipo</option></select>
     <label class="chk"><input type="checkbox" id="rBase"> Incluir situación inicial del extracto</label>
     <button class="btn ghost" id="expReg">Exportar registro (CSV)</button>
   </div>
@@ -551,7 +566,7 @@ const CHECK = DATA.check || null;              // centinela cifrado para validar
 const AREAS = [1,2,3,4,5,6,7,8,9];
 const MODS = ['most','inp','itc','inpc'];
 const MOD_LABEL = { most: 'CM · cita mostrador, la vía analógica (incluye las citas con centro concreto)', inp: 'INP · no presencial', itc: 'ITC · Presencial', inpc: 'ITCa · ITC abierta' };
-const ML = { most: 'CM', inp: 'INP', itc: 'ITC', inpc: 'ITCa', buz: 'Buzón INP' };
+const ML = { most: 'CM', inp: 'INP', itc: 'ITC', inpc: 'ITCa', buz: 'Buzón INP', nota: 'Nota' };
 const BASE_GRUPOS = [...new Set(CAT.map(c => c.g))];
 const BYK = Object.fromEntries(CAT.map(c => [c.k, c]));
 const FECHA_BASE = DATA.fecha;
@@ -824,6 +839,7 @@ function rowVisible(c) {
     if (F.modo === 'mostrador') return as.some(a => pendiente(c.k, a) > 0);
     if (F.modo === 'solo-inp') return as.some(a => soloInp(c.k, a));
     if (F.modo === 'auto') return as.some(a => esAuto(c.k, a));
+    if (F.modo === 'nota') return !!(notaDe(c.k) || {}).texto;
   }
   return true;
 }
@@ -877,7 +893,7 @@ function renderKpis() {
   if (F.modo) partes.push(`filtro <b>${esc($('#fModo').selectedOptions[0].textContent)}</b>`);
   if (F.modo === 'solo-inp') partes.push('solo se pintan las casillas que cumplen');
   $('#ambito').innerHTML = 'Mostrando ' + partes.join(' · ') + `. Casillas en la selección: <b>${casillas * ms.length}</b>.`;
-  const total = CAT.reduce((t2, c) => t2 + AREAS.reduce((s, a) => s + MODS.reduce((x, m) => x + ((rec(c.k, a, m) || {}).hist || []).length, 0), 0), 0) + histBuz().length;
+  const total = CAT.reduce((t2, c) => t2 + AREAS.reduce((s, a) => s + MODS.reduce((x, m) => x + ((rec(c.k, a, m) || {}).hist || []).length, 0), 0), 0) + histBuz().length + histNotas().length;
   $('#regCount').textContent = total ? `(${total})` : '';
 }
 const delta = n => n === 0 ? '±0' : (n > 0 ? '+' + n : String(n));
@@ -890,15 +906,15 @@ function renderMatrix() {
   const cls = m => m === 'most' ? 'm' : m === 'inp' ? 'i' : m === 'itc' ? 't' : 'c';
   const cab = ms.map(m => `<span class="${cls(m)}">${ML[m]}</span>`).join(' · ');
   $('#mx').className = 'mx mods-' + ms.length;
-  let h = '<thead><tr><th class="esp">Especialidad</th>' + as.map(a => `<th>Área ${a}<br><span style="font-weight:500;letter-spacing:0;text-transform:none">${cab}</span></th>`).join('') + `<th>Áreas abiertas<br><span style="font-weight:500;letter-spacing:0;text-transform:none">${cab}</span></th></tr>`;
+  let h = '<thead><tr><th class="esp">Especialidad</th>' + as.map(a => `<th>Área ${a}<br><span style="font-weight:500;letter-spacing:0;text-transform:none">${cab}</span></th>`).join('') + `<th>Áreas abiertas<br><span style="font-weight:500;letter-spacing:0;text-transform:none">${cab}</span></th><th class="res">Resumen y notas</th></tr>`;
   h += '<tr class="cnt"><th class="esp">abiertas en las filas visibles</th>' + as.map(a =>
-    `<th>${ms.map(m => `<b class="${cls(m)}">${rows.filter(c => enFiltro(c.k, a) && isOpen(c.k, a, m)).length}</b>`).join(' · ')}</th>`).join('') + `<th>${rows.length} esp.</th></tr></thead><tbody>`;
-  if (!rows.length) h += `<tr><td colspan="${as.length + 2}" class="empty">Ninguna especialidad coincide con el filtro.</td></tr>`;
+    `<th>${ms.map(m => `<b class="${cls(m)}">${rows.filter(c => enFiltro(c.k, a) && isOpen(c.k, a, m)).length}</b>`).join(' · ')}</th>`).join('') + `<th>${rows.length} esp.</th><th class="res"></th></tr></thead><tbody>`;
+  if (!rows.length) h += `<tr><td colspan="${as.length + 3}" class="empty">Ninguna especialidad coincide con el filtro.</td></tr>`;
   grupos().forEach(g => {
     const rs = rows.filter(c => grupoDe(c.k) === g);
     if (!rs.length) return;
     const cl = collapsed.has(g);
-    h += `<tr class="band${cl ? ' closed' : ''}" data-g="${esc(g)}"><th colspan="${as.length + 2}">${esc(g)}<small>${rs.length} especialidades</small></th></tr>`;
+    h += `<tr class="band${cl ? ' closed' : ''}" data-g="${esc(g)}"><th colspan="${as.length + 3}">${esc(g)}<small>${rs.length} especialidades</small></th></tr>`;
     if (cl) return;
     rs.sort((x, y) => x.e.localeCompare(y.e, 'es')).forEach(c => {
       const chgRow = AREAS.some(a => ms.some(m => changed(c.k, a, m)));
@@ -921,7 +937,8 @@ function renderMatrix() {
         });
         h += '</span></td>';
       });
-      h += `<td class="tot">${ms.map(m => `<span class="${cls(m)}">${AREAS.filter(a => enFiltro(c.k, a) && isOpen(c.k, a, m)).length}</span>`).join(' · ')} <span style="opacity:.6">de 9</span></td></tr>`;
+      h += `<td class="tot">${ms.map(m => `<span class="${cls(m)}">${AREAS.filter(a => enFiltro(c.k, a) && isOpen(c.k, a, m)).length}</span>`).join(' · ')} <span style="opacity:.6">de 9</span></td>`
+        + `<td class="res"><button type="button" data-res="${c.k}" title="${esc(textoResumen(c.k))}">${resumenCorto(c.k)}</button></td></tr>`;
     });
   });
   $('#mx').innerHTML = h + '</tbody>';
@@ -1125,7 +1142,7 @@ function renderKpisBuz() {
   if (F.q) partes.push(`búsqueda «<b>${esc(F.q)}</b>»`);
   if (FB.modo) partes.push(`filtro <b>${esc($('#bModo').selectedOptions[0].textContent)}</b>`, 'solo se pintan las casillas que cumplen');
   $('#ambito').innerHTML = `Mostrando ${partes.join(' · ')}. Casillas en la selección: <b>${cas}</b>. Excel de despliegue y COMPAS del ${fmt(INP.fecha)}.`;
-  const total = CAT.reduce((t2, c) => t2 + AREAS.reduce((s, a) => s + MODS.reduce((x, m) => x + ((rec(c.k, a, m) || {}).hist || []).length, 0), 0), 0) + histBuz().length;
+  const total = CAT.reduce((t2, c) => t2 + AREAS.reduce((s, a) => s + MODS.reduce((x, m) => x + ((rec(c.k, a, m) || {}).hist || []).length, 0), 0), 0) + histBuz().length + histNotas().length;
   $('#regCount').textContent = total ? `(${total})` : '';
 }
 
@@ -1340,6 +1357,172 @@ function openBuzDlg(id, a) {
   };
 }
 
+// ---------------- ficha de la especialidad: resumen automático y nota a mano ----------------
+// La nota la escribe el equipo y se guarda en ov[1] con la clave «esp-<slug>|nota», de modo que
+// se publica, se fusiona y se exporta igual que el resto del estado compartido.
+const nk = k => `esp-${k}|nota`;
+const notaDe = k => ov[1][nk(k)] || null;
+const filasDe = k => INP ? FILAS.filter(f => f.k === k) : [];
+const listaAreas = as => !as.length ? 'ninguna área' : as.length === 9 ? 'las 9 áreas'
+  : as.length === 1 ? `el Área ${as[0]}` : `las áreas ${as.slice(0, -1).join(', ')} y ${as[as.length - 1]}`;
+const listaSig = hs => yLista(hs.map(SIG));
+function yLista(xs) { return xs.length < 2 ? (xs[0] || '') : `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}`; }
+
+function datosEsp(k) {
+  const cm = AREAS.filter(a => isOpen(k, a, 'most')), inp = AREAS.filter(a => isOpen(k, a, 'inp'));
+  const itc = AREAS.filter(a => isOpen(k, a, 'itc')), itca = AREAS.filter(a => isOpen(k, a, 'inpc'));
+  const usos = AREAS.map(a => [a, isOpen(k, a, 'most') ? usoCM(k, a) : 0]).filter(x => x[1] > 0).sort((x, y) => y[1] - x[1]);
+  const buz = filasDe(k).map(f => {
+    const hs = AREAS.filter(a => buzOn(f, a));
+    return { f, hs,
+      au: hs.filter(a => modoDe(f, a) === 'Automática'), man: hs.filter(a => modoDe(f, a) === 'Manual'),
+      bloq: hs.filter(a => modoDe(f, a) === 'Automática' && tipoDe(f, a) === 'BLOQUEA'),
+      fuera: AREAS.filter(a => estadoB(f, a) === 'deriv' || estadoB(f, a) === 'desv'),
+      sind: AREAS.filter(a => estadoB(f, a) === 'sindest'),
+      prep: AREAS.filter(a => rutaPreparada(f, a).length) };
+  });
+  return { cm, inp, itc, itca, usos, buz,
+    auto: AREAS.filter(a => esAuto(k, a)), solo: AREAS.filter(a => soloInp(k, a)),
+    usoTot: usos.reduce((s, x) => s + x[1], 0),
+    hosp: [...new Set(buz.flatMap(b => b.hs))].sort((x, y) => x - y),
+    hAuto: [...new Set(buz.flatMap(b => b.au))].sort((x, y) => x - y),
+    fuera: [...new Set(buz.flatMap(b => b.fuera))].sort((x, y) => x - y),
+    sind: [...new Set(buz.flatMap(b => b.sind))].sort((x, y) => x - y),
+    inc: INP ? INP.inc.filter(i => i.f && BYF[i.f] && BYF[i.f].k === k && i.sev !== 'info' && !(incRec(i) || {}).resuelta) : [],
+    avisos: INP ? INP.inc.filter(i => i.f && BYF[i.f] && BYF[i.f].k === k && i.sev === 'info' && !(incRec(i) || {}).resuelta) : [] };
+}
+// El resumen se lee como frases: cada una es [etiqueta, texto]
+function resumenEsp(k) {
+  const D = datosEsp(k), fal = AREAS.filter(a => !D.cm.includes(a)), L = [];
+  L.push(['Cita mostrador', D.cm.length
+    ? `abierta en ${listaAreas(D.cm)}${fal.length ? `, no en ${listaAreas(fal)}` : ''}. `
+      + (D.usoTot ? `${miles(D.usoTot)} interconsulta${D.usoTot === 1 ? '' : 's'} en 2026: ${D.usos.map(([a, n]) => `Área ${a} ${miles(n)}`).join(', ')}`
+        : 'Sin ninguna interconsulta registrada en 2026')
+    : 'no existe en ninguna área: aquí no hay nada que migrar.']);
+  L.push(['INP', D.inp.length
+    ? `abierta en ${listaAreas(D.inp)}${D.solo.length ? `. Es la única vía en ${listaAreas(D.solo)}` : ''}`
+    : 'ninguna área la tiene abierta']);
+  const cit = [];
+  if (D.itc.length) cit.push(`ITC presencial en ${listaAreas(D.itc)}${D.auto.length ? ` (cita automática en ${listaAreas(D.auto)})` : ''}`);
+  if (D.itca.length) cit.push(`ITCa en ${listaAreas(D.itca)}`);
+  L.push(['Cita por gestor', cit.length ? cit.join('; ') : 'sin ITC ni ITCa en ninguna área: el mostrador sigue siendo la vía presencial']);
+  if (INP) {
+    if (!D.buz.length) L.push(['Buzones INP', 'esta especialidad no tiene ninguna prueba INP en el despliegue de los hospitales']);
+    else D.buz.forEach(b => {
+      const t = [], falH = AREAS.filter(a => !b.hs.includes(a));
+      t.push(b.hs.length === 9 ? 'estructura de buzones montada en los 9 hospitales'
+        : !b.hs.length ? 'sin estructura de buzones en ningún hospital'
+        : b.hs.length >= 5 ? `estructura de buzones montada en ${b.hs.length} hospitales, todos menos ${listaSig(falH)}`
+        : `estructura de buzones montada solo en ${listaSig(b.hs)}`);
+      if (b.hs.length) {
+        const lib = b.au.filter(a => !b.bloq.includes(a));
+        const pl = b.au.length > 1;
+        t.push(b.au.length
+          ? `cita automática en ${listaSig(b.au)}, que ${!lib.length ? (pl ? 'bloquean' : 'bloquea') + ' el hueco' : !b.bloq.length ? (pl ? 'lo liberan' : 'lo libera') : `lo ${pl ? 'bloquean' : 'bloquea'} salvo ${listaSig(lib)}, que lo libera`}`
+          : 'ninguno cita en automático');
+        if (b.man.length) t.push(`cita manual en ${listaSig(b.man)}`);
+      }
+      if (b.fuera.length) {
+        const dst = b.fuera.map(a => [a, listaSig(destinos(b.f, a).g.filter(g => g.h !== a).map(g => g.h))]);
+        const unico = [...new Set(dst.map(x => x[1]))];
+        t.push(unico.length === 1 ? `desde ${listaAreas(b.fuera)} va a ${unico[0]}`
+          : `desde ${listaAreas(b.fuera)} va a otro hospital (${dst.map(([a, s]) => `Área ${a} → ${s}`).join('; ')})`);
+      }
+      if (b.sind.length) t.push(`ojo: desde ${listaAreas(b.sind)} no llega a ningún buzón`);
+      if (b.prep.length) t.push(`hay ruta preparada, sin oferta en primaria, desde ${listaAreas(b.prep)}`);
+      L.push([b.f.n, t.join('; ')]);
+    });
+    if (D.inc.length || D.avisos.length) L.push(['Incidencias', [
+      D.inc.length ? `${D.inc.length} pendiente${D.inc.length === 1 ? '' : 's'} de configuración (${yLista([...new Set(D.inc.map(i => i.t.toLowerCase()))])})` : '',
+      D.avisos.length ? `${D.avisos.length} aviso${D.avisos.length === 1 ? '' : 's'} informativo${D.avisos.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' y ')]);
+  }
+  return L;
+}
+const textoResumen = k => resumenEsp(k).map(([e, t]) => `${e}: ${t}.`).join(' ');
+// versión corta para la columna del mapa
+function resumenCorto(k) {
+  const D = datosEsp(k), p = [];
+  p.push(`<b class="m">CM ${D.cm.length}/9</b>`);
+  if (D.usoTot) p.push(`<span class="u">${miles(D.usoTot)} usos</span>`);
+  p.push(`<b class="i">INP ${D.inp.length}/9</b>`);
+  if (D.itc.length) p.push(`<b class="t">ITC ${D.itc.length}</b>`);
+  if (D.itca.length) p.push(`<b class="c">ITCa ${D.itca.length}</b>`);
+  if (INP && D.buz.length) p.push(`<b class="b">buzón ${D.hosp.length}/9${D.hAuto.length ? ` · ${D.hAuto.length} aut.` : ''}</b>`);
+  if (D.fuera.length) p.push(`<span class="f">${D.fuera.length} a otro hosp.</span>`);
+  if (D.sind.length) p.push(`<span class="s">${D.sind.length} sin buzón</span>`);
+  if (D.inc.length) p.push(`<span class="n">${D.inc.length} incid.</span>`);
+  if (notaDe(k) && notaDe(k).texto) p.push('<span class="nota">✎ nota</span>');
+  return p.join(' · ');
+}
+
+function openEspDlg(k) {
+  const c = BYK[k], D = datosEsp(k), L = resumenEsp(k), n = notaDe(k);
+  const hist = (n && n.hist) || [];
+  const fila = a => {
+    const est = INP ? D.buz.map(b => estadoB(b.f, a)) : [];
+    const buzA = INP ? D.buz.filter(b => buzOn(b.f, a)) : [];
+    const dest = INP ? [...new Set(D.buz.filter(b => apOn(b.f, a)).flatMap(b => destinos(b.f, a).g.map(g => g.h)))] : [];
+    const mo = buzA.map(b => modoDe(b.f, a));
+    return `<tr><td class="mono">Área ${a}</td>
+      <td>${isOpen(k, a, 'most') ? `<i class="sq most open" style="width:11px;height:11px"></i> ${usoCM(k, a) ? miles(usoCM(k, a)) : '0'}` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${isOpen(k, a, 'inp') ? '<i class="sq inp open" style="width:11px;height:11px"></i>' : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${isOpen(k, a, 'itc') ? `<i class="sq itc open${esAuto(k, a) ? ' auto' : ''}" style="width:11px;height:11px"></i>` : ''}${isOpen(k, a, 'inpc') ? ' <i class="sq inpc open" style="width:11px;height:11px"></i>' : ''}${!isOpen(k, a, 'itc') && !isOpen(k, a, 'inpc') ? '<span style="color:var(--muted)">—</span>' : ''}</td>
+      <td>${INP ? (buzA.length ? `<i class="sq buz open${mo.includes('Automática') ? ' auto' : ''}" style="width:11px;height:11px"></i> ${SIG(a)}${mo.includes('Automática') ? ' · automática' : mo.includes('Manual') ? ' · manual' : ''}` : (D.buz.length ? `<span style="color:var(--muted)">sin buzón</span>` : '')) : ''}</td>
+      <td>${dest.length ? dest.map(h => h === a ? '<span style="color:var(--muted)">propio</span>' : `<b>${SIG(h)}</b>`).join(' + ') : (est.includes('sindest') ? '<b style="color:var(--bad-ink)">sin destino</b>' : '')}</td></tr>`;
+  };
+  $('#dlgIn').innerHTML = `
+    <h2>${esc(c.e)}</h2>
+    <div class="meta"><span class="pill rs">${esc(grupoDe(k))}</span><span>Ficha de la especialidad en el SMS</span></div>
+    <div class="box"><h3>Resumen</h3>
+      <ul class="res-l">${L.map(([e, t]) => `<li><b>${esc(e)}:</b> ${esc(t)}.</li>`).join('')}</ul>
+    </div>
+    <div class="box"><h3>Área por área</h3>
+      <table class="fic"><thead><tr><th>Área</th><th>CM · usos 2026</th><th>INP</th><th>ITC · ITCa</th><th>Buzón del hospital</th><th>Destino de la INP</th></tr></thead>
+      <tbody>${AREAS.map(fila).join('')}</tbody></table>
+    </div>
+    ${n && n.texto ? `<div class="box"><h3>Nota del equipo</h3><div style="white-space:pre-wrap">${esc(n.texto)}</div>
+      <div style="margin-top:6px;color:var(--muted);font-size:12px">${fmt(n.fecha)} · ${esc(n.usuario || '')}</div></div>` : ''}
+    ${hist.length > 1 ? `<div class="box hist"><h3>Historial de la nota</h3><ul>${hist.map(x => `<li><span class="mono">${fmt(x.fecha)}</span><span class="pill ${(ACC[x.accion] || ['', 'rs'])[1]}">${(ACC[x.accion] || [x.accion])[0]}</span><span class="n">${esc(x.usuario || '')}${x.nota ? ' — ' + esc(x.nota) : ''}</span></li>`).join('')}</ul></div>` : ''}
+    <form class="edit" id="notaForm">
+      <textarea name="texto" placeholder="Nota del equipo: acuerdos con el servicio, agendas, teléfonos, avisos… Lo que no sale de los archivos." style="min-height:90px">${esc(n ? n.texto || '' : '')}</textarea>
+      <label>Fecha <input type="date" name="fecha" value="${today()}" required></label>
+      <label>Quién lo registra <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
+      <div class="actions">
+        ${n && n.texto ? '<button type="button" class="btn ghost" id="notaBorrar">Borrar la nota</button>' : ''}
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="notaCancel">Cerrar</button>
+        <button type="submit" class="btn primary">Guardar la nota</button>
+      </div>
+    </form>`;
+  const dlg = $('#dlg'); dlg.showModal();
+  $('#notaCancel').onclick = () => dlg.close();
+  const quien = () => { const u = String(new FormData($('#notaForm')).get('usuario') || '').trim(); if (u) { $('#userName').value = u; try { localStorage.setItem('sms-itc-user', u); } catch (e) {} } return u; };
+  const bb = $('#notaBorrar'); if (bb) bb.onclick = () => {
+    const usuario = quien(); if (!usuario) { toast('Indica quién lo registra'); return; }
+    const ts = new Date().toISOString();
+    persistCells(1, { [nk(k)]: { texto: '', fecha: today(), usuario, ts, hist: [{ accion: 'nota-no', fecha: today(), usuario, nota: '', ts }, ...hist].slice(0, 30) } }, 'Nota borrada');
+    dlg.close();
+  };
+  $('#notaForm').onsubmit = ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target), usuario = quien(), texto = String(fd.get('texto') || '').trim();
+    if (!usuario) { toast('Indica quién lo registra'); return; }
+    if (texto === (n ? n.texto || '' : '')) { toast('La nota no ha cambiado.'); return; }
+    const ts = new Date().toISOString(), fecha = fd.get('fecha');
+    persistCells(1, { [nk(k)]: { texto, fecha, usuario, ts, hist: [{ accion: texto ? 'nota' : 'nota-no', fecha, usuario, nota: texto.slice(0, 120), ts }, ...hist].slice(0, 30) } }, texto ? 'Nota guardada' : 'Nota borrada');
+    dlg.close();
+  };
+}
+function histNotas() {
+  const out = [];
+  Object.entries(ov[1] || {}).forEach(([kk, r]) => {
+    if (!kk.startsWith('esp-') || !r || !Array.isArray(r.hist)) return;
+    const k = kk.slice(4).split('|')[0], c = BYK[k];
+    r.hist.forEach(hh => out.push({ ...hh, k: kk, e: (c ? c.e : k) + ' · nota', g: c ? grupoDe(k) : '', a: 0, m: 'nota' }));
+  });
+  return out;
+}
+
 // ---------------- registro ----------------
 function allEntries(includeBase) {
   const out = [];
@@ -1349,13 +1532,15 @@ function allEntries(includeBase) {
     if (includeBase && baseOpen(c.k, a, m)) out.push({ accion: 'base', fecha: FECHA_BASE, usuario: 'Extracto OMI-AP', nota: (CELLS[`${c.k}|${a}`][m] || []).join(' · '), ts: FECHA_BASE + 'T00:00:00.000Z', k: c.k, e: c.e, g: grupoDe(c.k), a, m });
   })));
   histBuz().forEach(x => out.push(x));
+  histNotas().forEach(x => out.push(x));
   out.sort((x, y) => (y.fecha.localeCompare(x.fecha)) || (y.ts || '').localeCompare(x.ts || ''));
   return out;
 }
 const R = { q: '', a: '', m: '', base: false };
 const ACC = { abrir: ['Apertura', 'ap'], cerrar: ['Cierre', 'ci'], 'auto-si': ['Pasa a cita automática', 'au'], 'auto-no': ['Deja de ser automática', 'rs'], reset: ['Restablecido al extracto', 'rs'], base: ['Situación inicial', 'base'],
   'buz-si': ['Buzón montado', 'ap'], 'buz-no': ['Buzón retirado', 'ci'], modo: ['Cambia el modo de citación', 'au'], tipo: ['Cambia libera / bloquea', 'au'],
-  dest: ['Cambia el destino', 'rs'], 'inc-ok': ['Incidencia resuelta', 'ap'], 'inc-re': ['Incidencia reabierta', 'ci'] };
+  dest: ['Cambia el destino', 'rs'], 'inc-ok': ['Incidencia resuelta', 'ap'], 'inc-re': ['Incidencia reabierta', 'ci'],
+  nota: ['Nota del equipo', 'nota'], 'nota-no': ['Nota borrada', 'ci'] };
 function renderReg() {
   if ($('#viewRegistro').hidden) return;
   let es = allEntries(R.base);
@@ -1366,7 +1551,7 @@ function renderReg() {
   if (!es.length) h += '<tr><td colspan="8" class="empty">Sin movimientos que mostrar.</td></tr>';
   es.forEach(x => {
     const [lab, cls] = ACC[x.accion] || [x.accion, 'rs'];
-    h += `<tr><td class="mono" data-l="Fecha">${fmt(x.fecha)}</td><td class="mono" data-l="Área">Área ${x.a}</td><td data-l="Especialidad"><b>${esc(x.e)}</b> <small style="color:var(--muted)">${esc(x.g)}</small></td><td data-l="Modalidad"><span class="pill ${x.m}">${ML[x.m]}</span></td><td data-l="Acción"><span class="pill ${cls}">${lab}</span></td><td data-l="Usuario">${esc(x.usuario)}</td><td data-l="Notas">${esc(x.nota)}</td><td class="mono" data-l="Registrado" style="color:var(--muted)">${x.accion === 'base' ? '' : fmtTs(x.ts)}</td></tr>`;
+    h += `<tr><td class="mono" data-l="Fecha">${fmt(x.fecha)}</td><td class="mono" data-l="Área">${x.a ? 'Área ' + x.a : 'Todas'}</td><td data-l="Especialidad"><b>${esc(x.e)}</b> <small style="color:var(--muted)">${esc(x.g)}</small></td><td data-l="Modalidad"><span class="pill ${x.m}">${ML[x.m]}</span></td><td data-l="Acción"><span class="pill ${cls}">${lab}</span></td><td data-l="Usuario">${esc(x.usuario)}</td><td data-l="Notas">${esc(x.nota)}</td><td class="mono" data-l="Registrado" style="color:var(--muted)">${x.accion === 'base' ? '' : fmtTs(x.ts)}</td></tr>`;
   });
   $('#rg').innerHTML = h + '</tbody>';
 }
@@ -1523,10 +1708,10 @@ async function offer(name, text, mime) {
 $('#expMatriz').onclick = () => {
   const ms = visMods(), as = F.a ? [Number(F.a)] : AREAS;
   const rows = [['Grupo', 'Especialidad', ...as.flatMap(a => [...ms.map(m => `A${a} ${ML[m]}`), ...ms.map(m => `A${a} fecha ${ML[m]}`),
-    `A${a} mostrador pendiente`, ...(USOINFO ? [`A${a} uso CM 2026`] : [])])]];
+    `A${a} mostrador pendiente`, ...(USOINFO ? [`A${a} uso CM 2026`] : [])]), 'Resumen', 'Nota del equipo']];
   CAT.filter(rowVisible).forEach(c => rows.push([grupoDe(c.k), c.e,
     ...as.flatMap(a => [...ms.map(m => isOpen(c.k, a, m) ? 'A' : 'C'), ...ms.map(m => fmt(lastDate(c.k, a, m))),
-      pendiente(c.k, a), ...(USOINFO ? [isOpen(c.k, a, 'most') ? usoCM(c.k, a) : ''] : [])])]));
+      pendiente(c.k, a), ...(USOINFO ? [isOpen(c.k, a, 'most') ? usoCM(c.k, a) : ''] : [])]), textoResumen(c.k), (notaDe(c.k) || {}).texto || '']));
   offer(`mapa-itc-inp-${today()}.csv`, csv(rows), 'text/csv;charset=utf-8');
 };
 $('#expBuz').onclick = () => {
@@ -1546,7 +1731,7 @@ $('#expBuz').onclick = () => {
 };
 $('#expReg').onclick = () => {
   const rows = [['Fecha', 'Área', 'Grupo', 'Especialidad', 'Modalidad', 'Acción', 'Usuario', 'Observaciones', 'Registrado']];
-  allEntries(R.base).forEach(x => rows.push([fmt(x.fecha), `ÁREA ${x.a}`, x.g, x.e, ML[x.m], (ACC[x.accion] || [x.accion])[0], x.usuario, x.nota, x.accion === 'base' ? '' : fmtTs(x.ts)]));
+  allEntries(R.base).forEach(x => rows.push([fmt(x.fecha), x.a ? `ÁREA ${x.a}` : 'TODAS', x.g, x.e, ML[x.m], (ACC[x.accion] || [x.accion])[0], x.usuario, x.nota, x.accion === 'base' ? '' : fmtTs(x.ts)]));
   offer(`registro-itc-inp-${today()}.csv`, csv(rows), 'text/csv;charset=utf-8');
 };
 $('#expEstado').onclick = () => offer('estado.json', JSON.stringify(snapshot(), null, 1), 'application/json');
@@ -1668,6 +1853,7 @@ $('#bi').addEventListener('click', e => {
 });
 $('#mx').addEventListener('click', e => {
   const sq = e.target.closest('button.sq'); if (sq) { openDlg(sq.dataset.k, Number(sq.dataset.a), sq.dataset.m); return; }
+  const rs = e.target.closest('button[data-res]'); if (rs) { openEspDlg(rs.dataset.res); return; }
   const band = e.target.closest('tr.band'); if (band) { const g = band.dataset.g; collapsed.has(g) ? collapsed.delete(g) : collapsed.add(g); renderMatrix(); }
 });
 try {
