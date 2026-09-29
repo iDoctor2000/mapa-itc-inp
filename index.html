@@ -103,8 +103,8 @@ body.locked #gate{display:flex}
 .plegar span{display:block;font-size:11px;line-height:1;transition:transform .18s}
 .plegar:hover{color:var(--ink);border-color:var(--line-strong)}
 .plegar[aria-expanded="false"] span{transform:rotate(-90deg)}
-body.plegado #ambito,body.plegado #kpis,body.plegado .note,body.plegado .tools,
-body.plegado .legend,body.plegado .chips,body.plegado .help{display:none}
+body.plegado #ambito,body.plegado #kpis,body.plegado .note,body.plegado section .tools,
+body.plegado section .legend,body.plegado section .chips,body.plegado section .help{display:none}
 body.plegado .wrap,body.plegado .reg{max-height:calc(100vh - 62px);margin-top:12px}
 
 /* ---------- kpis ---------- */
@@ -167,6 +167,12 @@ table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:1
 .mx td.cell.fuera{background:repeating-linear-gradient(45deg,transparent 0 5px,var(--surface-2) 5px 10px)}
 .mx tr.row:hover td,.mx tr.row:hover th.esp{background:var(--surface-2)}
 .mx tr.row:hover td.cell.hl{background:var(--accent-soft)}
+.mx td.res .res-in{display:flex;gap:8px;align-items:center}
+.mx td.res .res-in > button[data-res]{flex:1;min-width:0}
+.flechas{flex:none;width:28px;height:28px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;padding:0}
+.flechas:hover{border-color:var(--accent);background:var(--accent-soft)}
+.legend .ln{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:3px}
+.legend .ln.pun{background:repeating-linear-gradient(90deg,var(--muted) 0 4px,transparent 4px 7px)}
 .mx td.res{max-width:360px;min-width:250px;padding:5px 10px;font-size:11.5px;line-height:1.45;color:var(--muted);text-align:left;vertical-align:middle}
 .mx td.res button{display:block;width:100%;text-align:left;border:0;background:none;padding:0;color:inherit;font:inherit}
 .mx td.res button:hover{color:var(--ink)}
@@ -231,6 +237,7 @@ table.fic .sq{vertical-align:-1px;cursor:default} table.fic .sq:hover{transform:
 .dest small{color:var(--muted)}
 .dest details{grid-column:2} .dest summary{cursor:pointer;color:var(--accent);font-size:12px}
 .dest details ul{margin:4px 0 0;columns:2;column-gap:18px;font-size:12px}
+dialog .legend{gap:4px 14px;padding:0;margin:0}
 .lnk{border:0;background:none;padding:0;color:var(--accent);font-weight:500;text-decoration:underline;text-underline-offset:2px}
 .rg tr.res td{opacity:.55}
 form.edit select{padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);width:100%;min-width:0;max-width:100%;text-overflow:ellipsis}
@@ -938,7 +945,9 @@ function renderMatrix() {
         h += '</span></td>';
       });
       h += `<td class="tot">${ms.map(m => `<span class="${cls(m)}">${AREAS.filter(a => enFiltro(c.k, a) && isOpen(c.k, a, m)).length}</span>`).join(' · ')} <span style="opacity:.6">de 9</span></td>`
-        + `<td class="res"><button type="button" data-res="${c.k}" title="${esc(textoResumen(c.k))}">${resumenCorto(c.k)}</button></td></tr>`;
+        + `<td class="res"><div class="res-in"><button type="button" data-res="${c.k}" title="${esc(textoResumen(c.k))}">${resumenCorto(c.k)}</button>`
+        + (filasDe(c.k).length ? `<button type="button" class="flechas" data-flu="${c.k}" aria-label="Circuito del COMPAS de ${esc(c.e)}" title="Ver el circuito del COMPAS: desde qué áreas y a qué hospital van las INP de ${esc(c.e)}"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 5h9M8.6 2.4 11.6 5 8.6 7.6M14 11H5M7.4 8.4 4.4 11 7.4 13.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : '')
+        + `</div></td></tr>`;
     });
   });
   $('#mx').innerHTML = h + '</tbody>';
@@ -1357,6 +1366,85 @@ function openBuzDlg(id, a) {
   };
 }
 
+// ---------------- circuito del COMPAS dibujado ----------------
+// Un diagrama por prueba INP: a la izquierda la primaria de cada área, a la derecha el hospital
+// que recibe, y una flecha por cada ruta del COMPAS (o por el hospital propio cuando no hay ruta).
+const COL = { propio: 'var(--itc)', deriv: 'var(--accent)', desv: 'var(--halo)', sindest: 'var(--closed)', prep: 'var(--muted)' };
+function arcosDe(f) {
+  const E = a => (INP.emi[a] || []).length;
+  const arcos = [];
+  AREAS.forEach(a => {
+    const ap = apOn(f, a), st = estadoB(f, a);
+    const prep = !ap ? rutaPreparada(f, a) : [];
+    if (!ap && !prep.length) return;
+    const gs = ap ? destinos(f, a).g : (INP.rut[`${f.id}|${a}`] || []).reduce((m, r) => {
+      const g = m.find(x => x.h === r[2]); if (g) { g.n++; } else m.push({ h: r[2], n: 1, todos: r[1] === '*' }); return m;
+    }, []);
+    gs.forEach(g => {
+      const tipo = !ap ? 'prep' : (!g.ok ? 'sindest' : g.h === a ? 'propio' : (buzOn(f, a) ? 'desv' : 'deriv'));
+      arcos.push({ a, h: g.h, tipo, todos: g.todos, n: g.n, tot: E(a) });
+    });
+  });
+  return arcos;
+}
+function svgFlujo(f) {
+  const W = 560, dy = 36, top = 34, H = top + 9 * dy + 14, xA = 10, wA = 132, xH = W - 156, wH = 146;
+  const yy = a => top + (a - 1) * dy;
+  const arcos = arcosDe(f);
+  const marca = t => `<marker id="fl-${t}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="${COL[t]}"/></marker>`;
+  const caja = (x, y, w, txt, sub, cls, marcas) => `
+    <rect x="${x}" y="${y - 13}" width="${w}" height="26" rx="6" fill="var(--surface)" stroke="${cls}" stroke-width="1.5"/>
+    <text x="${x + 9}" y="${y + 4}" font-size="12" font-weight="600" fill="var(--ink)">${esc(txt)}</text>
+    <text x="${x + w - 8}" y="${y + 4}" font-size="10" text-anchor="end" fill="var(--muted)">${esc(sub)}</text>${marcas || ''}`;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Circuito del COMPAS de ${esc(f.n)}"><defs>${Object.keys(COL).map(marca).join('')}</defs>
+    <text x="${xA}" y="16" font-size="10" fill="var(--muted)" letter-spacing=".06em">PRIMARIA · ÁREA</text>
+    <text x="${xH + wH}" y="16" font-size="10" text-anchor="end" fill="var(--muted)" letter-spacing=".06em">HOSPITAL QUE RECIBE</text>`;
+  // flechas primero, para que las cajas queden encima
+  arcos.forEach(x => {
+    const y1 = yy(x.a), y2 = yy(x.h), x1 = xA + wA + 4, x2 = xH - 6;
+    const gr = Math.min(3.4, 1.2 + 2.2 * (x.tot ? x.n / x.tot : 1));
+    const cx = 62 + Math.min(70, Math.abs(y2 - y1) / 2);
+    s += `<path d="M${x1},${y1} C${x1 + cx},${y1} ${x2 - cx},${y2} ${x2},${y2}" fill="none" stroke="${COL[x.tipo]}"
+      stroke-width="${x.tipo === 'prep' ? 1.2 : gr}"${x.tipo === 'prep' ? ' stroke-dasharray="4 3"' : ''} marker-end="url(#fl-${x.tipo})" opacity="${x.tipo === 'prep' ? .8 : .92}"><title>${esc(`Área ${x.a} → ${SIG(x.h)} · ${x.todos ? 'todos los centros del área' : x.n + ' de ' + x.tot + ' emisores'}${x.tipo === 'prep' ? ' · ruta preparada, sin oferta en primaria' : ''}`)}</title></path>`;
+    if (!x.todos && x.n) s += `<text x="${(x1 + x2) / 2}" y="${(y1 + y2) / 2 - 4}" font-size="9" text-anchor="middle" fill="${COL[x.tipo]}">${x.n} centro${x.n === 1 ? '' : 's'}</text>`;
+  });
+  AREAS.forEach(a => {
+    const ap = apOn(f, a), hb = buzOn(f, a), mo = hb ? modoDe(f, a) : '';
+    s += caja(xA, yy(a), wA, `Área ${a}`, ap ? 'envía INP' : 'no la ofrece', ap ? 'var(--inp)' : 'var(--line-strong)');
+    const aut = mo === 'Automática', man = mo === 'Manual';
+    const extra = (aut || man) ? `<circle cx="${xH + wH - 10}" cy="${yy(a) - 7}" r="4" fill="${aut ? 'var(--halo)' : 'none'}" stroke="var(--halo)" stroke-width="1.5"/>`
+      + (tipoDe(f, a) === 'BLOQUEA' ? `<rect x="${xH + wH - 8}" y="${yy(a) + 3}" width="5" height="5" fill="var(--ink)"/>` : '') : '';
+    s += caja(xH, yy(a), wH, SIG(a), hb ? (aut ? 'automática' : man ? 'manual' : 'buzón') : 'sin buzón', hb ? 'var(--buz)' : 'var(--line-strong)', extra);
+  });
+  return s + '</svg>';
+}
+function openFlujoDlg(k, fid) {
+  const fs = filasDe(k);
+  if (!fs.length) { toast('Esta especialidad no tiene ninguna prueba INP en el COMPAS.'); return; }
+  const f = fs.find(x => x.id === fid) || fs.slice().sort((x, y) => AREAS.filter(a => apOn(y, a)).length - AREAS.filter(a => apOn(x, a)).length)[0];
+  const arcos = arcosDe(f);
+  const conta = t => arcos.filter(x => x.tipo === t).length;
+  $('#dlgIn').innerHTML = `
+    <h2>Circuito del COMPAS</h2>
+    <div class="meta"><span>${esc(BYK[k].e)}</span><span class="pill buz">${esc(f.c.join(' · '))}</span></div>
+    ${fs.length > 1 ? `<div class="chips" style="display:flex;padding:0">${fs.map(x => `<button data-flu="${x.id}" aria-pressed="${x.id === f.id}">${esc(x.n)}</button>`).join('')}</div>` : ''}
+    <div class="box" style="padding:6px 8px">${svgFlujo(f)}</div>
+    <div class="legend" style="padding:0;font-size:11px">
+      <span><i class="ln" style="background:var(--itc)"></i> va al hospital de su área (${conta('propio')})</span>
+      <span><i class="ln" style="background:var(--accent)"></i> derivada: su hospital no tiene buzón (${conta('deriv')})</span>
+      <span><i class="ln" style="background:var(--halo)"></i> desviada: hay buzón propio (${conta('desv')})</span>
+      <span><i class="ln" style="background:var(--closed)"></i> no llega a ningún buzón (${conta('sindest')})</span>
+      <span><i class="ln pun"></i> ruta preparada, sin oferta en primaria (${conta('prep')})</span>
+      <span>Cada flecha es una ruta; el grosor va con el número de centros que la usan.</span>
+    </div>
+    <div class="actions"><span class="spacer"></span><button type="button" class="btn" id="fluCerrar">Cerrar</button>
+      <button type="button" class="btn primary" data-ir-buz="${f.id}">Ver en Buzones INP</button></div>`;
+  const dlg = $('#dlg'); dlg.showModal();
+  $('#fluCerrar').onclick = () => dlg.close();
+  $('#dlgIn').querySelectorAll('[data-flu]').forEach(b => b.onclick = () => openFlujoDlg(k, b.dataset.flu));
+  $('#dlgIn').querySelectorAll('[data-ir-buz]').forEach(b => b.onclick = () => { dlg.close(); irABuzones(b.dataset.irBuz, ''); });
+}
+
 // ---------------- ficha de la especialidad: resumen automático y nota a mano ----------------
 // La nota la escribe el equipo y se guarda en ov[1] con la clave «esp-<slug>|nota», de modo que
 // se publica, se fusiona y se exporta igual que el resto del estado compartido.
@@ -1490,12 +1578,14 @@ function openEspDlg(k) {
       <div class="actions">
         ${n && n.texto ? '<button type="button" class="btn ghost" id="notaBorrar">Borrar la nota</button>' : ''}
         <span class="spacer"></span>
+        ${filasDe(k).length ? '<button type="button" class="btn" id="verFlujo">Ver el circuito del COMPAS</button>' : ''}
         <button type="button" class="btn" id="notaCancel">Cerrar</button>
         <button type="submit" class="btn primary">Guardar la nota</button>
       </div>
     </form>`;
   const dlg = $('#dlg'); dlg.showModal();
   $('#notaCancel').onclick = () => dlg.close();
+  const vf = $('#verFlujo'); if (vf) vf.onclick = () => { dlg.close(); openFlujoDlg(k); };
   const quien = () => { const u = String(new FormData($('#notaForm')).get('usuario') || '').trim(); if (u) { $('#userName').value = u; try { localStorage.setItem('sms-itc-user', u); } catch (e) {} } return u; };
   const bb = $('#notaBorrar'); if (bb) bb.onclick = () => {
     const usuario = quien(); if (!usuario) { toast('Indica quién lo registra'); return; }
@@ -1853,6 +1943,7 @@ $('#bi').addEventListener('click', e => {
 });
 $('#mx').addEventListener('click', e => {
   const sq = e.target.closest('button.sq'); if (sq) { openDlg(sq.dataset.k, Number(sq.dataset.a), sq.dataset.m); return; }
+  const fl = e.target.closest('button[data-flu]'); if (fl) { openFlujoDlg(fl.dataset.flu); return; }
   const rs = e.target.closest('button[data-res]'); if (rs) { openEspDlg(rs.dataset.res); return; }
   const band = e.target.closest('tr.band'); if (band) { const g = band.dataset.g; collapsed.has(g) ? collapsed.delete(g) : collapsed.add(g); renderMatrix(); }
 });
