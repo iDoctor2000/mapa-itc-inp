@@ -1390,6 +1390,16 @@ function svgFlujo(f) {
   const W = 560, dy = 36, top = 34, H = top + 9 * dy + 14, xA = 10, wA = 132, xH = W - 156, wH = 146;
   const yy = a => top + (a - 1) * dy;
   const arcos = arcosDe(f);
+  // Cuando varias rutas acaban en el mismo hospital, cada una entra por su propio punto,
+  // con su trazo y con el número de su área: así se pueden seguir una a una.
+  const TRAZO = ['', '14 5', '7 4', '20 6', '3 4'];   // trazos suaves: el carril y la etiqueta ya las distinguen
+  const porDestino = {};
+  arcos.forEach(x => { (porDestino[x.h] = porDestino[x.h] || []).push(x); });
+  Object.values(porDestino).forEach(g => { g.sort((p, q) => p.a - q.a); g.forEach((x, i) => { x.i = i; x.de = g.length; }); });
+  // cada ruta que cambia de fila baja por su propio carril vertical, como en un circuito
+  const cambian = arcos.filter(x => x.a !== x.h);
+  cambian.sort((p, q) => (p.h - q.h) || (p.a - q.a)).forEach((x, i) => { x.carril = i; });
+  const nCarr = Math.max(1, cambian.length);
   const marca = t => `<marker id="fl-${t}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="${COL[t]}"/></marker>`;
   const caja = (x, y, w, txt, sub, cls, marcas) => `
     <rect x="${x}" y="${y - 13}" width="${w}" height="26" rx="6" fill="var(--surface)" stroke="${cls}" stroke-width="1.5"/>
@@ -1400,12 +1410,28 @@ function svgFlujo(f) {
     <text x="${xH + wH}" y="16" font-size="10" text-anchor="end" fill="var(--muted)" letter-spacing=".06em">HOSPITAL QUE RECIBE</text>`;
   // flechas primero, para que las cajas queden encima
   arcos.forEach(x => {
-    const y1 = yy(x.a), y2 = yy(x.h), x1 = xA + wA + 4, x2 = xH - 6;
-    const gr = Math.min(3.4, 1.2 + 2.2 * (x.tot ? x.n / x.tot : 1));
-    const cx = 62 + Math.min(70, Math.abs(y2 - y1) / 2);
-    s += `<path d="M${x1},${y1} C${x1 + cx},${y1} ${x2 - cx},${y2} ${x2},${y2}" fill="none" stroke="${COL[x.tipo]}"
-      stroke-width="${x.tipo === 'prep' ? 1.2 : gr}"${x.tipo === 'prep' ? ' stroke-dasharray="4 3"' : ''} marker-end="url(#fl-${x.tipo})" opacity="${x.tipo === 'prep' ? .8 : .92}"><title>${esc(`Área ${x.a} → ${SIG(x.h)} · ${x.todos ? 'todos los centros del área' : x.n + ' de ' + x.tot + ' emisores'}${x.tipo === 'prep' ? ' · ruta preparada, sin oferta en primaria' : ''}`)}</title></path>`;
-    if (!x.todos && x.n) s += `<text x="${(x1 + x2) / 2}" y="${(y1 + y2) / 2 - 4}" font-size="9" text-anchor="middle" fill="${COL[x.tipo]}">${x.n} centro${x.n === 1 ? '' : 's'}</text>`;
+    const x1 = xA + wA + 4, x2 = xH - 7, y1 = yy(x.a);
+    const reparto = Math.min(18, 5 * (x.de - 1));                       // la llegada se reparte por la altura de la caja
+    const y2 = yy(x.h) + (x.de > 1 ? -reparto / 2 + reparto * x.i / (x.de - 1) : 0);
+    const gr = Math.min(3.2, 1.2 + 2 * (x.tot ? x.n / x.tot : 1));
+    const dash = x.tipo === 'prep' ? '4 3' : (x.de > 1 ? TRAZO[x.i % TRAZO.length] : '');
+    const carr = x1 + 30 + (x2 - x1 - 58) * (x.carril === undefined ? 0 : x.carril) / Math.max(1, nCarr - 1);
+    let d, lx = (x1 + x2) / 2, ly = y1;
+    if (x.a === x.h) { d = `M${x1},${y1} H${x2}`; }
+    else {
+      const dir = y2 > y1 ? 1 : -1, r = Math.min(7, Math.abs(y2 - y1) / 2);
+      d = `M${x1},${y1} H${(carr - r).toFixed(1)} Q${carr.toFixed(1)},${y1} ${carr.toFixed(1)},${(y1 + dir * r).toFixed(1)}`
+        + ` V${(y2 - dir * r).toFixed(1)} Q${carr.toFixed(1)},${y2.toFixed(1)} ${(carr + r).toFixed(1)},${y2.toFixed(1)} H${x2}`;
+      lx = carr; ly = (y1 + y2) / 2;
+    }
+    s += `<path d="${d}" fill="none" stroke="${COL[x.tipo]}" stroke-width="${x.tipo === 'prep' ? 1.2 : gr}"${dash ? ` stroke-dasharray="${dash}"` : ''}
+      stroke-linecap="round" marker-end="url(#fl-${x.tipo})" opacity="${x.tipo === 'prep' ? .85 : .95}"><title>${esc(`Área ${x.a} → ${SIG(x.h)} · ${x.todos ? 'todos los centros del área' : x.n + ' de ' + x.tot + ' emisores'}${x.tipo === 'prep' ? ' · ruta preparada, sin oferta en primaria' : ''}`)}</title></path>`;
+    const rot = [x.a === x.h ? '' : `A${x.a}`, !x.todos && x.n ? `${x.n} centro${x.n === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ');
+    if (rot) {
+      const izq = x.a === x.h ? null : lx > (x1 + x2) / 2;        // en la mitad derecha la etiqueta se pone a la izquierda del carril
+      const ax = x.a === x.h ? lx : lx + (izq ? -5 : 5), an = x.a === x.h ? 'middle' : (izq ? 'end' : 'start');
+      s += `<text x="${ax.toFixed(1)}" y="${(ly + (x.a === x.h ? -4 : 3)).toFixed(1)}" font-size="8.5" font-weight="600" text-anchor="${an}" fill="${COL[x.tipo]}" stroke="var(--surface)" stroke-width="2.6" paint-order="stroke" stroke-linejoin="round">${esc(rot)}</text>`;
+    }
   });
   AREAS.forEach(a => {
     const ap = apOn(f, a), hb = buzOn(f, a), mo = hb ? modoDe(f, a) : '';
@@ -1434,7 +1460,7 @@ function openFlujoDlg(k, fid) {
       <span><i class="ln" style="background:var(--halo)"></i> desviada: hay buzón propio (${conta('desv')})</span>
       <span><i class="ln" style="background:var(--closed)"></i> no llega a ningún buzón (${conta('sindest')})</span>
       <span><i class="ln pun"></i> ruta preparada, sin oferta en primaria (${conta('prep')})</span>
-      <span>Cada flecha es una ruta; el grosor va con el número de centros que la usan.</span>
+      <span>Cada flecha es una ruta; el grosor va con el número de centros que la usan. Las que acaban en el mismo hospital entran por puntos distintos y llevan su trazo y el número de su área.</span>
     </div>
     <div class="actions"><span class="spacer"></span><button type="button" class="btn" id="fluCerrar">Cerrar</button>
       <button type="button" class="btn primary" data-ir-buz="${f.id}">Ver en Buzones INP</button></div>`;
