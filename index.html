@@ -1179,23 +1179,23 @@ function renderBuz() {
   if (inc) { renderInc(); return; }
   const as = F.a ? [Number(F.a)] : AREAS, rows = filasVisibles();
   const cabAH = '<br><span style="font-weight:500;letter-spacing:0;text-transform:none"><span class="i">AP</span> · <span style="color:var(--buz)">H</span></span>';
-  let h = '<thead><tr><th class="esp">Prueba INP</th>' + as.map(a => `<th title="${esc(HOS[a].n)} (${esc(HOS[a].l)}) · con cita automática ${HOS[a].pol === 'LIBERA' ? 'libera' : 'bloquea'} el hueco">Área ${a} · ${SIG(a)}${cabAH}</th>`).join('') + `<th>Áreas${cabAH}</th></tr>`;
+  let h = '<thead><tr><th class="esp">Prueba INP</th>' + as.map(a => `<th title="${esc(HOS[a].n)} (${esc(HOS[a].l)}) · con cita automática ${HOS[a].pol === 'LIBERA' ? 'libera' : 'bloquea'} el hueco">Área ${a} · ${SIG(a)}${cabAH}</th>`).join('') + `<th>Áreas${cabAH}</th><th class="res">Resumen en Selene</th></tr>`;
   h += '<tr class="cnt"><th class="esp">en las filas visibles</th>' + as.map(a =>
-    `<th><b class="i">${rows.filter(f => enFiltroB(f, a) && apOn(f, a)).length}</b> · <b style="color:var(--buz)">${rows.filter(f => enFiltroB(f, a) && buzOn(f, a)).length}</b></th>`).join('') + `<th>${rows.length} pruebas</th></tr></thead><tbody>`;
-  if (!rows.length) h += `<tr><td colspan="${as.length + 2}" class="empty">Ninguna prueba coincide con el filtro.</td></tr>`;
+    `<th><b class="i">${rows.filter(f => enFiltroB(f, a) && apOn(f, a)).length}</b> · <b style="color:var(--buz)">${rows.filter(f => enFiltroB(f, a) && buzOn(f, a)).length}</b></th>`).join('') + `<th>${rows.length} pruebas</th><th class="res"></th></tr></thead><tbody>`;
+  if (!rows.length) h += `<tr><td colspan="${as.length + 3}" class="empty">Ninguna prueba coincide con el filtro.</td></tr>`;
   const gs = grupos(); FILAS.forEach(f => { if (!gs.includes(grupoF(f))) gs.push(grupoF(f)); });
   gs.forEach(g => {
     const rs = rows.filter(f => grupoF(f) === g);
     if (!rs.length) return;
     const cl = collapsed.has(g);
-    h += `<tr class="band${cl ? ' closed' : ''}" data-g="${esc(g)}"><th colspan="${as.length + 2}">${esc(g)}<small>${rs.length} ${rs.length === 1 ? 'prueba' : 'pruebas'}</small></th></tr>`;
+    h += `<tr class="band${cl ? ' closed' : ''}" data-g="${esc(g)}"><th colspan="${as.length + 3}">${esc(g)}<small>${rs.length} ${rs.length === 1 ? 'prueba' : 'pruebas'}</small></th></tr>`;
     if (cl) return;
     const porEsp = new Map();
     rs.sort((x, y) => espDe(x).localeCompare(espDe(y), 'es') || x.n.localeCompare(y.n, 'es'))
       .forEach(f => { const e = espDe(f); if (!porEsp.has(e)) porEsp.set(e, []); porEsp.get(e).push(f); });
     porEsp.forEach((fs, e) => {
       const varias = fs.length > 1;
-      if (varias) h += `<tr class="sub"><th colspan="${as.length + 2}">${esc(e)}<small>${fs.length} pruebas</small></th></tr>`;
+      if (varias) h += `<tr class="sub"><th colspan="${as.length + 3}">${esc(e)}<small>${fs.length} pruebas</small></th></tr>`;
       fs.forEach(f => { h += filaBuz(f, as, varias); });
     });
   });
@@ -1225,8 +1225,108 @@ function filaBuz(f, as, hijo) {
       + `<button class="sq buz${hb ? ' open' : ''}${mo === 'Automática' ? ' auto' : ''}${mo === 'Manual' ? ' man' : ''}${chH ? ' chg' : ''}" data-f="${f.id}" data-a="${a}" title="${esc(tH)}" aria-label="${esc(tH)}">${hb && ES_CITA(mo) && ti === 'BLOQUEA' ? '<i class="lk"></i>' : ''}</button>`
       + tag + '</span></td>';
   });
-  h += `<td class="tot"><span class="i">${AREAS.filter(a => apOn(f, a)).length}</span> · <span style="color:var(--buz)">${AREAS.filter(a => buzOn(f, a)).length}</span> <span style="opacity:.6">de 9</span></td></tr>`;
+  h += `<td class="tot"><span class="i">${AREAS.filter(a => apOn(f, a)).length}</span> · <span style="color:var(--buz)">${AREAS.filter(a => buzOn(f, a)).length}</span> <span style="opacity:.6">de 9</span></td>`
+    + `<td class="res"><div class="res-in"><button type="button" data-res="${f.id}" title="${esc(textoFila(f))}">${resumenCortoFila(f)}</button>`
+    + (f.k ? `<button type="button" class="flechas" data-flu="${f.k}" aria-label="Circuito del COMPAS de ${esc(f.n)}" title="Ver el circuito del COMPAS de ${esc(f.n)}"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 5h9M8.6 2.4 11.6 5 8.6 7.6M14 11H5M7.4 8.4 4.4 11 7.4 13.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : '')
+    + `</div></td></tr>`;
   return h;
+}
+
+// ---------------- resumen de cada prueba INP en Selene ----------------
+function datosFila(f) {
+  const hb = AREAS.filter(a => buzOn(f, a));
+  const est = {};
+  AREAS.forEach(a => { const s = estadoB(f, a); (est[s] = est[s] || []).push(a); });
+  const pend = i => i.f === f.id && !(incRec(i) || {}).resuelta;
+  return {
+    ap: AREAS.filter(a => apOn(f, a)), hb,
+    au: hb.filter(a => modoDe(f, a) === 'Automática'), man: hb.filter(a => modoDe(f, a) === 'Manual'),
+    bloq: hb.filter(a => modoDe(f, a) === 'Automática' && tipoDe(f, a) === 'BLOQUEA'),
+    sinCfg: hb.filter(a => ['Sin configurar', 'Sin modo'].includes(modoDe(f, a))),
+    est, prep: AREAS.filter(a => rutaPreparada(f, a).length),
+    excep: AREAS.filter(a => (INP.rut[`${f.id}|${a}`] || []).some(x => x[1] !== '*')),
+    camb: AREAS.filter(a => cambiadoBuz(f, a) || (hrec(f.id, a, 'dest') || {}).dest),
+    recibe: hb.filter(a => !apOn(f, a) && recibeDe(f, a).length),
+    inc: INP.inc.filter(i => pend(i) && i.sev !== 'info'), avisos: INP.inc.filter(i => pend(i) && i.sev === 'info')
+  };
+}
+const aDonde = (f, a) => listaSig(destinos(f, a).g.filter(g => g.h !== a).map(g => g.h));
+function resumenFila(f) {
+  const D = datosFila(f), L = [], fal = AREAS.filter(a => !D.hb.includes(a));
+  L.push(['Primaria', D.ap.length ? `la envían ${listaAreas(D.ap)}` : 'hoy no la ofrece ninguna área']);
+  L.push(['Estructura en Selene', D.hb.length === 9 ? 'buzón montado en los 9 hospitales'
+    : !D.hb.length ? 'sin buzón en ningún hospital'
+    : D.hb.length >= 5 ? `buzón montado en ${D.hb.length} hospitales, todos menos ${listaSig(fal)}`
+    : `buzón montado solo en ${listaSig(D.hb)}`]);
+  if (D.hb.length) {
+    const lib = D.au.filter(a => !D.bloq.includes(a));
+    L.push(['Citación', [
+      D.au.length ? `automática en ${listaSig(D.au)}, que ${!lib.length ? (D.au.length > 1 ? 'bloquean' : 'bloquea') + ' el hueco' : !D.bloq.length ? (D.au.length > 1 ? 'lo liberan' : 'lo libera') : `lo ${D.au.length > 1 ? 'bloquean' : 'bloquea'} salvo ${listaSig(lib)}, que lo libera`}` : '',
+      D.man.length ? `manual en ${listaSig(D.man)}` : '',
+      D.sinCfg.length ? `sin modo definido en ${listaSig(D.sinCfg)}` : '',
+      !D.au.length && !D.man.length ? 'ninguno cita en automático: se responde por el buzón' : ''
+    ].filter(Boolean).join('; ')]);
+  }
+  const dest = [];
+  if ((D.est.propio || []).length) dest.push(`${D.est.propio.length} ${D.est.propio.length === 1 ? 'área llega' : 'áreas llegan'} al hospital de su área`);
+  (D.est.deriv || []).forEach(a => dest.push(`el Área ${a} se deriva a ${aDonde(f, a)}`));
+  (D.est.desv || []).forEach(a => dest.push(`el Área ${a} se desvía a ${aDonde(f, a)} teniendo buzón propio`));
+  (D.est.sindest || []).forEach(a => dest.push(`ojo: el Área ${a} no llega a ningún buzón`));
+  if (dest.length) L.push(['Destino', dest.join('; ')]);
+  if (D.recibe.length) L.push(['Recibe de otras áreas', D.recibe.map(a => `${SIG(a)} recibe de ${listaAreas(recibeDe(f, a))} sin que su primaria la ofrezca`).join('; ')]);
+  if (D.prep.length) L.push(['Rutas preparadas', `hay ruta en el COMPAS desde ${listaAreas(D.prep)}, pero esas primarias no la ofrecen`]);
+  if (D.excep.length) L.push(['Rutas por centro', `en ${listaAreas(D.excep)} el COMPAS distingue por centro de salud, no va todo el área junto`]);
+  if (D.camb.length) L.push(['Corregido a mano', `${D.camb.length} casilla${D.camb.length === 1 ? '' : 's'} (${listaAreas(D.camb)}) difiere${D.camb.length === 1 ? '' : 'n'} del Excel o del COMPAS`]);
+  if (D.inc.length || D.avisos.length) L.push(['Incidencias', [
+    D.inc.length ? `${D.inc.length} pendiente${D.inc.length === 1 ? '' : 's'} (${yLista([...new Set(D.inc.map(i => i.t.toLowerCase()))])})` : '',
+    D.avisos.length ? `${D.avisos.length} aviso${D.avisos.length === 1 ? '' : 's'} informativo${D.avisos.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' y ')]);
+  return L;
+}
+const textoFila = f => resumenFila(f).map(([e, t]) => `${e}: ${t}.`).join(' ');
+function resumenCortoFila(f) {
+  const D = datosFila(f), p = [`<b class="i">AP ${D.ap.length}/9</b>`, `<b class="b">buzón ${D.hb.length}/9</b>`];
+  if (D.au.length) p.push(`<span class="u">${D.au.length} aut.${D.bloq.length ? ` · ${D.bloq.length} bloq.` : ''}</span>`);
+  if (D.man.length) p.push(`<span class="u">${D.man.length} manual${D.man.length === 1 ? '' : 'es'}</span>`);
+  const fuera = (D.est.deriv || []).length + (D.est.desv || []).length;
+  if (fuera) p.push(`<span class="f">${fuera} a otro hosp.</span>`);
+  if ((D.est.sindest || []).length) p.push(`<span class="s">${D.est.sindest.length} sin buzón</span>`);
+  if (D.recibe.length) p.push(`<span>${D.recibe.length} recibe${D.recibe.length === 1 ? '' : 'n'}</span>`);
+  if (D.prep.length) p.push(`<span>${D.prep.length} prep.</span>`);
+  if (D.camb.length) p.push(`<span class="nota">✎ ${D.camb.length}</span>`);
+  if (D.inc.length) p.push(`<span class="n">${D.inc.length} incid.</span>`);
+  return p.join(' · ');
+}
+function openPruebaDlg(fid) {
+  const f = BYF[fid]; if (!f) return;
+  const D = datosFila(f), L = resumenFila(f);
+  const incs = INP.inc.filter(i => i.f === fid);
+  const fila = a => {
+    const ap = apOn(f, a), hb = buzOn(f, a), st = estadoB(f, a), mo = hb ? modoDe(f, a) : '', ti = hb ? tipoDe(f, a) : '';
+    const rec2 = recibeDe(f, a);
+    return `<tr><td class="mono">Área ${a}</td>
+      <td>${ap ? '<i class="sq inp open" style="width:11px;height:11px"></i>' : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${hb ? `<i class="sq buz open${mo === 'Automática' ? ' auto' : ''}${mo === 'Manual' ? ' man' : ''}" style="width:11px;height:11px"></i> ${SIG(a)}` : '<span style="color:var(--muted)">sin buzón</span>'}</td>
+      <td>${hb ? esc(mo.toLowerCase()) + (ES_CITA(mo) ? ` · ${ti === 'LIBERA' ? 'libera' : ti === 'BLOQUEA' ? 'bloquea' : '—'}` : '') : ''}</td>
+      <td><span class="pill est-${st}">${EST[st][0]}</span>${['deriv', 'desv'].includes(st) ? ` <b>${aDonde(f, a)}</b>` : ''}${st === 'nada' && rutaPreparada(f, a).length ? ` <span style="color:var(--muted)">ruta a ${listaSig(rutaPreparada(f, a))}</span>` : ''}</td>
+      <td>${rec2.length ? rec2.map(b => 'A' + b).join(', ') : ''}</td></tr>`;
+  };
+  $('#dlgIn').innerHTML = `
+    <h2>${esc(f.n)}</h2>
+    <div class="meta"><span class="pill buz" title="${esc(f.c.join(' · '))}">${esc(f.c.length > 4 ? `${f.c.slice(0, 3).join(' · ')} y ${f.c.length - 3} códigos más` : f.c.join(' · '))}</span><span>${esc(espDe(f))} · ${esc(grupoF(f))}</span></div>
+    <div class="box"><h3>Resumen en Selene</h3><ul class="res-l">${L.map(([e, t]) => `<li><b>${esc(e)}:</b> ${esc(t)}.</li>`).join('')}</ul></div>
+    <div class="box"><h3>Área por área</h3>
+      <table class="fic"><thead><tr><th>Área</th><th>AP</th><th>Buzón</th><th>Citación</th><th>Situación</th><th>Recibe</th></tr></thead>
+      <tbody>${AREAS.map(fila).join('')}</tbody></table>
+    </div>
+    ${incs.length ? `<div class="box"><h3>Incidencias de configuración</h3><ul>${incs.map(i => `<li><span class="pill sev-${i.sev}">${i.sev}</span> ${i.a ? `<b>Área ${i.a}</b> · ` : ''}${esc(i.x)}${(incRec(i) || {}).resuelta ? ' <span class="pill ap">resuelta</span>' : ''}</li>`).join('')}</ul></div>` : ''}
+    <div class="actions"><span class="spacer"></span>
+      <button type="button" class="btn" id="pfCerrar">Cerrar</button>
+      ${f.k ? `<button type="button" class="btn" data-ir-mapa="${f.k}">Ver en el mapa</button>` : ''}
+      <button type="button" class="btn primary" id="pfFlujo">Ver el circuito del COMPAS</button></div>`;
+  const dlg = $('#dlg'); dlg.showModal();
+  $('#pfCerrar').onclick = () => dlg.close();
+  $('#pfFlujo').onclick = () => { dlg.close(); openFlujoDlg(f.k, f.id); };
+  $('#dlgIn').querySelectorAll('[data-ir-mapa]').forEach(b => b.onclick = () => { dlg.close(); irAMapa(b.dataset.irMapa, Number(F.a) || (D.ap[0] || 1)); });
 }
 
 // ---------------- incidencias ----------------
@@ -1940,12 +2040,12 @@ $('#expBuz').onclick = () => {
     offer(`incidencias-inp-${today()}.csv`, csv(rows), 'text/csv;charset=utf-8'); return;
   }
   const as = F.a ? [Number(F.a)] : AREAS;
-  const rows = [['Grupo', 'Especialidad', 'Prueba', 'Códigos', ...as.flatMap(a => [`A${a} AP ofrece`, `A${a} buzón ${SIG(a)}`, `A${a} situación`, `A${a} destino`, `A${a} modo ${SIG(a)}`, `A${a} libera/bloquea ${SIG(a)}`])]];
+  const rows = [['Grupo', 'Especialidad', 'Prueba', 'Códigos', ...as.flatMap(a => [`A${a} AP ofrece`, `A${a} buzón ${SIG(a)}`, `A${a} situación`, `A${a} destino`, `A${a} modo ${SIG(a)}`, `A${a} libera/bloquea ${SIG(a)}`]), 'Resumen en Selene']];
   const gsExp = grupos();
   filasVisibles().sort((x, y) => ((gsExp.indexOf(grupoF(x)) + 1 || 99) - (gsExp.indexOf(grupoF(y)) + 1 || 99)) || espDe(x).localeCompare(espDe(y), 'es') || x.n.localeCompare(y.n, 'es')).forEach(f => rows.push([grupoF(f), espDe(f), f.n, f.c.join(' '), ...as.flatMap(a => {
     const st = estadoB(f, a), D = apOn(f, a) ? destinos(f, a) : null, hb = buzOn(f, a);
     return [apOn(f, a) ? 'S' : 'N', hb ? 'S' : 'N', EST[st][0], D ? D.g.map(g => SIG(g.h) + (g.todos ? '' : ` (${g.n} emisores)`)).join(' + ') : '', hb ? modoDe(f, a) : '', hb ? tipoDe(f, a) : ''];
-  })]));
+  }), textoFila(f)]));
   offer(`buzones-inp-${today()}.csv`, csv(rows), 'text/csv;charset=utf-8');
 };
 $('#expReg').onclick = () => {
@@ -2064,6 +2164,8 @@ $('#bVista').onchange = e => { FB.vista = e.target.value; renderKpis(); renderBu
 $('#bRes').onchange = e => { FB.res = e.target.checked; renderBuz(); };
 $('#bx').addEventListener('click', e => {
   const sq = e.target.closest('button.sq'); if (sq) { openBuzDlg(sq.dataset.f, Number(sq.dataset.a)); return; }
+  const fl = e.target.closest('button[data-flu]'); if (fl) { openFlujoDlg(fl.dataset.flu); return; }
+  const rs = e.target.closest('button[data-res]'); if (rs) { openPruebaDlg(rs.dataset.res); return; }
   const band = e.target.closest('tr.band'); if (band) { const g = band.dataset.g; collapsed.has(g) ? collapsed.delete(g) : collapsed.add(g); renderBuz(); }
 });
 $('#bi').addEventListener('click', e => {
