@@ -185,6 +185,7 @@ table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:1
 .mx td.res .nota{color:var(--itc);font-weight:600}
 .mx thead th.res{width:350px;text-align:left}
 .mx.sin-res th.res,.mx.sin-res td.res,.mx.sin-res .mbadge{display:none}
+.mas10{font:500 10px/1 "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
 ul.res-l{margin:0;padding-left:16px} ul.res-l li{margin:3px 0}
 table.fic{border-collapse:collapse;width:100%;font-size:12px;margin-top:2px}
 table.fic th{text-align:left;font:600 10px/1.2 "IBM Plex Sans Condensed",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:3px 6px;border-bottom:1px solid var(--line)}
@@ -476,6 +477,7 @@ form.edit .full{grid-column:1/-1}
     <label class="chk"><input type="checkbox" id="tDates"> Fechas</label>
     <label class="chk"><input type="checkbox" id="tMost" checked> Mostrador</label>
     <button class="btn ghost" id="expMatriz">Exportar matriz (CSV)</button>
+    <button class="btn ghost" id="expInforme" title="Tabla con el resultado del filtro actual, para compartir o imprimir en PDF">Exportar informe</button>
     <button class="btn ghost" id="expEstado" title="Guarda todos los cambios y el catálogo en un archivo">Guardar estado (JSON)</button>
     <button class="btn ghost" id="impEstado" title="Carga un archivo de estado guardado con este botón">Cargar estado…</button>
     <input type="file" id="impFile" accept="application/json,.json" hidden>
@@ -955,8 +957,10 @@ function renderMatrix() {
       const chgRow = AREAS.some(a => ms.some(m => changed(c.k, a, m)));
       h += `<tr class="row${chgRow ? ' chg-row' : ''}"><th class="esp" title="${esc(c.e)}">${esc(c.e)}${infoSol(c.k)}</th>`;
       as.forEach(a => {
-        if (!enFiltro(c.k, a) && escasa) { h += '<td class="cell"></td>'; return; }
-        if (!enFiltro(c.k, a)) { h += `<td class="cell fuera" title="${F.modo === 'cm-escasa' ? 'Aquí no hay cita mostrador o tuvo 10 interconsultas o más en 2026' : 'Aquí la INP no es la única vía'}"></td>`; return; }
+        // Con «Escasa o nula»: la CM cerrada se pinta cerrada (con su aspa) y la que se usa
+        // 10 veces o más lleva «≥10»; nada queda en blanco (30/09/2026).
+        if (escasa && isOpen(c.k, a, 'most') && !cmEscasa(c.k, a)) { h += `<td class="cell"><span class="mas10" title="${esc(c.e)} · Área ${a} · CM abierta con ${miles(usoCM(c.k, a))} interconsultas en 2026">≥10</span></td>`; return; }
+        if (!enFiltro(c.k, a) && !escasa) { h += `<td class="cell fuera" title="${F.modo === 'cm-escasa' ? 'Aquí no hay cita mostrador o tuvo 10 interconsultas o más en 2026' : 'Aquí la INP no es la única vía'}"></td>`; return; }
         const mo = pendiente(c.k, a);
         h += `<td class="cell${F.a ? ' hl' : ''}">` + (mo ? `<i class="mbadge" title="${mo} línea(s) en CITA EN MOSTRADOR pendientes de migrar">${mo}</i>` : '') + '<span class="pair">';
         ms.forEach(m => {
@@ -2063,6 +2067,77 @@ async function offer(name, text, mime) {
   }
   try { await navigator.clipboard.writeText(text); toast('Descarga no disponible aquí: contenido copiado al portapapeles.'); } catch (e) { toast('No se pudo exportar en esta vista.'); }
 }
+// INFORME PARA COMPARTIR (30/09/2026): el resultado del filtro actual en una tabla,
+// como página HTML autónoma (se abre en cualquier navegador y se imprime a PDF).
+// Con «Escasa o nula cita mostrador» cada casilla lleva la cifra de uso de la CM, o
+// «cerrada» / «≥10»; con los demás filtros, las modalidades abiertas de la casilla.
+function informeHTML() {
+  const escasa = F.modo === 'cm-escasa';
+  const ms = escasa ? ['most'] : visMods(), as = F.a ? [Number(F.a)] : AREAS;
+  const rows = CAT.filter(rowVisible);
+  const filtro = F.modo ? $('#fModo').selectedOptions[0].textContent : 'Sin filtro de situación';
+  const celda = (k, a) => {
+    if (escasa) {
+      if (!isOpen(k, a, 'most')) return ['cerrada', 'x'];
+      const n = usoCM(k, a);
+      return n < POCOS ? [String(n), n ? 'p' : 'z'] : ['≥10', 'x'];
+    }
+    if (!enFiltro(k, a)) return ['', 'x'];
+    const t = ms.filter(m => isOpen(k, a, m)).map(m => m === 'most' && USOINFO ? `${ML[m]} ${miles(usoCM(k, a))}` : ML[m]);
+    return t.length ? [t.join(' · '), 'p'] : ['—', 'x'];
+  };
+  const cumple = (k, a) => escasa ? cmEscasa(k, a) : enFiltro(k, a) && ms.some(m => isOpen(k, a, m));
+  let cuerpo = '', total = 0, ceros = 0;
+  grupos().forEach(g => {
+    const rs = rows.filter(c => grupoDe(c.k) === g).sort((x, y) => x.e.localeCompare(y.e, 'es'));
+    if (!rs.length) return;
+    cuerpo += `<tr class="g"><th colspan="${as.length + 2}">${esc(g)} <small>${rs.length}</small></th></tr>`;
+    rs.forEach(c => {
+      const n = as.filter(a => cumple(c.k, a)).length;
+      total += n; if (escasa) ceros += as.filter(a => cmEscasa(c.k, a) && !usoCM(c.k, a)).length;
+      cuerpo += `<tr><th>${esc(c.e)}</th>${as.map(a => { const [t, cl] = celda(c.k, a); return `<td class="${cl}">${esc(t)}</td>`; }).join('')}<td class="n">${n}</td></tr>`;
+    });
+  });
+  const pie = as.map(a => `<td class="n">${rows.filter(c => cumple(c.k, a)).length}</td>`).join('');
+  const titulo = escasa ? 'Cita mostrador con uso escaso o nulo' : 'Mapa ITC · INP';
+  const periodo = USOINFO ? `uso de la cita mostrador del ${fmt(USOINFO.desde)} al ${fmt(USOINFO.hasta)}` : '';
+  const resumen = escasa
+    ? `<b>${total}</b> casillas con cita mostrador abierta y menos de 10 interconsultas en 2026, en <b>${rows.length}</b> especialidades: <b>${ceros}</b> sin ningún uso y <b>${total - ceros}</b> con entre 1 y 9.`
+    : `<b>${rows.length}</b> especialidades y <b>${total}</b> casillas en la selección.`;
+  const leyenda = escasa
+    ? 'Cada casilla da las interconsultas por cita mostrador en 2026 (0 a 9). «cerrada»: el área no tiene cita mostrador para esa especialidad. «≥10»: la tiene y se usa 10 veces o más.'
+    : `Cada casilla lista las modalidades abiertas (${ms.map(m => ML[m]).join(', ')})${ms.includes('most') && USOINFO ? '; junto a CM, las interconsultas por cita mostrador en 2026' : ''}.`;
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(titulo)} · ${fmt(today())}</title>
+<style>
+@page{size:A4 landscape;margin:12mm}
+body{margin:0;padding:24px;font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#18241F;background:#fff}
+h1{margin:0 0 4px;font-size:21px} .sub{color:#5C6C66;margin:0 0 14px}
+.res{background:#F6EDDA;border:1px solid #8A6E4B;border-radius:8px;padding:10px 12px;margin:0 0 14px}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{border:1px solid #D5DDD8;padding:4px 6px;text-align:center}
+thead th{background:#EAF0EB;font-weight:600}
+tbody th{text-align:left;font-weight:500;white-space:nowrap}
+tr.g th{background:#F3F6F3;text-transform:uppercase;letter-spacing:.04em;font-size:11px;font-weight:700}
+tr.g small{font-weight:500;color:#5C6C66;text-transform:none;letter-spacing:0}
+td.p{font-weight:700;color:#4A3823;background:#F6EDDA} td.z{font-weight:700;color:#4A3823;background:#fff;box-shadow:inset 0 0 0 2px #8A6E4B}
+td.x{color:#9AA7A1;font-size:11px} td.n{font-weight:600}
+tfoot td,tfoot th{background:#EAF0EB;font-weight:600}
+.ley{color:#5C6C66;font-size:12px;margin:12px 0 0} .firma{margin-top:16px;color:#1F5F8B;font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em}
+thead{display:table-header-group} tr{break-inside:avoid}
+</style></head><body>
+<h1>${esc(titulo)}</h1>
+<p class="sub">Interconsultas de Atención Primaria · Servicio Murciano de Salud · extracto OMI-AP del ${esc($('#fechaBase').textContent)}${periodo ? ' · ' + periodo : ''} · informe del ${fmt(today())}</p>
+<div class="res">${resumen}<br><small>Filtro: ${esc(filtro)}.${escasa ? '' : ' ' + esc($('#ambito').textContent)}</small></div>
+<table><thead><tr><th style="text-align:left">Especialidad</th>${as.map(a => `<th>Área ${a}</th>`).join('')}<th>Áreas</th></tr></thead>
+<tbody>${cuerpo || `<tr><td colspan="${as.length + 2}">Ninguna especialidad coincide con el filtro.</td></tr>`}</tbody>
+<tfoot><tr><th style="text-align:left">Casillas por área</th>${pie}<td class="n">${total}</td></tr></tfoot></table>
+<p class="ley">${esc(leyenda)}</p>
+<div class="firma">Mapa ITC · INP · iDoctor@2026</div>
+</body></html>`;
+}
+$('#expInforme').onclick = () => offer(`informe-${F.modo === 'cm-escasa' ? 'cita-mostrador-escasa' : 'mapa-itc-inp'}-${today()}.html`, informeHTML(), 'text/html;charset=utf-8');
+
 $('#expMatriz').onclick = () => {
   const ms = visMods(), as = F.a ? [Number(F.a)] : AREAS;
   const rows = [['Grupo', 'Especialidad', ...as.flatMap(a => [...ms.map(m => `A${a} ${ML[m]}`), ...ms.map(m => `A${a} fecha ${ML[m]}`),
