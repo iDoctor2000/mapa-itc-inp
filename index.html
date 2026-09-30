@@ -184,6 +184,7 @@ table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:1
 .mx td.res .f{color:var(--accent)} .mx td.res .s{color:var(--closed)} .mx td.res .n{color:var(--warn-ink)}
 .mx td.res .nota{color:var(--itc);font-weight:600}
 .mx thead th.res{width:350px;text-align:left}
+.mx.sin-res th.res,.mx.sin-res td.res,.mx.sin-res .mbadge{display:none}
 ul.res-l{margin:0;padding-left:16px} ul.res-l li{margin:3px 0}
 table.fic{border-collapse:collapse;width:100%;font-size:12px;margin-top:2px}
 table.fic th{text-align:left;font:600 10px/1.2 "IBM Plex Sans Condensed",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:3px 6px;border-bottom:1px solid var(--line)}
@@ -932,11 +933,15 @@ function renderMatrix() {
   const as = F.a ? [Number(F.a)] : AREAS;
   const showDates = document.body.classList.contains('show-dates');
   const rows = CAT.filter(rowVisible);
-  const ms = visMods();
+  // «Escasa o nula cita mostrador» es un filtro de verdad, para capturar y enviar: solo la
+  // columna CM, la cifra dentro de cada cuadrado (también el 0), las casillas que no cumplen
+  // en blanco y sin la columna de resumen. No toca la selección de modalidades guardada.
+  const escasa = F.modo === 'cm-escasa';
+  const ms = escasa ? ['most'] : visMods();
   const cls = m => m === 'most' ? 'm' : m === 'inp' ? 'i' : m === 'itc' ? 't' : 'c';
   const cab = ms.map(m => `<span class="${cls(m)}">${ML[m]}</span>`).join(' · ');
-  $('#mx').className = 'mx mods-' + ms.length;
-  let h = '<thead><tr><th class="esp">Especialidad</th>' + as.map(a => `<th>Área ${a}<br><span style="font-weight:500;letter-spacing:0;text-transform:none">${cab}</span></th>`).join('') + `<th>Áreas abiertas<br><span style="font-weight:500;letter-spacing:0;text-transform:none">${cab}</span></th><th class="res">Resumen y notas</th></tr>`;
+  $('#mx').className = 'mx mods-' + ms.length + (escasa ? ' sin-res' : '');
+  let h = '<thead><tr><th class="esp">Especialidad</th>' + as.map(a => `<th>Área ${a}<br><span style="font-weight:500;letter-spacing:0;text-transform:none">${cab}</span></th>`).join('') + `<th>${escasa ? 'Áreas con CM escasa' : 'Áreas abiertas'}<br><span style="font-weight:500;letter-spacing:0;text-transform:none">${cab}</span></th><th class="res">Resumen y notas</th></tr>`;
   h += '<tr class="cnt"><th class="esp">abiertas en las filas visibles</th>' + as.map(a =>
     `<th>${ms.map(m => `<b class="${cls(m)}">${rows.filter(c => enFiltro(c.k, a) && isOpen(c.k, a, m)).length}</b>`).join(' · ')}</th>`).join('') + `<th>${rows.length} esp.</th><th class="res"></th></tr></thead><tbody>`;
   if (!rows.length) h += `<tr><td colspan="${as.length + 3}" class="empty">Ninguna especialidad coincide con el filtro.</td></tr>`;
@@ -950,6 +955,7 @@ function renderMatrix() {
       const chgRow = AREAS.some(a => ms.some(m => changed(c.k, a, m)));
       h += `<tr class="row${chgRow ? ' chg-row' : ''}"><th class="esp" title="${esc(c.e)}">${esc(c.e)}${infoSol(c.k)}</th>`;
       as.forEach(a => {
+        if (!enFiltro(c.k, a) && escasa) { h += '<td class="cell"></td>'; return; }
         if (!enFiltro(c.k, a)) { h += `<td class="cell fuera" title="${F.modo === 'cm-escasa' ? 'Aquí no hay cita mostrador o tuvo 10 interconsultas o más en 2026' : 'Aquí la INP no es la única vía'}"></td>`; return; }
         const mo = pendiente(c.k, a);
         h += `<td class="cell${F.a ? ' hl' : ''}">` + (mo ? `<i class="mbadge" title="${mo} línea(s) en CITA EN MOSTRADOR pendientes de migrar">${mo}</i>` : '') + '<span class="pair">';
@@ -958,7 +964,7 @@ function renderMatrix() {
           const nu = m === 'most' && o ? usoCM(c.k, a) : 0;
           const est = m === 'most' && o ? tintaCM(nu) : '';   // el degradado solo tiñe la CM abierta
           const tUso = m === 'most' ? (o ? ` · ${miles(nu)} interconsultas en 2026` : ' · sin uso, no existe') : '';
-          const pocos = m === 'most' && o && nu > 0 && nu < POCOS;
+          const pocos = m === 'most' && o && nu < POCOS && (nu > 0 || escasa);
           const hi = (m === 'inp' || m === 'inpc') && o ? hospInfo(c.k, a, m) : null;
           const auto = (m === 'itc' && esAuto(c.k, a)) || (m === 'inp' && hi && hi.auto);
           const tHosp = hi ? ` · hospital: ${hi.sigs.join(', ')}${hi.peor ? ' (' + EST[hi.peor][0].toLowerCase() + ')' : ''}` : '';
