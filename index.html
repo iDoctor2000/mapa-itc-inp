@@ -452,11 +452,11 @@ form.edit .full{grid-column:1/-1}
       <button type="button" data-amb="ho" aria-pressed="false">Hospital</button>
     </div>
     <div class="tabs" role="tablist">
-      <button role="tab" aria-selected="true" data-view="matriz" data-ap>Matriz</button>
-      <button role="tab" aria-selected="false" data-view="buzones" data-ap>Buzones INP</button>
+      <button role="tab" aria-selected="true" data-view="matriz" data-ap>Despliegue</button>
+      <button role="tab" aria-selected="false" data-view="buzones" data-ap>Visión HOS</button>
       <button role="tab" aria-selected="false" data-view="itcr" data-ho>ITC-R</button>
       <button role="tab" aria-selected="false" data-view="registro">Registro <span id="regCount" class="mono"></span></button>
-      <button role="tab" aria-selected="false" data-view="catalogo">Catálogo</button>
+      <button role="tab" aria-selected="false" data-view="catalogo">Clasificación</button>
     </div>
     <div class="spacer"></div>
     <label class="user">Tu nombre <input id="userName" placeholder="p. ej. J. Gómez" autocomplete="off"></label>
@@ -497,9 +497,9 @@ form.edit .full{grid-column:1/-1}
     </div>
     <label class="chk"><input type="checkbox" id="tDates"> Fechas</label>
     <label class="chk"><input type="checkbox" id="tMost" checked> Mostrador</label>
-    <button class="btn ghost" id="expMatriz">Exportar matriz (CSV)</button>
+    <button class="btn ghost" id="expMatriz">Exportar despliegue (CSV)</button>
     <button class="btn ghost" id="expInforme" title="Tabla con el resultado del filtro actual, para compartir o imprimir en PDF">Exportar informe</button>
-    <button class="btn ghost" id="expEstado" title="Guarda todos los cambios y el catálogo en un archivo">Guardar estado (JSON)</button>
+    <button class="btn ghost" id="expEstado" title="Guarda todos los cambios y la clasificación en un archivo">Guardar estado (JSON)</button>
     <button class="btn ghost" id="impEstado" title="Carga un archivo de estado guardado con este botón">Cargar estado…</button>
     <input type="file" id="impFile" accept="application/json,.json" hidden>
   </div>
@@ -622,13 +622,13 @@ form.edit .full{grid-column:1/-1}
 
 <section id="viewCatalogo" hidden>
   <div class="tools">
-    <input type="search" id="cq" placeholder="Buscar especialidad…" aria-label="Buscar especialidad en el catálogo">
+    <input type="search" id="cq" placeholder="Buscar especialidad…" aria-label="Buscar especialidad en la clasificación">
     <select id="cGrupo" aria-label="Filtrar por grupo"><option value="">Todos los grupos</option></select>
     <input type="text" id="newGrupo" placeholder="Nombre de un grupo nuevo" aria-label="Nombre de un grupo nuevo">
     <button class="btn" id="addGrupo">Añadir grupo</button>
     <label class="chk"><input type="checkbox" id="cMod"> Solo modificadas</label>
   </div>
-  <p class="help">Cambia el grupo de servicio de cada especialidad con el desplegable. El cambio se aplica al momento en la matriz, el registro y los filtros. Las filas en amarillo difieren de la clasificación del extracto; "Restablecer" vuelve a la original.</p>
+  <p class="help">Cambia el grupo de servicio de cada especialidad con el desplegable. El cambio se aplica al momento en el despliegue, el registro y los filtros. Las filas en amarillo difieren de la clasificación del extracto; "Restablecer" vuelve a la original.</p>
   <div class="reg"><table class="rg cat" id="cg"></table></div>
 </section>
 
@@ -1171,7 +1171,7 @@ function cajaHospital(k, a, m) {
   if (!hi) return '<div class="box"><h3>Hospital de destino</h3><div style="color:var(--muted)">Ninguna INP de esta casilla figura en el despliegue de buzones.</div></div>';
   return `<div class="box"><h3>Hospital de destino · buzones INP</h3>${hi.fs.map(f => {
     const st = estadoB(f, a), D = destinos(f, a);
-    return `<div class="dest"><span class="h ${st === 'sindest' ? 'ko' : 'ok'}">${D.g.map(g => SIG(g.h)).join(' + ')}</span><span><b>${esc(f.n)}</b> <span class="pill est-${st}">${EST[st][0]}</span><br><small>${D.g.map(g => `${SIG(g.h)}: ${g.ok ? esc(modoDe(f, g.h).toLowerCase()) + (ES_CITA(modoDe(f, g.h)) ? ' · ' + tipoTxt(tipoDe(f, g.h)) : '') : 'sin buzón'}${g.todos ? '' : ` · ${g.n} emisores`}`).join(' · ')}</small><br><button type="button" class="lnk" data-ir-buz="${f.id}">Ver en Buzones INP</button></span></div>`;
+    return `<div class="dest"><span class="h ${st === 'sindest' ? 'ko' : 'ok'}">${D.g.map(g => SIG(g.h)).join(' + ')}</span><span><b>${esc(f.n)}</b> <span class="pill est-${st}">${EST[st][0]}</span><br><small>${D.g.map(g => `${SIG(g.h)}: ${g.ok ? esc(modoDe(f, g.h).toLowerCase()) + (ES_CITA(modoDe(f, g.h)) ? ' · ' + tipoTxt(tipoDe(f, g.h)) : '') : 'sin buzón'}${g.todos ? '' : ` · ${g.n} emisores`}`).join(' · ')}</small><br><button type="button" class="lnk" data-ir-buz="${f.id}">Ver en Visión HOS</button></span></div>`;
   }).join('')}</div>`;
 }
 function irABuzones(id, a) {
@@ -1784,7 +1784,7 @@ function histBuz() {
     if (!kk.startsWith('h-') || !r || !Array.isArray(r.hist)) return;
     const [id, t] = kk.slice(2).split('|');
     let e, g;
-    if (t === 'inc') { const i = INC_BY[id.slice(4)]; e = 'Incidencia · ' + (i ? i.t : id.slice(4)); g = 'Buzones INP'; }
+    if (t === 'inc') { const i = INC_BY[id.slice(4)]; e = 'Incidencia · ' + (i ? i.t : id.slice(4)); g = 'Visión HOS'; }
     else { const f = BYF[id]; e = (f ? f.n : id) + (t === 'dest' ? ` · destino desde el Área ${a}` : ` · buzón de ${SIG(a)}`); g = f ? grupoF(f) : ''; }
     r.hist.forEach(hh => out.push({ ...hh, k: kk, e, g, a, m: 'buz' }));
   }));
@@ -2072,7 +2072,7 @@ function openFlujoDlg(k, fid, secA, secG) {
     <p class="help" style="margin:0;font-size:11.5px">Todas las rutas con el mismo destino se dibujan igual; el grosor va con el número de centros que la usan.
       ${[[conta('propio'), 'al hospital de su área'], [conta('deriv'), 'derivadas'], [conta('desv'), 'desviadas'], [conta('sindest'), 'sin buzón de destino'], [conta('prep'), 'preparadas']].filter(x => x[0]).map(x => `<b>${x[0]}</b> ${x[1]}`).join(' · ')}.</p>
     <div class="actions"><span class="spacer"></span><button type="button" class="btn" id="fluCerrar">Cerrar</button>
-      <button type="button" class="btn primary" data-ir-buz="${f.id}">Ver en Buzones INP</button></div>`;
+      <button type="button" class="btn primary" data-ir-buz="${f.id}">Ver en Visión HOS</button></div>`;
   const dlg = $('#dlg'); dlg.showModal();
   $('#fluCerrar').onclick = () => dlg.close();
   $('#dlgIn').querySelectorAll('[data-flu]').forEach(b => b.onclick = () => openFlujoDlg(k, b.dataset.flu, secA, secG));
