@@ -1,21 +1,17 @@
-# Mapa ITC · INP · Atención Primaria (SMS)
+# Interconsultas SMS
 
-Matriz interactiva de interconsultas de Atención Primaria por especialidad y área sanitaria del Servicio Murciano de Salud.
+Cuadro de las interconsultas del Servicio Murciano de Salud. Dos ámbitos:
 
-Cada casilla muestra tres cuadrados, uno por modalidad:
+**Atención Primaria.** Matriz por especialidad y área sanitaria con cuatro modalidades por casilla: **CM** (cita mostrador, la vía analógica), **INP** (no presencial), **ITC** (presencial por gestor) e **ITCa** (ITC abierta). El relleno identifica la modalidad y el aspa el estado; la CM se tiñe según su uso en 2026. Una segunda vista, **Buzones INP**, cruza lo que ofrece la primaria con el buzón de cada hospital en Selene y con el destino que marca el COMPAS.
 
-| Modalidad | Borde | Significado |
-|---|---|---|
-| **INP** | azul | Interconsulta no presencial (INPAP) |
-| **ITC** | verde | Interconsulta presencial gestionada |
-| **INPc** | morado | INP Citable, también llamada ITC abierta |
+**Hospital.** Vista **ITC-R**, las interconsultas entre hospitales, con sus dos vías: la actual entre Selenes y la nueva por el Gestor de Peticiones, el hospital que atiende, la llamada telefónica obligatoria y la cita en destino.
 
-Relleno verde = abierta. Rojo con aspa = cerrada. Al pulsar un cuadrado se abre o cierra la modalidad y se registra fecha, usuario y observaciones.
+Al pulsar una casilla se cambia su estado y se registra fecha, usuario y observaciones. Cada especialidad y cada prueba llevan su resumen, su ficha y su circuito dibujado.
 
 ## Estructura
 
 - Rama `main`: `index.html`, la aplicación completa. No necesita servidor.
-- Rama `datos`: `estado.json`, el estado compartido (cambios, fechas y reclasificaciones), cifrado con la contraseña de acceso.
+- Rama `datos`: `estado.json`, el estado compartido (cambios, fechas, notas y reclasificaciones), cifrado con la contraseña de acceso.
 
 ## Publicar cambios para todo el equipo
 

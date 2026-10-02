@@ -4,30 +4,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<meta name="description" content="Mapa transversal de las interconsultas de Atención Primaria del Servicio Murciano de Salud: CM, INP, ITC e ITCa abiertas o cerradas en cada una de las nueve áreas, los buzones INP de cada hospital y a dónde llega cada INP, con registro fechado de cada cambio. Herramienta interna de trabajo, protegida con contraseña.">
+<meta name="description" content="Cuadro de las interconsultas del Servicio Murciano de Salud: en Atención Primaria, CM, INP, ITC e ITCa de cada especialidad en las nueve áreas y los buzones INP de cada hospital; entre hospitales, las ITC-R y su paso al Gestor de Peticiones. Con registro fechado de cada cambio. Herramienta interna de trabajo, protegida con contraseña.">
 <link rel="canonical" href="https://idoctor2000.github.io/mapa-itc-inp/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_ES">
 <meta property="og:site_name" content="Servicio Murciano de Salud · Atención Primaria">
-<meta property="og:title" content="Mapa ITC · INP · Interconsultas de Atención Primaria">
-<meta property="og:description" content="Mapa transversal de las interconsultas de Atención Primaria del Servicio Murciano de Salud: CM, INP, ITC e ITCa abiertas o cerradas en cada una de las nueve áreas, los buzones INP de cada hospital y a dónde llega cada INP, con registro fechado de cada cambio. Herramienta interna de trabajo, protegida con contraseña.">
+<meta property="og:title" content="Interconsultas SMS · Atención Primaria y entre hospitales">
+<meta property="og:description" content="Cuadro de las interconsultas del Servicio Murciano de Salud: en Atención Primaria, CM, INP, ITC e ITCa de cada especialidad en las nueve áreas y los buzones INP de cada hospital; entre hospitales, las ITC-R y su paso al Gestor de Peticiones. Con registro fechado de cada cambio. Herramienta interna de trabajo, protegida con contraseña.">
 <meta property="og:url" content="https://idoctor2000.github.io/mapa-itc-inp/">
-<meta property="og:image" content="https://idoctor2000.github.io/mapa-itc-inp/preview.png?v=2026090304">
-<meta property="og:image:secure_url" content="https://idoctor2000.github.io/mapa-itc-inp/preview.png?v=2026090304">
+<meta property="og:image" content="https://idoctor2000.github.io/mapa-itc-inp/preview.png?v=2026100201">
+<meta property="og:image:secure_url" content="https://idoctor2000.github.io/mapa-itc-inp/preview.png?v=2026100201">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Mapa ITC · INP del Servicio Murciano de Salud">
+<meta property="og:image:alt" content="Interconsultas SMS · Servicio Murciano de Salud">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Mapa ITC · INP · Interconsultas de Atención Primaria">
-<meta name="twitter:description" content="Mapa transversal de las interconsultas de Atención Primaria del Servicio Murciano de Salud: CM, INP, ITC e ITCa abiertas o cerradas en cada una de las nueve áreas, los buzones INP de cada hospital y a dónde llega cada INP, con registro fechado de cada cambio. Herramienta interna de trabajo, protegida con contraseña.">
-<meta name="twitter:image" content="https://idoctor2000.github.io/mapa-itc-inp/preview.png?v=2026090304">
+<meta name="twitter:title" content="Interconsultas SMS · Atención Primaria y entre hospitales">
+<meta name="twitter:description" content="Cuadro de las interconsultas del Servicio Murciano de Salud: en Atención Primaria, CM, INP, ITC e ITCa de cada especialidad en las nueve áreas y los buzones INP de cada hospital; entre hospitales, las ITC-R y su paso al Gestor de Peticiones. Con registro fechado de cada cambio. Herramienta interna de trabajo, protegida con contraseña.">
+<meta name="twitter:image" content="https://idoctor2000.github.io/mapa-itc-inp/preview.png?v=2026100201">
 <meta name="theme-color" content="#9B2242">
-<meta name="apple-mobile-web-app-title" content="Mapa ITC · INP">
+<meta name="apple-mobile-web-app-title" content="Interconsultas SMS">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
-<title>Mapa ITC · INP Atención Primaria</title>
+<title>Interconsultas SMS</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root{
@@ -428,8 +428,8 @@ form.edit .full{grid-column:1/-1}
 
 <div id="gate">
   <form class="gate-card" id="gateForm">
-    <h1>Mapa ITC · INP</h1>
-    <p>Interconsultas de Atención Primaria del Servicio Murciano de Salud. Introduce la contraseña para ver y editar el mapa.</p>
+    <h1>Interconsultas SMS</h1>
+    <p>Interconsultas del Servicio Murciano de Salud, de Atención Primaria y entre hospitales. Introduce la contraseña para ver y editar el cuadro.</p>
     <input type="password" id="gatePass" placeholder="Contraseña" autocomplete="current-password" required autofocus>
     <label class="chk"><input type="checkbox" id="gateRemember" checked> Recordar en este equipo</label>
     <div class="err" id="gateErr"></div>
@@ -444,8 +444,8 @@ form.edit .full{grid-column:1/-1}
     <button class="plegar" id="btnCab" aria-expanded="true"
             title="Ocultar los indicadores y los filtros para ver más filas"><span>▾</span></button>
     <div class="brand">
-      <h1>Mapa ITC · INP</h1>
-      <span class="sub">Atención Primaria · SMS · extracto OMI-AP del <span id="fechaBase"></span></span>
+      <h1>Interconsultas SMS</h1>
+      <span class="sub" id="sub">Atención Primaria · extracto OMI-AP del <span id="fechaBase"></span></span>
     </div>
     <div class="amb" role="group" aria-label="Ámbito">
       <button type="button" data-amb="ap" aria-pressed="true">Primaria</button>
@@ -633,7 +633,7 @@ form.edit .full{grid-column:1/-1}
 </section>
 
 <footer class="pie">
-  <span>Mapa ITC · INP · Interconsultas de Atención Primaria · Servicio Murciano de Salud</span>
+  <span>Interconsultas SMS · Atención Primaria y entre hospitales · Servicio Murciano de Salud</span>
   <span class="firma">iDoctor@2026</span>
 </footer>
 
@@ -2494,7 +2494,7 @@ function informeHTML() {
     });
   });
   const pie = as.map(a => `<td class="n">${rows.filter(c => cumple(c.k, a)).length}</td>`).join('');
-  const titulo = escasa ? 'Cita mostrador con uso escaso o nulo' : 'Mapa ITC · INP';
+  const titulo = escasa ? 'Cita mostrador con uso escaso o nulo' : 'Interconsultas SMS';
   const periodo = USOINFO ? `uso de la cita mostrador del ${fmt(USOINFO.desde)} al ${fmt(USOINFO.hasta)}` : '';
   const resumen = escasa
     ? `<b>${total}</b> casillas con cita mostrador abierta y menos de 10 interconsultas en 2026, en <b>${rows.length}</b> especialidades: <b>${ceros}</b> sin ningún uso y <b>${total - ceros}</b> con entre 1 y 9.`
@@ -2528,7 +2528,7 @@ thead{display:table-header-group} tr{break-inside:avoid}
 <tbody>${cuerpo || `<tr><td colspan="${as.length + 2}">Ninguna especialidad coincide con el filtro.</td></tr>`}</tbody>
 <tfoot><tr><th style="text-align:left">Casillas por área</th>${pie}<td class="n">${total}</td></tr></tfoot></table>
 <p class="ley">${esc(leyenda)}</p>
-<div class="firma">Mapa ITC · INP · iDoctor@2026</div>
+<div class="firma">Interconsultas SMS · iDoctor@2026</div>
 </body></html>`;
 }
 $('#expInforme').onclick = () => offer(`informe-${F.modo === 'cm-escasa' ? 'cita-mostrador-escasa' : 'mapa-itc-inp'}-${today()}.html`, informeHTML(), 'text/html;charset=utf-8');
@@ -2649,6 +2649,8 @@ function verAmbito(x) {
   document.body.dataset.amb = x;
   document.querySelectorAll('.amb button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.amb === x)));
   try { localStorage.setItem('sms-itc-ambito', x); } catch (e) {}
+  $('#sub').innerHTML = x === 'ho' && ITCR ? `Entre hospitales · ITC-R · archivo del ${fmt(ITCR.fecha)}`
+    : `Atención Primaria · extracto OMI-AP del ${fmt(FECHA_BASE)}`;
   const propia = { matriz: 'ap', buzones: 'ap', itcr: 'ho' }[vista];
   if (propia && propia !== x) verVista(x === 'ho' ? 'itcr' : 'matriz');
 }
