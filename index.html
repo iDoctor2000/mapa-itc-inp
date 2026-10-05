@@ -272,6 +272,8 @@ dialog .legend{gap:4px 14px;padding:0;margin:0}
 .org-area{margin-top:10px;font:600 11px/1.2 "IBM Plex Sans Condensed",sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .org-rec{margin:8px 0 0;padding:8px 0 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
 .org-rec b{color:var(--ink);font-weight:600;white-space:nowrap}
+.nv{font-style:normal;font:600 9px/1.5 "IBM Plex Sans",sans-serif;background:var(--ok-soft);color:var(--ok-ink);border-radius:999px;padding:1px 6px;margin-left:6px;vertical-align:1px;text-transform:uppercase;letter-spacing:.04em}
+.btn.mas{font-weight:700}
 .ruta{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
 .ruta:first-child{border-top:0}
 .ruta select,.ruta input[type=text],.ruta input:not([type]){padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-size:12.5px;min-width:0;width:100%}
@@ -492,6 +494,7 @@ form.edit .full{grid-column:1/-1}
       <option value="cm-escasa">Escasa o nula cita mostrador · menos de 10 en 2026</option>
       <option value="auto">Con cita automática</option>
       <option value="nota">Con nota del equipo</option>
+      <option value="nuevas">Añadidas a mano</option>
       <option value="mostrador">Con mostrador pendiente</option>
     </select>
     <div class="ms">
@@ -505,6 +508,7 @@ form.edit .full{grid-column:1/-1}
     </div>
     <label class="chk"><input type="checkbox" id="tDates"> Fechas</label>
     <label class="chk"><input type="checkbox" id="tMost" checked> Mostrador</label>
+    <button class="btn mas" id="masMapa" title="Añadir una especialidad o una modalidad nueva">+ Añadir</button>
     <button class="btn ghost" id="expMatriz">Exportar despliegue (CSV)</button>
     <button class="btn ghost" id="expInforme" title="Tabla con el resultado del filtro actual, para compartir o imprimir en PDF">Exportar informe</button>
     <button class="btn ghost" id="expEstado" title="Guarda todos los cambios y la clasificación en un archivo">Guardar estado (JSON)</button>
@@ -551,12 +555,14 @@ form.edit .full{grid-column:1/-1}
       <option value="auto">Buzón con cita automática</option>
       <option value="bloq">Cita automática que bloquea el hueco</option>
       <option value="cambios">Con cambios desde el Excel</option>
+      <option value="nuevas">Añadidas a mano</option>
     </select>
     <select id="bVista" aria-label="Qué mostrar">
       <option value="cuadro">Cuadro</option>
       <option value="inc">Incidencias de configuración</option>
     </select>
     <label class="chk" id="bResWrap" hidden><input type="checkbox" id="bRes"> Ver resueltas</label>
+    <button class="btn mas" id="masInp" title="Añadir una prueba INP">+ Añadir</button>
     <button class="btn ghost" id="expBuz">Exportar (CSV)</button>
   </div>
   <p class="help" id="bHelp">Cada casilla cruza la <b>primaria</b> de un área (AP: la INP que ofrece OMI-AP, tal como está en el mapa) con el <b>hospital</b> de esa misma área (H: buzón montado en Selene). La etiqueta dice a dónde la manda el COMPAS cuando no es a su propio hospital; sin ruta en el COMPAS, la INP va al hospital de su área. Pulsa un cuadrado para ver el detalle, las rutas por centro y corregir la configuración.</p>
@@ -598,7 +604,9 @@ form.edit .full{grid-column:1/-1}
       <option value="cita">Con cita en destino</option>
       <option value="urgente">Admiten prioridad urgente</option>
       <option value="cambios">Con cambios desde el archivo</option>
+      <option value="nuevas">Añadidas a mano</option>
     </select>
+    <button class="btn mas" id="masItcr" title="Añadir una interconsulta regional">+ Añadir</button>
     <button class="btn ghost" id="expItcr">Exportar (CSV)</button>
   </div>
   <p class="help" id="iHelp">Interconsultas <b>entre hospitales</b>. Cada fila es una interconsulta regional y cada casilla dice si esa área la pide por la <b>vía actual, entre Selenes</b> (cuadrado sepia) y si ya la pide por el <b>Gestor de Peticiones</b> (cuadrado verde), la vía nueva. El hospital que la atiende aparece marcado y en el resumen. Pulsa un cuadrado para corregir el estado de esa área, o el resumen para abrir la ficha.</p>
@@ -621,7 +629,7 @@ form.edit .full{grid-column:1/-1}
   <div class="tools">
     <input type="search" id="rq" placeholder="Buscar en el registro…" aria-label="Buscar en el registro">
     <select id="rArea" aria-label="Área"><option value="">Todas las áreas</option></select>
-    <select id="rMod" aria-label="Modalidad"><option value="">Todas las modalidades</option><option value="most">Solo CM (mostrador)</option><option value="inp">Solo INP</option><option value="itc">Solo ITC</option><option value="inpc">Solo ITCa</option><option value="buz">Solo buzones INP</option><option value="nota">Solo notas del equipo</option><option value="itcr">Solo ITC-R</option></select>
+    <select id="rMod" aria-label="Modalidad"><option value="">Todas las modalidades</option><option value="most">Solo CM (mostrador)</option><option value="inp">Solo INP</option><option value="itc">Solo ITC</option><option value="inpc">Solo ITCa</option><option value="buz">Solo buzones INP</option><option value="nota">Solo notas del equipo</option><option value="itcr">Solo ITC-R</option><option value="alta">Solo altas a mano</option></select>
     <label class="chk"><input type="checkbox" id="rBase"> Incluir situación inicial del extracto</label>
     <button class="btn ghost" id="expReg">Exportar registro (CSV)</button>
   </div>
@@ -661,7 +669,7 @@ const CHECK = DATA.check || null;              // centinela cifrado para validar
 const AREAS = [1,2,3,4,5,6,7,8,9];
 const MODS = ['most','inp','itc','inpc'];
 const MOD_LABEL = { most: 'CM · cita mostrador, la vía analógica (incluye las citas con centro concreto)', inp: 'INP · no presencial', itc: 'ITC · Presencial', inpc: 'ITCa · ITC abierta' };
-const ML = { most: 'CM', inp: 'INP', itc: 'ITC', inpc: 'ITCa', buz: 'Buzón INP', nota: 'Nota', itcr: 'ITC-R' };
+const ML = { most: 'CM', inp: 'INP', itc: 'ITC', inpc: 'ITCa', buz: 'Buzón INP', nota: 'Nota', itcr: 'ITC-R', alta: 'Alta' };
 const BASE_GRUPOS = [...new Set(CAT.map(c => c.g))];
 const BYK = Object.fromEntries(CAT.map(c => [c.k, c]));
 const FECHA_BASE = DATA.fecha;
@@ -938,12 +946,13 @@ function rowVisible(c) {
     if (F.modo === 'cm-escasa') return as.some(a => cmEscasa(c.k, a));
     if (F.modo === 'auto') return as.some(a => esAuto(c.k, a));
     if (F.modo === 'nota') return !!(notaDe(c.k) || {}).texto;
+    if (F.modo === 'nuevas') return esNueva(c.k) || as.some(a => MODS.some(m => (rec(c.k, a, m) || {}).prueba));
   }
   return true;
 }
 
 // ---------------- render ----------------
-function render() { MEMO.clear(); renderGroupOptions(); renderChips(); renderKpis(); renderMatrix(); renderBuz(); renderItcr(); renderReg(); renderCat(); }
+function render() { MEMO.clear(); sincronizaAltas(); renderGroupOptions(); renderChips(); renderKpis(); renderMatrix(); renderBuz(); renderItcr(); renderReg(); renderCat(); }
 function renderChips() {
   $('#areaChips').innerHTML = [['', 'Todas']].concat(AREAS.map(a => [String(a), 'Área ' + a]))
     .map(([v, l]) => `<button data-a="${v}" aria-pressed="${F.a === v}">${l}</button>`).join('');
@@ -993,7 +1002,7 @@ function renderKpis() {
   if (F.modo) partes.push(`filtro <b>${esc($('#fModo').selectedOptions[0].textContent)}</b>`);
   if (F.modo === 'solo-inp' || F.modo === 'cm-escasa') partes.push('solo se pintan las casillas que cumplen');
   $('#ambito').innerHTML = 'Mostrando ' + partes.join(' · ') + `. Casillas en la selección: <b>${casillas * ms.length}</b>.`;
-  const total = CAT.reduce((t2, c) => t2 + AREAS.reduce((s, a) => s + MODS.reduce((x, m) => x + ((rec(c.k, a, m) || {}).hist || []).length, 0), 0), 0) + histBuz().length + histNotas().length + histItcr().length;
+  const total = CAT.reduce((t2, c) => t2 + AREAS.reduce((s, a) => s + MODS.reduce((x, m) => x + ((rec(c.k, a, m) || {}).hist || []).length, 0), 0), 0) + histBuz().length + histNotas().length + histItcr().length + histAltas().length;
   $('#regCount').textContent = total ? `(${total})` : '';
 }
 const delta = n => n === 0 ? '±0' : (n > 0 ? '+' + n : String(n));
@@ -1022,7 +1031,7 @@ function renderMatrix() {
     if (cl) return;
     rs.sort((x, y) => x.e.localeCompare(y.e, 'es')).forEach(c => {
       const chgRow = AREAS.some(a => ms.some(m => changed(c.k, a, m)));
-      h += `<tr class="row${chgRow ? ' chg-row' : ''}"><th class="esp" title="${esc(c.e)}">${esc(c.e)}${infoSol(c.k)}</th>`;
+      h += `<tr class="row${chgRow ? ' chg-row' : ''}"><th class="esp" title="${esc(c.e)}">${esc(c.e)}${infoSol(c.k)}${marcaNueva(esNueva(c.k))}</th>`;
       as.forEach(a => {
         // Con «Escasa o nula»: la CM cerrada se pinta cerrada (con su aspa) y la que se usa
         // 10 veces o más lleva «≥10»; nada queda en blanco (30/09/2026).
@@ -1221,6 +1230,7 @@ function enFiltroB(f, a) {
   return st === m;
 }
 function filaVisibleB(f) {
+  if (FB.modo === 'nuevas') return esNuevaFila(f.id);
   if (F.g && grupoF(f) !== F.g) return false;
   if (F.q && !norm([f.n, f.id, espDe(f), f.c.join(' ')].join(' ')).includes(norm(F.q))) return false;
   if (FB.modo) { const as = F.a ? [Number(F.a)] : AREAS; return as.some(a => enFiltroB(f, a)); }
@@ -1263,7 +1273,7 @@ function renderKpisBuz() {
   if (F.q) partes.push(`búsqueda «<b>${esc(F.q)}</b>»`);
   if (FB.modo) partes.push(`filtro <b>${esc($('#bModo').selectedOptions[0].textContent)}</b>`, 'solo se pintan las casillas que cumplen');
   $('#ambito').innerHTML = `Mostrando ${partes.join(' · ')}. Casillas en la selección: <b>${cas}</b>. Excel de despliegue y COMPAS del ${fmt(INP.fecha)}.`;
-  const total = CAT.reduce((t2, c) => t2 + AREAS.reduce((s, a) => s + MODS.reduce((x, m) => x + ((rec(c.k, a, m) || {}).hist || []).length, 0), 0), 0) + histBuz().length + histNotas().length + histItcr().length;
+  const total = CAT.reduce((t2, c) => t2 + AREAS.reduce((s, a) => s + MODS.reduce((x, m) => x + ((rec(c.k, a, m) || {}).hist || []).length, 0), 0), 0) + histBuz().length + histNotas().length + histItcr().length + histAltas().length;
   $('#regCount').textContent = total ? `(${total})` : '';
 }
 
@@ -1299,8 +1309,8 @@ function renderBuz() {
   fijaCab('#bx');
 }
 function filaBuz(f, as, hijo) {
-  const cod = f.c.length === 1 ? f.c[0] : `${f.c.length} códigos`;
-  let h = `<tr class="row${FB.foco === f.id ? ' foco' : ''}" data-f="${f.id}"><th class="esp${hijo ? ' hijo' : ''}" title="${esc(f.n)} · ${esc(f.c.join(', '))} · ${esc(espDe(f))}">${esc(f.n)}<span class="cod">${esc(cod)}</span></th>`;
+  const cod = f.c.length === 1 ? f.c[0] : f.c.length ? `${f.c.length} códigos` : 'sin código';
+  let h = `<tr class="row${FB.foco === f.id ? ' foco' : ''}" data-f="${f.id}"><th class="esp${hijo ? ' hijo' : ''}" title="${esc(f.n)} · ${esc(f.c.join(', '))} · ${esc(espDe(f))}">${esc(f.n)}${marcaNueva(esNuevaFila(f.id))}<span class="cod">${esc(cod)}</span></th>`;
   as.forEach(a => {
     if (!enFiltroB(f, a)) { h += '<td class="cell fuera"></td>'; return; }
     const x = apInfo(f, a), mod = x ? x[1] : 'inp', ap = apOn(f, a), hb = buzOn(f, a), st = estadoB(f, a);
@@ -1375,6 +1385,7 @@ function enFiltroR(f, a) {
   return true;
 }
 function filaVisibleR(f) {
+  if (FI.modo === 'nuevas') return esNuevaItcr(f.id);
   if (F.q && !norm([f.n, f.id, f.svc, (f.gdp || {}).cod || '', ((f.sel || {}).pruebas || []).join(' ')].join(' ')).includes(norm(F.q))) return false;
   if (FI.modo === 'llamada') return llamadaR(f);
   if (FI.modo === 'cita') return citaR(f);
@@ -1403,7 +1414,7 @@ function filaItcr(f, as) {
   const dest = destinosR(f), est = estadoR(f);
   const marcas = (llamadaR(f) ? '<i class="mk tel" title="Hace falta llamar por teléfono al hospital de destino">✆</i>' : '')
     + (citaR(f) ? '<i class="mk cit" title="Requiere cita en destino">◷</i>' : '');
-  let h = `<tr class="row${FI.foco === f.id ? ' foco' : ''}" data-i="${f.id}"><th class="esp" title="${esc(f.n + ' · ' + (f.gdp && f.gdp.cod ? f.gdp.cod + ' · ' : '') + ((f.sel || {}).pruebas || []).join(', '))}">${esc(f.n)}${marcas}<span class="cod">${esc(f.svc)}</span></th>`;
+  let h = `<tr class="row${FI.foco === f.id ? ' foco' : ''}" data-i="${f.id}"><th class="esp" title="${esc(f.n + ' · ' + (f.gdp && f.gdp.cod ? f.gdp.cod + ' · ' : '') + ((f.sel || {}).pruebas || []).join(', '))}">${esc(f.n)}${marcas}${marcaNueva(esNuevaItcr(f.id))}<span class="cod">${esc(f.svc)}</span></th>`;
   as.forEach(a => {
     if (!enFiltroR(f, a)) { h += '<td class="cell fuera"></td>'; return; }
     const s = emiteSel(f, a), g = emiteGdp(f, a), rec = dest.includes(a);
@@ -1547,6 +1558,7 @@ function openItcrFicha(id) {
       <label>Fecha <input type="date" name="fecha" value="${today()}" required></label>
       <label>Quién lo registra <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
       <div class="actions">
+        ${esNuevaItcr(id) ? '<button type="button" class="btn ghost" id="ifRetira">Retirar la interconsulta</button>' : ''}
         <span class="spacer"></span>
         <button type="button" class="btn" id="ifCerrar">Cerrar</button>
         <button type="button" class="btn" id="ifFlujo">Ver el circuito</button>
@@ -1555,6 +1567,7 @@ function openItcrFicha(id) {
     </form>`;
   const dlg = $('#dlg'); dlg.showModal();
   $('#ifCerrar').onclick = () => dlg.close();
+  const ir = $('#ifRetira'); if (ir) ir.onclick = () => retiraAlta('itcr', id, f.n);
   $('#ifFlujo').onclick = () => { dlg.close(); openItcrFlujo(id); };
   $('#itcrForm').onsubmit = ev => {
     ev.preventDefault();
@@ -1746,12 +1759,13 @@ function openPruebaDlg(fid) {
       <tbody>${AREAS.map(fila).join('')}</tbody></table>
     </div>
     ${incs.length ? `<div class="box"><h3>Incidencias de configuración</h3><ul>${incs.map(i => `<li><span class="pill sev-${i.sev}">${i.sev}</span> ${i.a ? `<b>Área ${i.a}</b> · ` : ''}${esc(i.x)}${(incRec(i) || {}).resuelta ? ' <span class="pill ap">resuelta</span>' : ''}</li>`).join('')}</ul></div>` : ''}
-    <div class="actions"><span class="spacer"></span>
+    <div class="actions">${esNuevaFila(fid) ? `<button type="button" class="btn ghost" id="pfRetira">Retirar la prueba</button>` : ''}<span class="spacer"></span>
       <button type="button" class="btn" id="pfCerrar">Cerrar</button>
       ${f.k ? `<button type="button" class="btn" data-ir-mapa="${f.k}">Ver en el mapa</button>` : ''}
       <button type="button" class="btn primary" id="pfFlujo">Ver el circuito del COMPAS</button></div>`;
   const dlg = $('#dlg'); dlg.showModal();
   $('#pfCerrar').onclick = () => dlg.close();
+  const pr = $('#pfRetira'); if (pr) pr.onclick = () => retiraAlta('fila', fid, f.n);
   $('#pfFlujo').onclick = () => { dlg.close(); openFlujoDlg(f.k, f.id); };
   $('#dlgIn').querySelectorAll('[data-ir-mapa]').forEach(b => b.onclick = () => { dlg.close(); irAMapa(b.dataset.irMapa, Number(F.a) || (D.ap[0] || 1)); });
 }
@@ -1809,6 +1823,224 @@ function histBuz() {
     r.hist.forEach(hh => out.push({ ...hh, k: kk, e, g, a, m: 'buz' }));
   }));
   return out;
+}
+
+// ---------------- altas a mano: especialidades, modalidades, pruebas INP e ITC-R ----------------
+// Todo lo que se crea a mano vive en ov[1] con las claves «n-esp|…», «n-fila|…» y «n-itcr|…»,
+// de modo que se publica, se fusiona y se exporta como el resto. No se borra: se retira.
+const akey = (t, id) => `n-${t}|${id}`;
+const altaRec = (t, id) => (ov[1] || {})[akey(t, id)];
+const altas = t => Object.entries(ov[1] || {}).filter(([k, r]) => k.startsWith(`n-${t}|`) && r && r.n !== undefined && !r.retirada)
+  .map(([k, r]) => [k.slice(`n-${t}|`.length), r]);
+const esNueva = k => { const r = altaRec('esp', k); return !!(r && !r.retirada); };
+const esNuevaFila = id => { const r = altaRec('fila', id); return !!(r && !r.retirada); };
+const esNuevaItcr = id => { const r = altaRec('itcr', id); return !!(r && !r.retirada); };
+const marcaNueva = cond => cond ? '<i class="nv" title="Añadida a mano, no viene de los archivos">nueva</i>' : '';
+const slugificar = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+
+// El catálogo y las listas de filas son los del archivo más lo añadido a mano.
+function sincronizaAltas() {
+  const vivas = new Map(altas('esp'));
+  CAT.slice().forEach(c => { if (c.nuevo && !vivas.has(c.k)) { CAT.splice(CAT.indexOf(c), 1); delete BYK[c.k]; } });
+  vivas.forEach((r, id) => {
+    if (!BYK[id]) { const c = { g: r.g, e: r.n, k: id, nuevo: true }; CAT.push(c); BYK[id] = c; }
+    else if (BYK[id].nuevo) { BYK[id].e = r.n; BYK[id].g = r.g; }
+  });
+  if (INP) {
+    const vf = new Map(altas('fila'));
+    FILAS.slice().forEach(f => { if (f.nuevo && !vf.has(f.id)) { FILAS.splice(FILAS.indexOf(f), 1); delete BYF[f.id]; delete UNICA[f.id]; } });
+    vf.forEach((r, id) => {
+      const base = { id, n: r.n, k: r.k || null, c: r.c ? [r.c] : [], nuevo: true, svc: r.svc || '' };
+      if (!r.k) { base.e = r.e || r.n; base.g = r.g || 'Centrales'; }
+      if (!BYF[id]) { FILAS.push(base); BYF[id] = base; } else if (BYF[id].nuevo) Object.assign(BYF[id], base);
+      if (r.k) UNICA[id] = [r.k, 'inp'];                 // la primaria la ofrece si la INP está abierta en el mapa
+    });
+  }
+  if (ITCR) {
+    const vi = new Map(altas('itcr'));
+    IFILAS.slice().forEach(f => { if (f.nuevo && !vi.has(f.id)) { IFILAS.splice(IFILAS.indexOf(f), 1); delete BYI[f.id]; } });
+    vi.forEach((r, id) => {
+      const base = { id, n: r.n, svc: r.svc || '', nuevo: true, sel: null,
+        gdp: { cod: r.cod || '', estado: r.estado || 'prevista', orig: r.orig || [], origSvc: '', destSvc: r.destSvc || '',
+               dest: r.dest ? Number(r.dest) : null, circ: r.circ || [], prio: r.prio || [], cita: !!r.cita, just: '' } };
+      if (!BYI[id]) { IFILAS.push(base); BYI[id] = base; } else if (BYI[id].nuevo) Object.assign(BYI[id], base);
+    });
+  }
+}
+function histAltas() {
+  const out = [], T = { esp: 'especialidad', fila: 'prueba INP', itcr: 'ITC-R' };
+  Object.entries(ov[1] || {}).forEach(([kk, r]) => {
+    if (!/^n-(esp|fila|itcr)\|/.test(kk) || !r || !Array.isArray(r.hist)) return;
+    const t = kk.slice(2).split('|')[0];
+    r.hist.forEach(hh => out.push({ ...hh, k: kk, e: `${r.n} · ${T[t]} añadida a mano`, g: 'Altas', a: 0, m: 'alta' }));
+  });
+  return out;
+}
+function guardaAlta(t, id, datos, accion, texto, usuario, fecha, nota) {
+  const ts = new Date().toISOString(), prev = altaRec(t, id) || {};
+  persistCells(1, { [akey(t, id)]: { ...prev, ...datos, fecha, usuario, ts,
+    hist: [{ accion, fecha, usuario, nota: texto + (nota ? ' — ' + nota : ''), ts }, ...(prev.hist || [])].slice(0, 40) } },
+    accion === 'alta' ? 'Alta guardada' : accion === 'retirada' ? 'Retirada' : 'Guardado');
+}
+const retiradas = t => Object.entries(ov[1] || {}).filter(([k, r]) => k.startsWith(`n-${t}|`) && r && r.retirada)
+  .map(([k, r]) => [k.slice(`n-${t}|`.length), r]);
+function cajaRetiradas(t) {
+  const L = retiradas(t);
+  if (!L.length) return '';
+  return `<div class="box"><h3>Retiradas</h3>${L.map(([id, r]) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
+    <span style="flex:1">${esc(r.n)}<small style="color:var(--muted)"> · retirada el ${fmt(r.fecha)}${r.usuario ? ' por ' + esc(r.usuario) : ''}</small></span>
+    <button type="button" class="btn ghost" data-rest="${t}|${esc(id)}">Devolver al cuadro</button></div>`).join('')}</div>`;
+}
+function enlazaRetiradas() {
+  $('#dlgIn').querySelectorAll('[data-rest]').forEach(b => b.onclick = () => {
+    const [t, id] = b.dataset.rest.split('|');
+    retiraAlta(t, id, (altaRec(t, id) || {}).n || id);
+  });
+}
+function pieAlta(id) {   // campos comunes de las ventanas de alta
+  return `<label>Fecha <input type="date" name="fecha" value="${today()}" required></label>
+    <label>Quién lo registra <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
+    <textarea name="nota" placeholder="Observaciones (opcional): quién lo ha pedido, desde cuándo…"></textarea>
+    <div class="actions"><span class="spacer"></span>
+      <button type="button" class="btn" id="${id}Cancel">Cancelar</button>
+      <button type="submit" class="btn primary">Añadir</button></div>`;
+}
+const quienDe = form => { const u = String(new FormData(form).get('usuario') || '').trim(); if (u) { $('#userName').value = u; try { localStorage.setItem('sms-itc-user', u); } catch (e) {} } return u; };
+
+// ---------------- + en el Despliegue: especialidad o modalidad ----------------
+function openAltaMapaDlg() {
+  const gs = grupos();
+  $('#dlgIn').innerHTML = `
+    <h2>Añadir al despliegue</h2>
+    <p style="margin:0;color:var(--muted);font-size:12.5px">Lo que añadas aquí se guarda con tu nombre y la fecha, se publica para el equipo y queda marcado como <b>nueva</b>. No se borra: se retira, y queda en el registro.</p>
+    <div class="chips" style="display:flex;padding:0"><button type="button" data-alta="esp" aria-pressed="true">Especialidad nueva</button><button type="button" data-alta="mod" aria-pressed="false">Modalidad en una casilla</button></div>
+    <form class="edit" id="altaEsp">
+      <label class="full">Nombre de la especialidad <input type="text" name="e" placeholder="p. ej. Cirugía de la mano" required></label>
+      <label>Grupo <select name="g">${gs.map(g => `<option>${esc(g)}</option>`).join('')}<option value="__nuevo">Otro grupo nuevo…</option></select></label>
+      <label>Si es un grupo nuevo <input type="text" name="gnuevo" placeholder="Nombre del grupo"></label>
+      ${pieAlta('ae')}
+    </form>
+    <form class="edit" id="altaMod" hidden>
+      <label class="full">Especialidad <select name="k">${CAT.slice().sort((x, y) => x.e.localeCompare(y.e, 'es')).map(c => `<option value="${c.k}">${esc(c.e)}</option>`).join('')}</select></label>
+      <label>Área <select name="a">${AREAS.map(a => `<option value="${a}"${String(F.a) === String(a) ? ' selected' : ''}>Área ${a}${INP ? ' · ' + SIG(a) : ''}</option>`).join('')}</select></label>
+      <label>Modalidad <select name="m">${MODS.map(m => `<option value="${m}">${ML[m]} · ${MOD_LABEL[m].split('·')[1] || ML[m]}</option>`).join('')}</select></label>
+      <label class="full">Nombre de la prueba en OMI-AP <input type="text" name="prueba" placeholder="p. ej. Interconsulta Presencial Dermatología"></label>
+      ${pieAlta('am')}
+    </form>
+    ${cajaRetiradas('esp')}`;
+  const dlg = $('#dlg'); dlg.showModal(); enlazaRetiradas();
+  const ver = t => {
+    $('#altaEsp').hidden = t !== 'esp'; $('#altaMod').hidden = t !== 'mod';
+    $('#dlgIn').querySelectorAll('[data-alta]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.alta === t)));
+  };
+  $('#dlgIn').querySelectorAll('[data-alta]').forEach(b => b.onclick = () => ver(b.dataset.alta));
+  $('#aeCancel').onclick = () => dlg.close(); $('#amCancel').onclick = () => dlg.close();
+  $('#altaEsp').onsubmit = ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target), usuario = quienDe(ev.target);
+    if (!usuario) { toast('Indica quién lo registra'); return; }
+    const e = String(fd.get('e') || '').trim();
+    let g = fd.get('g'); if (g === '__nuevo') g = String(fd.get('gnuevo') || '').trim();
+    if (!e || !g) { toast('Hace falta el nombre y el grupo'); return; }
+    let id = slugificar(e); if (!id) { toast('Ese nombre no vale'); return; }
+    if (BYK[id]) { toast('Ya existe una especialidad con ese nombre'); return; }
+    if (!grupos().includes(g)) { extraGrupos.push(g); persistGrupos(); }
+    guardaAlta('esp', id, { n: e, g }, 'alta', `Especialidad nueva en ${g}`, usuario, fd.get('fecha'), String(fd.get('nota') || '').trim());
+    dlg.close();
+  };
+  $('#altaMod').onsubmit = ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target), usuario = quienDe(ev.target);
+    if (!usuario) { toast('Indica quién lo registra'); return; }
+    const k = fd.get('k'), a = Number(fd.get('a')), m = fd.get('m'), prueba = String(fd.get('prueba') || '').trim();
+    const fecha = fd.get('fecha'), nota = String(fd.get('nota') || '').trim(), ts = new Date().toISOString();
+    if (isOpen(k, a, m)) { toast(`${ML[m]} ya está abierta en esa casilla.`); return; }
+    const prev = rec(k, a, m) || {};
+    persist(a, key(k, m), { ...prev, abierta: true, prueba: prueba || (prev.prueba || ''), fecha, usuario, nota, ts,
+      hist: [{ accion: 'abrir', fecha, usuario, nota: `Alta a mano${prueba ? ': ' + prueba : ''}${nota ? ' — ' + nota : ''}`, ts }, ...(prev.hist || [])].slice(0, 60) });
+    dlg.close();
+  };
+}
+
+// ---------------- + en Visión HOS: prueba INP nueva ----------------
+function openAltaInpDlg() {
+  $('#dlgIn').innerHTML = `
+    <h2>Añadir una prueba INP</h2>
+    <p style="margin:0;color:var(--muted);font-size:12.5px">Se crea la fila; los buzones de cada hospital se marcan luego pulsando sus casillas. El código puede quedar pendiente.</p>
+    <form class="edit" id="altaInp">
+      <label class="full">Nombre <input type="text" name="n" placeholder="p. ej. INP Cirugía de la mano" required></label>
+      <label>Código de la prueba <input type="text" name="c" placeholder="INPxxx (opcional)"></label>
+      <label>Servicio de Selene <input type="text" name="svc" placeholder="p. ej. CGD (opcional)"></label>
+      <label class="full">Especialidad del mapa <select name="k"><option value="">Sin especialidad: va suelta en Centrales</option>${CAT.slice().sort((x, y) => x.e.localeCompare(y.e, 'es')).map(c => `<option value="${c.k}">${esc(c.e)}</option>`).join('')}</select></label>
+      ${pieAlta('ai')}
+    </form>
+    ${cajaRetiradas('fila')}`;
+  const dlg = $('#dlg'); dlg.showModal(); enlazaRetiradas();
+  $('#aiCancel').onclick = () => dlg.close();
+  $('#altaInp').onsubmit = ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target), usuario = quienDe(ev.target);
+    if (!usuario) { toast('Indica quién lo registra'); return; }
+    const n = String(fd.get('n') || '').trim(), c = String(fd.get('c') || '').trim().toUpperCase();
+    if (!n) { toast('Hace falta el nombre'); return; }
+    const id = c || 'X-' + slugificar(n);
+    if (BYF[id]) { toast('Ya existe una prueba con ese código o nombre'); return; }
+    guardaAlta('fila', id, { n, c, svc: String(fd.get('svc') || '').trim().toUpperCase(), k: fd.get('k') || null, e: n, g: 'Centrales' },
+      'alta', `Prueba INP nueva${c ? ' (' + c + ')' : ', pendiente de código'}`, usuario, fd.get('fecha'), String(fd.get('nota') || '').trim());
+    dlg.close();
+  };
+}
+
+// ---------------- + en ITC-R: interconsulta regional nueva ----------------
+function openAltaItcrDlg() {
+  $('#dlgIn').innerHTML = `
+    <h2>Añadir una interconsulta regional</h2>
+    <p style="margin:0;color:var(--muted);font-size:12.5px">Nace por el Gestor de Peticiones. Si además existe hoy entre Selenes, se marca después en sus casillas.</p>
+    <form class="edit" id="altaItcr">
+      <label class="full">Nombre <input type="text" name="n" placeholder="p. ej. Interconsulta Regional Cardiología" required></label>
+      <label>Servicio <input type="text" name="svc" placeholder="p. ej. CAR (opcional)"></label>
+      <label>Código del Gestor <input type="text" name="cod" placeholder="ITCRxxx (opcional)"></label>
+      <label>Hospital que atiende <select name="dest">${AREAS.map(a => `<option value="${a}">${SIG(a)} · Área ${a}</option>`).join('')}</select></label>
+      <label>Estado <select name="estado"><option value="prevista">Prevista</option><option value="montaje">En montaje</option><option value="montada">Montada</option></select></label>
+      <div class="full"><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Áreas que la piden</div>
+        <div class="cen" style="max-height:none;grid-template-columns:repeat(3,1fr)">${AREAS.map(a => `<label><input type="checkbox" name="orig" value="${a}"> Área ${a} · ${SIG(a)}</label>`).join('')}</div></div>
+      <label class="chk full"><input type="checkbox" name="llamada"> Hace falta llamar por teléfono al hospital de destino</label>
+      <label class="chk full"><input type="checkbox" name="cita"> Requiere cita en destino</label>
+      ${pieAlta('ar')}
+    </form>
+    ${cajaRetiradas('itcr')}`;
+  const dlg = $('#dlg'); dlg.showModal(); enlazaRetiradas();
+  $('#arCancel').onclick = () => dlg.close();
+  $('#altaItcr').onsubmit = ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target), usuario = quienDe(ev.target);
+    if (!usuario) { toast('Indica quién lo registra'); return; }
+    const n = String(fd.get('n') || '').trim(), cod = String(fd.get('cod') || '').trim().toUpperCase();
+    if (!n) { toast('Hace falta el nombre'); return; }
+    const id = cod || 'X-' + slugificar(n);
+    if (BYI[id]) { toast('Ya existe una interconsulta con ese código o nombre'); return; }
+    const orig = fd.getAll('orig').map(Number), dest = Number(fd.get('dest')), estado = fd.get('estado');
+    const fecha = fd.get('fecha'), nota = String(fd.get('nota') || '').trim();
+    guardaAlta('itcr', id, { n, svc: String(fd.get('svc') || '').trim().toUpperCase(), cod, dest, estado, orig,
+      circ: [], prio: [], cita: !!fd.get('cita'), destSvc: String(fd.get('svc') || '').trim().toUpperCase() },
+      'alta', `ITC-R nueva hacia ${SIG(dest)}${orig.length ? ', la piden ' + listaAreas(orig) : ''}`, usuario, fecha, nota);
+    if (fd.get('llamada')) {
+      const ts = new Date().toISOString();
+      persistCells(1, { [ikey(id, 'fila')]: { estado, dest, llamada: true, cita: !!fd.get('cita'), nota, fecha, usuario, ts,
+        hist: [{ accion: 'llam-si', fecha, usuario, nota: '', ts }] } });
+    }
+    dlg.close();
+  };
+}
+
+// ---------------- retirar y restaurar ----------------
+function retiraAlta(t, id, nombre) {
+  const usuario = $('#userName').value.trim();
+  if (!usuario) { toast('Escribe tu nombre arriba antes de retirar'); $('#userName').focus(); return; }
+  const r = altaRec(t, id) || {};
+  guardaAlta(t, id, { retirada: !r.retirada }, r.retirada ? 'restaurada' : 'retirada',
+    r.retirada ? `${nombre} vuelve al cuadro` : `${nombre} se retira del cuadro`, usuario, today(), '');
+  $('#dlg').close();
 }
 
 // ---------------- direccionamiento del COMPAS, editable ----------------
@@ -2376,6 +2608,7 @@ function openEspDlg(k) {
       <div class="actions">
         ${n && n.texto ? '<button type="button" class="btn ghost" id="notaBorrar">Borrar la nota</button>' : ''}
         <span class="spacer"></span>
+        ${esNueva(k) ? '<button type="button" class="btn ghost" id="retiraEsp">Retirar la especialidad</button>' : ''}
         ${filasDe(k).length ? '<button type="button" class="btn" id="verFlujo">Ver el circuito del COMPAS</button>' : ''}
         <button type="button" class="btn" id="notaCancel">Cerrar</button>
         <button type="submit" class="btn primary">Guardar la nota</button>
@@ -2384,6 +2617,7 @@ function openEspDlg(k) {
   const dlg = $('#dlg'); dlg.showModal();
   $('#notaCancel').onclick = () => dlg.close();
   const vf = $('#verFlujo'); if (vf) vf.onclick = () => { dlg.close(); openFlujoDlg(k); };
+  const re = $('#retiraEsp'); if (re) re.onclick = () => retiraAlta('esp', k, BYK[k].e);
   const quien = () => { const u = String(new FormData($('#notaForm')).get('usuario') || '').trim(); if (u) { $('#userName').value = u; try { localStorage.setItem('sms-itc-user', u); } catch (e) {} } return u; };
   const bb = $('#notaBorrar'); if (bb) bb.onclick = () => {
     const usuario = quien(); if (!usuario) { toast('Indica quién lo registra'); return; }
@@ -2422,6 +2656,7 @@ function allEntries(includeBase) {
   histBuz().forEach(x => out.push(x));
   histNotas().forEach(x => out.push(x));
   histItcr().forEach(x => out.push(x));
+  histAltas().forEach(x => out.push(x));
   out.sort((x, y) => (y.fecha.localeCompare(x.fecha)) || (y.ts || '').localeCompare(x.ts || ''));
   return out;
 }
@@ -2433,7 +2668,8 @@ const ACC = { abrir: ['Apertura', 'ap'], cerrar: ['Cierre', 'ci'], 'auto-si': ['
   'sel-si': ['Empieza a pedirla por Selene', 'ap'], 'sel-no': ['Deja de pedirla por Selene', 'ci'],
   'gdp-si': ['Pasa al Gestor de Peticiones', 'ap'], 'gdp-no': ['Sale del Gestor de Peticiones', 'ci'],
   estado: ['Cambia el estado', 'au'], 'llam-si': ['Pasa a necesitar llamada', 'au'], 'llam-no': ['Deja de necesitar llamada', 'rs'],
-  'cita-si': ['Pasa a requerir cita', 'au'], 'cita-no': ['Deja de requerir cita', 'rs'], rut: ['Cambia el direccionamiento', 'au'] };
+  'cita-si': ['Pasa a requerir cita', 'au'], 'cita-no': ['Deja de requerir cita', 'rs'], rut: ['Cambia el direccionamiento', 'au'],
+  alta: ['Alta a mano', 'ap'], retirada: ['Retirada', 'ci'], restaurada: ['Vuelve al cuadro', 'ap'] };
 function renderReg() {
   if ($('#viewRegistro').hidden) return;
   let es = allEntries(R.base);
@@ -2487,6 +2723,7 @@ function openDlg(k, a, m) {
     <div class="box"><h3>Según el extracto de OMI-AP (${fmt(FECHA_BASE)})</h3>
       ${basePruebas.length ? `<div><b>${ML[m]} abierta:</b> ${basePruebas.map(esc).join(' · ')}</div>` : `<div style="color:var(--muted)">Sin ${ML[m]} para esta especialidad en el área ${a}.</div>`}
       ${most.length ? `<div style="margin-top:4px"><b style="color:var(--most)">Mostrador (${most.length}):</b> ${most.map(esc).join(' · ')}</div>` : ''}
+      ${(r && r.prueba) ? `<div style="margin-top:4px"><b class="nv">nueva</b> Añadida a mano: ${esc(r.prueba)}</div>` : ''}
     </div>
     ${(m === 'inp' || m === 'inpc') ? cajaHospital(k, a, m) : ''}
     ${hist.length ? `<div class="box hist"><h3>Historial</h3><ul>${hist.map(x => `<li><span class="mono">${fmt(x.fecha)}</span><span class="pill ${(ACC[x.accion] || ['', 'rs'])[1]}">${(ACC[x.accion] || [x.accion])[0]}</span><span class="n">${esc(x.usuario || '')}${x.nota ? ' — ' + esc(x.nota) : ''}</span></li>`).join('')}</ul></div>` : ''}
@@ -2498,6 +2735,7 @@ function openDlg(k, a, m) {
       </div>
       ${m === 'itc' ? `<label class="auto-chk full"><input type="checkbox" name="auto" ${esAuto(k, a) ? 'checked' : ''}>
         <span><b>Cita automática</b><small>El paciente sale de la consulta con la cita ya dada, sin ninguna gestión. Se marca con un halo ámbar en el mapa.</small></span></label>` : ''}
+      ${!basePruebas.length ? `<label class="full">Nombre de la prueba (si la estás dando de alta) <input type="text" name="prueba" value="${esc((r && r.prueba) || '')}" placeholder="p. ej. Interconsulta Presencial Dermatología"></label>` : ''}
       <label>Fecha del cambio <input type="date" name="fecha" value="${today()}" required></label>
       <label>Quién lo registra <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
       <textarea name="nota" placeholder="Observaciones (opcional): motivo, agenda creada, incidencia…"></textarea>
@@ -2532,6 +2770,7 @@ function openDlg(k, a, m) {
     if (cambiaAuto) entradas.unshift({ accion: nuevoAuto ? 'auto-si' : 'auto-no', fecha: fd.get('fecha'), usuario, nota: '', ts });
     if (!entradas.length) { toast('No has cambiado nada: elige Abrir o Cerrar, o marca la cita automática.'); return; }
     persist(a, key(k, m), { abierta: acc === 'igual' ? previa : (acc === 'abrir'), fecha: fd.get('fecha'), usuario, nota, ts,
+      ...(fd.has('prueba') ? { prueba: String(fd.get('prueba') || '').trim() } : ((r && r.prueba) ? { prueba: r.prueba } : {})),
       ...(m === 'itc' ? { auto: nuevoAuto } : {}), hist: [...entradas, ...hist].slice(0, 60) });
     dlg.close();
   };
@@ -2738,6 +2977,9 @@ $('#cq').oninput = e => { C.q = e.target.value; renderCat(); };
 $('#cGrupo').onchange = e => { C.g = e.target.value; renderCat(); };
 $('#cMod').onchange = e => { C.mod = e.target.checked; renderCat(); };
 $('#sync').onclick = openSyncDlg;
+$('#masMapa').onclick = openAltaMapaDlg;
+if (INP) $('#masInp').onclick = openAltaInpDlg; else $('#masInp').hidden = true;
+if (ITCR) $('#masItcr').onclick = openAltaItcrDlg;
 $('#btnCab').onclick = () => {
   const plegado = document.body.classList.toggle('plegado');
   $('#btnCab').setAttribute('aria-expanded', String(!plegado));
