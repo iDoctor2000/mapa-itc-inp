@@ -285,6 +285,8 @@ dialog .legend{gap:4px 14px;padding:0;margin:0}
 .ruta .btn{padding:5px 9px;font-size:12px}
 .ruta .cen{grid-column:1/-1;max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:7px;padding:7px 9px;display:grid;grid-template-columns:1fr 1fr;gap:1px 12px;background:var(--surface-2)}
 .ruta .cen label{display:flex;gap:6px;align-items:center;font-size:11.5px;color:var(--ink)}
+.aviso-ruta{grid-column:1/-1;font-size:11.5px;color:var(--bad-ink);background:var(--bad-soft);border-radius:6px;padding:4px 8px}
+.aviso-caja{margin-top:8px;font-size:12px;color:var(--bad-ink);background:var(--bad-soft);border-radius:8px;padding:8px 10px}
 .ruta .cen-bar{grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--muted);padding-bottom:4px}
 @media (max-width:720px){ .ruta{grid-template-columns:1fr 1fr} .ruta .cen{grid-template-columns:1fr} }
 .lnk{border:0;background:none;padding:0;color:var(--accent);font-weight:500;text-decoration:underline;text-underline-offset:2px}
@@ -1242,6 +1244,7 @@ function hospInfo(k, a, m) {
 }
 function cajaCompasCelda(k, a, m, r) {
   if (!INP || m === 'most') return '';
+  const c = BYK[k];
   const fs = (m === 'inp' || m === 'inpc') ? filasDe(k).filter(f => apInfo(f, a)) : [];
   const propias = Array.isArray(r && r.compas) ? r.compas : [];
   const txtG = g => rutaTxt(g.map(x => ({ h: x.h, em: x.todos ? [] : x.em })));
@@ -1249,8 +1252,11 @@ function cajaCompasCelda(k, a, m, r) {
     ${fs.map(f => `<div class="dest"><span class="h ok">${destinos(f, a).g.map(g => SIG(g.h)).join(' + ')}</span><span><b>${esc(f.n)}</b><br>
       <small>${esc(txtG(destinos(f, a).g))}</small><br><button type="button" class="lnk" data-rutf="${f.id}">Editar sus líneas del COMPAS</button></span></div>`).join('')}
     ${propias.length
-      ? `<div class="dest"><span class="h ok">${[...new Set(propias.map(x => Number(x.h)))].map(SIG).join(' + ')}</span><span><b>Línea puesta desde aquí</b><br>
-          <small>${esc(rutaTxt(propias))}</small><br><button type="button" class="lnk" id="rutCelda">Editar</button></span></div>`
+      ? (() => {
+          const fs = filasDe(k), sinB = [...new Set(propias.map(x => Number(x.h)))].filter(h => fs.length && !fs.some(x => buzOn(x, h)));
+          return `<div class="dest"><span class="h ${sinB.length ? 'ko' : 'ok'}">${[...new Set(propias.map(x => Number(x.h)))].map(SIG).join(' + ')}</span><span><b>Línea puesta desde aquí</b><br>
+          <small>${esc(rutaTxt(propias))}</small>${sinB.length ? `<br><small style="color:var(--bad-ink)">⚠ ${esc(listaSig(sinB))} no tiene montado el buzón de ${esc(c.e)}: no llegaría</small>` : ''}<br><button type="button" class="lnk" id="rutCelda">Editar</button></span></div>`;
+        })()
       : `<div style="color:var(--muted)">${fs.length ? 'Puedes añadir además una línea propia para esta interconsulta.' : 'Todavía no hay líneas del COMPAS para esta interconsulta en esta área.'}
           <button type="button" class="lnk" id="rutCelda">${fs.length ? 'Añadir una línea' : 'Añadir direccionamiento'}</button></div>`}
   </div>`;
@@ -1884,6 +1890,15 @@ function incidencias() {
     din.push({ id: `din-${f.id}-${a}`, din: true, sev: 'alta', t: 'Sin destino', a, f: f.id,
       x: `La primaria del Área ${a} ofrece ${f.n}, pero ${malos.map(g => `${g.todos ? 'todo el área' : g.n + ' emisores'} → ${SIG(g.h)}`).join(' y ')} no llega a ningún buzón montado.` });
   }));
+  CAT.forEach(c => AREAS.forEach(a => MODS.forEach(m => {
+    const rc = rec(c.k, a, m) || {};
+    if (!Array.isArray(rc.compas) || !rc.compas.length) return;
+    const fs = filasDe(c.k);
+    const malos = [...new Set(rc.compas.map(x => Number(x.h)))].filter(h => fs.length && !fs.some(x => buzOn(x, h)));
+    if (!malos.length) return;
+    din.push({ id: `cel-${c.k}-${m}-${a}`, din: true, sev: 'alta', t: 'Destino sin estructura montada', a, f: null,
+      x: `La línea puesta a mano en ${c.e} · ${ML[m]} del Área ${a} manda a ${listaSig(malos)}, que no tiene montado el buzón de esa especialidad.` });
+  })));
   const S = { alta: 0, media: 1, info: 2 };
   return din.concat(INP.inc)
     .filter(i => (!F.a || i.a === Number(F.a))
@@ -2302,12 +2317,15 @@ const rutasDeArchivo = (f, a) => {
 
 function openRutasDlg(id, a) {          // las líneas del COMPAS de una prueba INP
   const f = BYF[id]; if (!f) return;
-  openRutasBase({ a, titulo: f.n, sub: espDe(f), clave: hk(id, 'rut'), campo: 'rutas', base: rutasDeArchivo(f, a), ov0: rutOv(f, a) });
+  openRutasBase({ a, titulo: f.n, sub: espDe(f), clave: hk(id, 'rut'), campo: 'rutas', base: rutasDeArchivo(f, a), ov0: rutOv(f, a),
+    chk: (h, c) => (c ? !buzCodeOn(f, c, h) : !buzOn(f, h)) ? `${SIG(h)} no tiene montado el buzón de ${f.n}` : '' });
 }
 function openRutasCelda(k, a, m) {      // líneas propias de una interconsulta del mapa que aún no está en el COMPAS
   const c = BYK[k], r = rec(k, a, m) || {};
   openRutasBase({ a, titulo: `${c.e} · ${ML[m]}`, sub: `Línea propia, Área ${a}`, clave: key(k, m), campo: 'compas',
-    base: [], ov0: (Array.isArray(r.compas) && r.compas.length) ? r : null, volver: () => openDlg(k, a, m) });
+    base: [], ov0: (Array.isArray(r.compas) && r.compas.length) ? r : null, volver: () => openDlg(k, a, m),
+    chk: h => { const fs = filasDe(k); if (!fs.length) return `No consta ninguna prueba INP de ${c.e} en el despliegue, así que no se puede comprobar si ${SIG(h)} tiene estructura montada`;
+      return fs.some(x => buzOn(x, h)) ? '' : `${SIG(h)} no tiene montado el buzón de ninguna prueba de ${c.e}`; } });
 }
 function openRutasBase(cfg) {
   const { a, titulo, sub, clave, campo, base, ov0, volver } = cfg;
@@ -2325,6 +2343,8 @@ function openRutasBase(cfg) {
       ? `Los otros <b>${r.length}</b> centros del área seguirán yendo a <b>${SIG(a)}</b>, el hospital de su área.`
       : (ed.some(x => !x.em.length) ? 'Hay una ruta para todo el área, así que no queda ningún centro suelto.' : 'Todos los centros del área están repartidos en las rutas de arriba.');
   };
+  const avisoDe = x => (cfg.chk ? (cfg.chk(Number(x.h), x.c || '') || '') : '');
+  const avisos = () => ed.map(avisoDe).filter(Boolean);
   const pinta = () => {
     $('#rutLista').innerHTML = ed.map((x, i) => `
       <div class="ruta" data-n="${i}">
@@ -2332,13 +2352,21 @@ function openRutasBase(cfg) {
         <input data-k="sd" value="${esc(x.sd)}" placeholder="servicio de destino (opcional)" aria-label="Servicio de destino">
         <button type="button" class="btn ghost" data-cen="${i}">${x.em.length ? `${x.em.length} centro${x.em.length === 1 ? '' : 's'}` : 'todo el área'}</button>
         <button type="button" class="btn ghost" data-del="${i}" title="Quitar esta ruta">✕</button>
+        ${avisoDe(x) ? `<div class="aviso-ruta">⚠ ${esc(avisoDe(x))}. Lo que se mande ahí no llegaría a ningún buzón.</div>` : ''}
         <div class="cen" data-lista="${i}" hidden>
           <div class="cen-bar"><button type="button" class="lnk" data-todos="${i}">Todos</button> · <button type="button" class="lnk" data-ninguno="${i}">Ninguno</button>
             <span>${x.em.length ? `${x.em.length} de ${E.length}` : 'sin elegir: va todo el área'}</span></div>
           ${E.map(e => `<label><input type="checkbox" data-em="${i}" value="${e}"${x.em.includes(e) ? ' checked' : ''}> ${esc(nomEmi(e))} <span class="mono" style="color:var(--muted)">${e}</span></label>`).join('')}
         </div>
       </div>`).join('') || '<div style="color:var(--muted);padding:6px 0">Sin rutas: todo el área iría al hospital de su área.</div>';
-    cuentas();
+    cuentas(); pintaAvisos();
+  };
+  const pintaAvisos = () => {
+    const av = [...new Set(avisos())], c = $('#rutAviso'); if (!c) return;
+    c.hidden = !av.length;
+    c.innerHTML = av.length ? `<b>Ojo:</b> ${av.map(x => esc(x)).join('. ')}. Revisa si falta montar la estructura en Selene o si el destino es otro.` : '';
+    const b = $('#rutForm') && $('#rutForm').querySelector('button[type=submit]');
+    if (b) b.textContent = av.length ? 'Guardar de todas formas' : 'Guardar';
   };
   $('#dlgIn').innerHTML = `
     <h2>Direccionamiento del COMPAS</h2>
@@ -2347,6 +2375,7 @@ function openRutasBase(cfg) {
     <div class="box"><div id="rutLista"></div>
       <div style="margin-top:8px"><button type="button" class="btn" id="rutAdd">+ Añadir ruta</button></div>
       <div id="rutResto" style="margin-top:8px;color:var(--muted);font-size:12px"></div>
+      <div id="rutAviso" class="aviso-caja" hidden></div>
     </div>
     <form class="edit" id="rutForm">
       <label>Fecha <input type="date" name="fecha" value="${today()}" required></label>
@@ -2359,7 +2388,7 @@ function openRutasBase(cfg) {
         <button type="submit" class="btn primary">Guardar</button>
       </div>
     </form>`;
-  const dlg = $('#dlg'); dlg.showModal(); pinta();
+  const dlg = $('#dlg'); dlg.showModal(); pinta(); pintaAvisos();
   const cerrar = () => { dlg.close(); if (volver) setTimeout(volver, 60); };
   $('#rutCancel').onclick = cerrar;
   $('#rutAdd').onclick = () => { ed.push({ h: a, sd: '', c: '', em: [] }); pinta(); };
@@ -2378,13 +2407,14 @@ function openRutasBase(cfg) {
         if (!x.em.includes(em.value)) x.em.push(em.value);
         ed.forEach((y, j) => { if (j !== i) y.em = y.em.filter(v => v !== em.value); });   // un centro, una sola ruta
       } else x.em = x.em.filter(v => v !== em.value);
-      cuentas();            // sin repintar la lista, para no perder el sitio donde vas marcando
+      cuentas(); pintaAvisos();   // sin repintar la lista, para no perder el sitio donde vas marcando
       ed.forEach((y, j) => { if (j !== i) $(`[data-lista="${j}"]`).querySelectorAll('input[data-em]').forEach(c => { c.checked = y.em.includes(c.value); }); });
       return;
     }
     const c = e.target.closest('[data-k]'); if (!c) return;
     const i = Number(c.closest('.ruta').dataset.n);
     ed[i][c.dataset.k] = c.dataset.k === 'h' ? Number(c.value) : c.value.trim();   // el destino y el servicio no cambian la lista
+    if (c.dataset.k === 'h') pinta();                                               // al cambiar de hospital se recomprueba el buzón
   });
   const br = $('#rutReset'); if (br) br.onclick = () => {
     const usuario = String(new FormData($('#rutForm')).get('usuario') || '').trim();
