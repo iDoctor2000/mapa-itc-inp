@@ -35,7 +35,7 @@
   --accent:#1F5F8B; --accent-ink:#FFFFFF; --accent-soft:#E3EEF6;
   --open:#2FA35A; --closed:#D7443E; --inp:#1290C9; --itc:#137A3B; --inpc:#D94F8C; --most:#E0851C; --most-soft:#FBEBD7;
   --vin-b:#8A6E4B; --vin-bg:#F6EDDA; --vin-pal:#EAE3D3; --vin-x:#6B5334; --vin-suave:#F3E9D6;
-  --inp-pal:#94CDE7; --itc-pal:#95C3A7; --inpc-pal:#EEB0CB; --borde-sq:#6B6862; --aspa:#3C3A36; --halo:#E8A33D; --buz:#27508F; --buz-pal:#AFC0DA;
+  --inp-pal:#94CDE7; --itc-pal:#95C3A7; --inpc-pal:#EEB0CB; --borde-sq:#6B6862; --aspa:#3C3A36; --halo:#E8A33D; --obra:#F0B429; --obra-pal:#F7E3A6; --buz:#27508F; --buz-pal:#AFC0DA;
   --d1:#2F6FBF; --d2:#0E8A7D; --d3:#C05A3E; --d4:#7A5AA8; --d5:#A07B00; --d6:#C2557A; --d7:#5C8A1E; --d8:#566E8C; --d9:#8A6B2F;
   --warn-soft:#FFF4D6; --warn-ink:#7A5200; --ok-soft:#DFF3E5; --ok-ink:#155E33; --bad-soft:#FBE1DF; --bad-ink:#8B1F1A; --inpc-soft:#FBE7F1; --inp-soft:#E2F3FB;
   --shadow:0 10px 30px rgba(24,36,31,.14);
@@ -47,7 +47,7 @@
     --accent:#6FB1E0; --accent-ink:#0F1512; --accent-soft:#1B2C39;
     --open:#37B865; --closed:#E2544E; --inp:#63C3ED; --itc:#3CBE72; --inpc:#F18BBE; --most:#F0993C; --most-soft:#3A2A16;
     --vin-b:#BCA07A; --vin-bg:#3B3327; --vin-pal:#2C271E; --vin-x:#E0CCA6; --vin-suave:#332C21;
-    --inp-pal:#39697A; --itc-pal:#2B6742; --inpc-pal:#795064; --borde-sq:#8A857B; --aspa:#E8E4DA; --halo:#F2B457; --buz:#8F98F5; --buz-pal:#3C3F6E;
+    --inp-pal:#39697A; --itc-pal:#2B6742; --inpc-pal:#795064; --borde-sq:#8A857B; --aspa:#E8E4DA; --halo:#F2B457; --obra:#F2B457; --obra-pal:#6B5323; --buz:#8F98F5; --buz-pal:#3C3F6E;
   --d1:#78B4F5; --d2:#4FD0BE; --d3:#F0997C; --d4:#B79BE8; --d5:#E0C34D; --d6:#F094B2; --d7:#A9D257; --d8:#9FB6D4; --d9:#D7AC70;
     --warn-soft:#3A3010; --warn-ink:#F3D27A; --ok-soft:#173523; --ok-ink:#9FE0B6; --bad-soft:#3E1B19; --bad-ink:#F3A9A4; --inpc-soft:#3A1E2C; --inp-soft:#14303D;
     --shadow:0 10px 30px rgba(0,0,0,.5);
@@ -58,7 +58,7 @@
   --accent:#6FB1E0; --accent-ink:#0F1512; --accent-soft:#1B2C39;
   --open:#37B865; --closed:#E2544E; --inp:#63C3ED; --itc:#3CBE72; --inpc:#F18BBE; --most:#F0993C; --most-soft:#3A2A16;
   --vin-b:#BCA07A; --vin-bg:#3B3327; --vin-pal:#2C271E; --vin-x:#E0CCA6; --vin-suave:#332C21;
-    --inp-pal:#39697A; --itc-pal:#2B6742; --inpc-pal:#795064; --borde-sq:#8A857B; --aspa:#E8E4DA; --halo:#F2B457; --buz:#8F98F5; --buz-pal:#3C3F6E;
+    --inp-pal:#39697A; --itc-pal:#2B6742; --inpc-pal:#795064; --borde-sq:#8A857B; --aspa:#E8E4DA; --halo:#F2B457; --obra:#F2B457; --obra-pal:#6B5323; --buz:#8F98F5; --buz-pal:#3C3F6E;
   --d1:#78B4F5; --d2:#4FD0BE; --d3:#F0997C; --d4:#B79BE8; --d5:#E0C34D; --d6:#F094B2; --d7:#A9D257; --d8:#9FB6D4; --d9:#D7AC70;
   --warn-soft:#3A3010; --warn-ink:#F3D27A; --ok-soft:#173523; --ok-ink:#9FE0B6; --bad-soft:#3E1B19; --bad-ink:#F3A9A4; --inpc-soft:#3A1E2C; --inp-soft:#14303D;
   --shadow:0 10px 30px rgba(0,0,0,.5);
@@ -215,6 +215,9 @@ table.fic .sq{vertical-align:-1px;cursor:default} table.fic .sq:hover{transform:
 .sq.sel{--relleno:var(--vin-bg);--pal:var(--vin-pal);--x:var(--vin-x);border-color:var(--vin-b);border-radius:1px}
 .sq.gdp{--relleno:var(--itc);--pal:var(--itc-pal)}
 .sq.gdp.prev{border-style:dashed}
+.sq.obra{background:var(--obra);background-image:none;border-color:var(--obra)}
+.sq.obra::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(0,0,0,.45)}
+.kpi.obra .v{color:var(--obra)}
 .mx td.cell.recibe{background:color-mix(in srgb, var(--buz) 10%, transparent)}
 svg .toca{cursor:pointer}
 svg .toca:hover{stroke:color-mix(in srgb, var(--accent) 22%, transparent)}
@@ -498,6 +501,7 @@ form.edit .full{grid-column:1/-1}
       <option value="auto">Con cita automática</option>
       <option value="nota">Con nota del equipo</option>
       <option value="nuevas">Añadidas a mano</option>
+      <option value="obra">En construcción</option>
       <option value="mostrador">Con mostrador pendiente</option>
     </select>
     <div class="ms">
@@ -526,6 +530,7 @@ form.edit .full{grid-column:1/-1}
     <span><i class="sq inp"></i> INP cerrada</span>
     <span><i class="sq itc open"></i> ITC abierta</span>
     <span><i class="sq itc"></i> ITC cerrada</span>
+    <span><i class="sq itc obra"></i> en construcción</span>
     <span><i class="sq itc open auto"></i> ITC con cita automática</span>
     <span><i class="sq inp open"><i class="dv"></i></i> INP que va a otro hospital (ámbar: desviada, roja: sin buzón)</span>
     <span><i class="sq inp open auto"></i> INP con cita automática en el hospital</span>
@@ -705,6 +710,11 @@ const key = (k, mod) => `${k}|${mod}`;
 const baseOpen = (k, a, mod) => !!(CELLS[`${k}|${a}`] && CELLS[`${k}|${a}`][mod] && CELLS[`${k}|${a}`][mod].length);
 const rec = (k, a, mod) => ov[a][key(k, mod)];
 const isOpen = (k, a, mod) => { const r = rec(k, a, mod); return (r && typeof r.abierta === 'boolean') ? r.abierta : baseOpen(k, a, mod); };
+// «En construcción»: ni abierta ni cerrada; el cuadrado se pinta amarillo hasta el arranque.
+const enObra = (k, a, mod) => !!(rec(k, a, mod) || {}).obra;
+const inicioDe = (k, a, mod) => (rec(k, a, mod) || {}).inicio || '';
+const arranqueDe = (k, a, mod) => (rec(k, a, mod) || {}).arranque || '';
+const fmtMom = v => !v ? '' : (v.includes('T') ? `${fmt(v.slice(0, 10))} a las ${v.slice(11, 16)}` : fmt(v));
 const changed = (k, a, mod) => { const r = rec(k, a, mod); return !!(r && typeof r.abierta === 'boolean' && r.abierta !== baseOpen(k, a, mod)); };
 const lastDate = (k, a, mod) => { const r = rec(k, a, mod); return (r && r.hist && r.hist[0]) ? r.hist[0].fecha : null; };
 const USO = DATA.uso || {};
@@ -743,6 +753,11 @@ const soloInp = (k, a) => isOpen(k, a, 'inp') && !isOpen(k, a, 'most') && !isOpe
 // «Escasa o nula cita mostrador» (30/09/2026): CM abierta con menos de 10 interconsultas en 2026
 const cmEscasa = (k, a) => isOpen(k, a, 'most') && usoCM(k, a) < POCOS;
 const enFiltro = (k, a) => F.modo === 'solo-inp' ? soloInp(k, a) : F.modo === 'cm-escasa' ? cmEscasa(k, a) : true;
+// para buscar también por el código del servicio: CMF encuentra Cirugía maxilofacial
+function codigosDe(k) {
+  if (!INP) return '';
+  return INP.filas.filter(f => f.k === k).flatMap(f => [...(f.c || []), f.svc || '']).join(' ');
+}
 const grupoDe = k => (catOv[k] && catOv[k].g) ? catOv[k].g : BYK[k].g;
 const grupos = () => { const s = [...BASE_GRUPOS, ...extraGrupos]; CAT.forEach(c => { const g = grupoDe(c.k); if (!s.includes(g)) s.push(g); }); return s; };
 
@@ -962,7 +977,7 @@ let toastT; function toast(t) { const el = $('#toast'); el.textContent = t; el.c
 const F = { q: '', g: '', a: '', modo: '' };
 function rowVisible(c) {
   if (F.g && grupoDe(c.k) !== F.g) return false;
-  if (F.q && !norm(c.e).includes(norm(F.q))) return false;
+  if (F.q && !norm([c.e, codigosDe(c.k)].join(' ')).includes(norm(F.q))) return false;
   if (F.modo) {
     const as = F.a ? [Number(F.a)] : AREAS;
     if (F.modo === 'cambios') return as.some(a => MODS.some(m => changed(c.k, a, m)));
@@ -974,6 +989,7 @@ function rowVisible(c) {
     if (F.modo === 'auto') return as.some(a => esAuto(c.k, a));
     if (F.modo === 'nota') return !!(notaDe(c.k) || {}).texto;
     if (F.modo === 'nuevas') return esNueva(c.k) || as.some(a => MODS.some(m => (rec(c.k, a, m) || {}).prueba));
+    if (F.modo === 'obra') return as.some(a => MODS.some(m => enObra(c.k, a, m)));
   }
   return true;
 }
@@ -1016,9 +1032,12 @@ function renderKpis() {
   }));
   const card = (m, lab) => `<div class="kpi ${m}"><span class="l">${lab}</span><span class="v">${n[m]}<small>de ${casillas} · ${delta(n[m] - nb[m])} desde el extracto</small></span></div>`;
   const orden = [['most', 'CM abiertas'], ['itc', 'ITC abiertas'], ['inpc', 'ITCa abiertas'], ['inp', 'INP abiertas']].filter(([m]) => modsOn[m]);
+  let obras = 0;
+  rows.forEach(c => as.forEach(a => ms.forEach(m => { if (enObra(c.k, a, m)) obras++; })));
+  const kObra = obras ? `<div class="kpi obra"><span class="l">En construcción</span><span class="v">${obras}<small>casillas en marcha</small></span></div>` : '';
   const kUso = USOINFO && modsOn.most
     ? `<div class="kpi uso"><span class="l">Uso de la CM en 2026</span><span class="v">${miles(usoTot)}<small>interconsultas · ${cmSinUso} casilla${cmSinUso === 1 ? '' : 's'} sin uso</small></span></div>` : '';
-  $('#kpis').innerHTML = orden.map(([m, l]) => card(m, l)).join('') + kUso +
+  $('#kpis').innerHTML = orden.map(([m, l]) => card(m, l)).join('') + kObra + kUso +
     `<div class="kpi"><span class="l">Movimientos</span><span class="v">${cambios}<small>${last ? 'último ' + fmtTs(last) : 'ninguno todavía'}</small></span></div>` +
     `<div class="kpi"><span class="l">Especialidades</span><span class="v">${rows.length}<small>${rows.length === CAT.length ? `en ${grupos().length} grupos` : 'de ' + CAT.length}${Object.keys(catOv).length ? ' · ' + Object.keys(catOv).length + ' reclasificadas' : ''}</small></span></div>`;
   const partes = [`<b>${rows.length}</b> ${rows.length === 1 ? 'especialidad' : 'especialidades'}`,
@@ -1067,7 +1086,7 @@ function renderMatrix() {
         const mo = pendiente(c.k, a);
         h += `<td class="cell${F.a ? ' hl' : ''}">` + (mo ? `<i class="mbadge" title="${mo} línea(s) en CITA EN MOSTRADOR pendientes de migrar">${mo}</i>` : '') + '<span class="pair">';
         ms.forEach(m => {
-          const o = isOpen(c.k, a, m), ch = changed(c.k, a, m), d = lastDate(c.k, a, m);
+          const o = isOpen(c.k, a, m), ch = changed(c.k, a, m), d = lastDate(c.k, a, m), ob = !o && enObra(c.k, a, m);
           const nu = m === 'most' && o ? usoCM(c.k, a) : 0;
           const est = m === 'most' && o ? tintaCM(nu) : '';   // el degradado solo tiñe la CM abierta
           const tUso = m === 'most' ? (o ? ` · ${miles(nu)} interconsultas en 2026` : ' · sin uso, no existe') : '';
@@ -1075,7 +1094,7 @@ function renderMatrix() {
           const hi = (m === 'inp' || m === 'inpc') && o ? hospInfo(c.k, a, m) : null;
           const auto = (m === 'itc' && esAuto(c.k, a)) || (m === 'inp' && hi && hi.auto);
           const tHosp = hi ? ` · hospital: ${hi.sigs.join(', ')}${hi.peor ? ' (' + EST[hi.peor][0].toLowerCase() + ')' : ''}` : '';
-          const b = `<button class="sq ${m}${o ? ' open' : ''}${ch ? ' chg' : ''}${pocos ? ' pocos' : ''}${auto ? ' auto' : ''}"${est ? ` style="${est}"` : ''} data-k="${c.k}" data-a="${a}" data-m="${m}" aria-label="${esc(c.e)} · Área ${a} · ${ML[m]} ${o ? 'abierta' : 'cerrada'}${tUso}${tHosp}" title="${esc(c.e)} · Área ${a} · ${ML[m]}: ${o ? 'abierta' : 'cerrada'}${d ? ' · ' + fmt(d) : ''}${tUso}${tHosp}${auto ? ' · cita automática' + (m === 'inp' ? ' en el hospital' : '') : ''}">${pocos ? nu : ''}${hi && hi.peor ? `<i class="dv ${hi.peor}"></i>` : ''}</button>`;
+          const b = `<button class="sq ${m}${o ? ' open' : ''}${ob ? ' obra' : ''}${ch ? ' chg' : ''}${pocos ? ' pocos' : ''}${auto ? ' auto' : ''}"${est ? ` style="${est}"` : ''} data-k="${c.k}" data-a="${a}" data-m="${m}" aria-label="${esc(c.e)} · Área ${a} · ${ML[m]} ${o ? 'abierta' : 'cerrada'}${tUso}${tHosp}" title="${esc(c.e)} · Área ${a} · ${ML[m]}: ${ob ? 'en construcción' + (inicioDe(c.k, a, m) ? ', prevista para el ' + fmt(inicioDe(c.k, a, m)) : '') : o ? 'abierta' + (arranqueDe(c.k, a, m) ? ', arrancó el ' + fmtMom(arranqueDe(c.k, a, m)) : '') : 'cerrada'}${d ? ' · ' + fmt(d) : ''}${tUso}${tHosp}${auto ? ' · cita automática' + (m === 'inp' ? ' en el hospital' : '') : ''}">${pocos ? nu : ''}${hi && hi.peor ? `<i class="dv ${hi.peor}"></i>` : ''}</button>`;
           h += showDates ? `<span class="u">${b}<span class="d">${d ? fmt(d).slice(0, 5) : '·'}</span></span>` : b;
         });
         h += '</span></td>';
@@ -1221,6 +1240,21 @@ function hospInfo(k, a, m) {
   });
   return { fs, peor, auto, sigs: [...sigs] };
 }
+function cajaCompasCelda(k, a, m, r) {
+  if (!INP || m === 'most') return '';
+  const fs = (m === 'inp' || m === 'inpc') ? filasDe(k).filter(f => apInfo(f, a)) : [];
+  const propias = Array.isArray(r && r.compas) ? r.compas : [];
+  const txtG = g => rutaTxt(g.map(x => ({ h: x.h, em: x.todos ? [] : x.em })));
+  return `<div class="box"><h3>Direccionamiento del COMPAS · Área ${a}</h3>
+    ${fs.map(f => `<div class="dest"><span class="h ok">${destinos(f, a).g.map(g => SIG(g.h)).join(' + ')}</span><span><b>${esc(f.n)}</b><br>
+      <small>${esc(txtG(destinos(f, a).g))}</small><br><button type="button" class="lnk" data-rutf="${f.id}">Editar sus líneas del COMPAS</button></span></div>`).join('')}
+    ${propias.length
+      ? `<div class="dest"><span class="h ok">${[...new Set(propias.map(x => Number(x.h)))].map(SIG).join(' + ')}</span><span><b>Línea puesta desde aquí</b><br>
+          <small>${esc(rutaTxt(propias))}</small><br><button type="button" class="lnk" id="rutCelda">Editar</button></span></div>`
+      : `<div style="color:var(--muted)">${fs.length ? 'Puedes añadir además una línea propia para esta interconsulta.' : 'Todavía no hay líneas del COMPAS para esta interconsulta en esta área.'}
+          <button type="button" class="lnk" id="rutCelda">${fs.length ? 'Añadir una línea' : 'Añadir direccionamiento'}</button></div>`}
+  </div>`;
+}
 function cajaHospital(k, a, m) {
   if (!INP || !isOpen(k, a, m)) return '';
   const hi = hospInfo(k, a, m);
@@ -1259,7 +1293,7 @@ function enFiltroB(f, a) {
 function filaVisibleB(f) {
   if (FB.modo === 'nuevas') return esNuevaFila(f.id);
   if (F.g && grupoF(f) !== F.g) return false;
-  if (F.q && !norm([f.n, f.id, espDe(f), f.c.join(' ')].join(' ')).includes(norm(F.q))) return false;
+  if (F.q && !norm([f.n, f.id, espDe(f), f.c.join(' '), f.svc || ''].join(' ')).includes(norm(F.q))) return false;
   if (FB.modo) { const as = F.a ? [Number(F.a)] : AREAS; return as.some(a => enFiltroB(f, a)); }
   return true;
 }
@@ -2266,10 +2300,19 @@ const rutasDeArchivo = (f, a) => {
   return [...g.values()];
 };
 
-function openRutasDlg(id, a) {
+function openRutasDlg(id, a) {          // las líneas del COMPAS de una prueba INP
   const f = BYF[id]; if (!f) return;
-  const E = INP.emi[a] || [], ov0 = rutOv(f, a);
-  let ed = (ov0 ? ov0.rutas : rutasDeArchivo(f, a)).map(x => ({ h: Number(x.h), sd: x.sd || '', c: x.c || '', em: (x.em || []).slice() }));
+  openRutasBase({ a, titulo: f.n, sub: espDe(f), clave: hk(id, 'rut'), campo: 'rutas', base: rutasDeArchivo(f, a), ov0: rutOv(f, a) });
+}
+function openRutasCelda(k, a, m) {      // líneas propias de una interconsulta del mapa que aún no está en el COMPAS
+  const c = BYK[k], r = rec(k, a, m) || {};
+  openRutasBase({ a, titulo: `${c.e} · ${ML[m]}`, sub: `Línea propia, Área ${a}`, clave: key(k, m), campo: 'compas',
+    base: [], ov0: (Array.isArray(r.compas) && r.compas.length) ? r : null, volver: () => openDlg(k, a, m) });
+}
+function openRutasBase(cfg) {
+  const { a, titulo, sub, clave, campo, base, ov0, volver } = cfg;
+  const E = INP.emi[a] || [];
+  let ed = (ov0 ? (ov0[campo] || []) : base).map(x => ({ h: Number(x.h), sd: x.sd || '', c: x.c || '', em: (x.em || []).slice() }));
   const cubiertos = () => new Set(ed.flatMap(x => x.em));
   const resto = () => ed.some(x => !x.em.length) ? [] : E.filter(e => !cubiertos().has(e));
   const cuentas = () => {
@@ -2299,7 +2342,7 @@ function openRutasDlg(id, a) {
   };
   $('#dlgIn').innerHTML = `
     <h2>Direccionamiento del COMPAS</h2>
-    <div class="meta"><span>${esc(f.n)}</span><span class="pill buz">Área ${a}</span><span>${esc(espDe(f))}</span></div>
+    <div class="meta"><span>${esc(titulo)}</span><span class="pill buz">Área ${a}</span><span>${esc(sub)}</span></div>
     <p style="margin:0;color:var(--muted);font-size:12.5px">Así sale hoy desde el Área ${a}. Puedes mandar <b>todo el área</b> a un hospital o <b>elegir centros</b> y mandarlos a otro, como hace el COMPAS. Lo que guardes aquí manda sobre el archivo y cambia las etiquetas, las flechas del circuito y los indicadores.</p>
     <div class="box"><div id="rutLista"></div>
       <div style="margin-top:8px"><button type="button" class="btn" id="rutAdd">+ Añadir ruta</button></div>
@@ -2317,7 +2360,8 @@ function openRutasDlg(id, a) {
       </div>
     </form>`;
   const dlg = $('#dlg'); dlg.showModal(); pinta();
-  $('#rutCancel').onclick = () => dlg.close();
+  const cerrar = () => { dlg.close(); if (volver) setTimeout(volver, 60); };
+  $('#rutCancel').onclick = cerrar;
   $('#rutAdd').onclick = () => { ed.push({ h: a, sd: '', c: '', em: [] }); pinta(); };
   $('#rutLista').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -2346,8 +2390,8 @@ function openRutasDlg(id, a) {
     const usuario = String(new FormData($('#rutForm')).get('usuario') || '').trim();
     if (!usuario) { toast('Indica quién registra el cambio'); return; }
     const ts = new Date().toISOString();
-    persistCells(a, { [hk(id, 'rut')]: { rutas: null, fecha: today(), usuario, ts, hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'El direccionamiento vuelve a lo que dice el COMPAS', ts }, ...((ov0 && ov0.hist) || [])].slice(0, 60) } }, 'Direccionamiento restablecido');
-    dlg.close();
+    persistCells(a, { [clave]: { ...(ov[a][clave] || {}), [campo]: null, fecha: today(), usuario, ts, hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'El direccionamiento vuelve a lo que dice el COMPAS', ts }, ...((ov0 && ov0.hist) || [])].slice(0, 60) } }, 'Direccionamiento restablecido');
+    cerrar();
   };
   $('#rutForm').onsubmit = ev => {
     ev.preventDefault();
@@ -2358,9 +2402,9 @@ function openRutasDlg(id, a) {
     if (!ed.length) { toast('Deja al menos una ruta, o usa «Volver a lo que dice el COMPAS».'); return; }
     const resumen = ed.map(x => `${x.em.length ? x.em.length + ' centros' : 'todo el área'} a ${SIG(x.h)}`).join('; ');
     const ts = new Date().toISOString(), fecha = fd.get('fecha'), nota = String(fd.get('nota') || '').trim();
-    persistCells(a, { [hk(id, 'rut')]: { rutas: ed, fecha, usuario, nota, ts,
+    persistCells(a, { [clave]: { ...(ov[a][clave] || {}), [campo]: ed, fecha, usuario, nota, ts,
       hist: [{ accion: 'rut', fecha, usuario, nota: `Desde el Área ${a}: ${resumen}${nota ? ' — ' + nota : ''}`, ts }, ...((ov0 && ov0.hist) || [])].slice(0, 60) } }, 'Direccionamiento guardado');
-    dlg.close();
+    cerrar();
   };
 }
 
@@ -2874,7 +2918,7 @@ function allEntries(includeBase) {
   return out;
 }
 const R = { q: '', a: '', m: '', base: false };
-const ACC = { abrir: ['Apertura', 'ap'], cerrar: ['Cierre', 'ci'], 'auto-si': ['Pasa a cita automática', 'au'], 'auto-no': ['Deja de ser automática', 'rs'], reset: ['Restablecido al extracto', 'rs'], base: ['Situación inicial', 'base'],
+const ACC = { abrir: ['Apertura', 'ap'], cerrar: ['Cierre', 'ci'], obra: ['Pasa a en construcción', 'base'], inicio: ['Comienzo previsto', 'rs'], arranque: ['Arranque', 'ap'], 'auto-si': ['Pasa a cita automática', 'au'], 'auto-no': ['Deja de ser automática', 'rs'], reset: ['Restablecido al extracto', 'rs'], base: ['Situación inicial', 'base'],
   'buz-si': ['Buzón montado', 'ap'], 'buz-no': ['Buzón retirado', 'ci'], modo: ['Cambia el modo de citación', 'au'], tipo: ['Cambia libera / bloquea', 'au'],
   dest: ['Cambia el destino', 'rs'], 'inc-ok': ['Incidencia resuelta', 'ap'], 'inc-re': ['Incidencia reabierta', 'ci'],
   nota: ['Nota del equipo', 'nota'], 'nota-no': ['Nota borrada', 'ci'],
@@ -2924,7 +2968,7 @@ function openDlg(k, a, m) {
   $('#dlgIn').innerHTML = `
     <h2>${esc(c.e)}</h2>
     <div class="meta"><span class="pill ${m}">${MOD_LABEL[m]}</span><span>Área ${a}</span><span>·</span><span>${esc(grupoDe(k))}</span></div>
-    <div class="state"><i class="sq ${m}${o ? ' open' : ''}"></i><div><b>${o ? 'Abierta' : 'Cerrada'}</b> actualmente${hist[0] ? ` · último movimiento ${fmt(hist[0].fecha)} (${esc(hist[0].usuario || 'sin nombre')})` : ' · según el extracto de OMI-AP'}${changed(k, a, m) ? ' · <span style="color:var(--warn-ink)">difiere del extracto</span>' : ''}</div></div>
+    <div class="state"><i class="sq ${m}${o ? ' open' : ''}${!o && enObra(k, a, m) ? ' obra' : ''}"></i><div><b>${!o && enObra(k, a, m) ? 'En construcción' : o ? 'Abierta' : 'Cerrada'}</b> actualmente${hist[0] ? ` · último movimiento ${fmt(hist[0].fecha)} (${esc(hist[0].usuario || 'sin nombre')})` : ' · según el extracto de OMI-AP'}${changed(k, a, m) ? ' · <span style="color:var(--warn-ink)">difiere del extracto</span>' : ''}</div></div>
     ${m === 'most' && USOINFO ? `<div class="box uso">
       <h3>Utilización en 2026 · del ${fmt(USOINFO.desde)} al ${fmt(USOINFO.hasta)}</h3>
       <div class="uso-cifra"><b>${miles(usoCM(k, a))}</b> <span>interconsultas por cita mostrador</span></div>
@@ -2937,15 +2981,21 @@ function openDlg(k, a, m) {
       ${basePruebas.length ? `<div><b>${ML[m]} abierta:</b> ${basePruebas.map(esc).join(' · ')}</div>` : `<div style="color:var(--muted)">Sin ${ML[m]} para esta especialidad en el área ${a}.</div>`}
       ${most.length ? `<div style="margin-top:4px"><b style="color:var(--most)">Mostrador (${most.length}):</b> ${most.map(esc).join(' · ')}</div>` : ''}
       ${(r && r.prueba) ? `<div style="margin-top:4px"><b class="nv">nueva</b> Añadida a mano: ${esc(r.prueba)}</div>` : ''}
+      ${(r && r.inicio) ? `<div style="margin-top:4px">Comienzo previsto: <b>${fmt(r.inicio)}</b></div>` : ''}
+      ${(r && r.arranque) ? `<div style="margin-top:4px">Arrancó el <b>${fmtMom(r.arranque)}</b></div>` : ''}
     </div>
     ${(m === 'inp' || m === 'inpc') ? cajaHospital(k, a, m) : ''}
+    ${cajaCompasCelda(k, a, m, r)}
     ${hist.length ? `<div class="box hist"><h3>Historial</h3><ul>${hist.map(x => `<li><span class="mono">${fmt(x.fecha)}</span><span class="pill ${(ACC[x.accion] || ['', 'rs'])[1]}">${(ACC[x.accion] || [x.accion])[0]}</span><span class="n">${esc(x.usuario || '')}${x.nota ? ' — ' + esc(x.nota) : ''}</span></li>`).join('')}</ul></div>` : ''}
     <form class="edit" id="editForm">
       <div class="seg">
         <label class="ap"><input type="radio" name="acc" value="abrir"><i class="sq ${m} open" style="width:12px;height:12px"></i> Abrir</label>
+        <label class="ap"><input type="radio" name="acc" value="obra"><i class="sq ${m} obra" style="width:12px;height:12px"></i> En construcción</label>
         <label class="ci"><input type="radio" name="acc" value="cerrar"><i class="sq ${m}" style="width:12px;height:12px"></i> Cerrar</label>
         <label class="sc"><input type="radio" name="acc" value="igual" checked> Dejar como está</label>
       </div>
+      <label>Comienzo previsto (si está en construcción) <input type="date" name="inicio" value="${esc((r && r.inicio) || '')}"></label>
+      <label>Arranque · momento exacto <input type="datetime-local" name="arranque" value="${esc((r && r.arranque) || '')}"> <button type="button" class="lnk" id="ahora" style="justify-self:start">Poner ahora</button></label>
       ${m === 'itc' ? `<label class="auto-chk full"><input type="checkbox" name="auto" ${esAuto(k, a) ? 'checked' : ''}>
         <span><b>Cita automática</b><small>El paciente sale de la consulta con la cita ya dada, sin ninguna gestión. Se marca con un halo ámbar en el mapa.</small></span></label>` : ''}
       ${!basePruebas.length ? `<label class="full">Nombre de la prueba (si la estás dando de alta) <input type="text" name="prueba" value="${esc((r && r.prueba) || '')}" placeholder="p. ej. Interconsulta Presencial Dermatología"></label>` : ''}
@@ -2961,7 +3011,14 @@ function openDlg(k, a, m) {
     </form>`;
   const dlg = $('#dlg'); dlg.showModal();
   $('#btnCancel').onclick = () => dlg.close();
+  const ah = $('#ahora'); if (ah) ah.onclick = () => {
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    $('#editForm').arranque.value = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+    const ab = $('#editForm').querySelector('input[name="acc"][value="abrir"]'); if (ab) ab.checked = true;
+  };
   $('#dlgIn').querySelectorAll('[data-ir-buz]').forEach(b => b.onclick = () => { dlg.close(); irABuzones(b.dataset.irBuz, a); });
+  $('#dlgIn').querySelectorAll('[data-rutf]').forEach(b => b.onclick = () => { dlg.close(); openRutasDlg(b.dataset.rutf, a); });
+  const rc = $('#rutCelda'); if (rc) rc.onclick = () => { dlg.close(); openRutasCelda(k, a, m); };
   const rb = $('#btnReset'); if (rb) rb.onclick = () => {
     const ts = new Date().toISOString();
     persist(a, key(k, m), { abierta: null, ts, hist: [{ accion: 'reset', fecha: today(), usuario: $('#userName').value || '', nota: '', ts }, ...hist].slice(0, 60) });
@@ -2971,6 +3028,7 @@ function openDlg(k, a, m) {
     ev.preventDefault();
     const fd = new FormData(ev.target);
     const acc = fd.get('acc'), usuario = String(fd.get('usuario') || '').trim(), ts = new Date().toISOString();
+    const nIni = String(fd.get('inicio') || ''), nArr = String(fd.get('arranque') || '');
     if (!usuario) { toast('Indica quién registra el cambio'); return; }
     try { localStorage.setItem('sms-itc-user', usuario); } catch (e) {}
     $('#userName').value = usuario;
@@ -2980,9 +3038,13 @@ function openDlg(k, a, m) {
     const previa = (r && typeof r.abierta === 'boolean') ? r.abierta : null;
     const entradas = [];
     if (acc !== 'igual') entradas.push({ accion: acc, fecha: fd.get('fecha'), usuario, nota, ts });
+    if (nIni !== ((r && r.inicio) || '')) entradas.push({ accion: 'inicio', fecha: fd.get('fecha'), usuario, nota: nIni ? `Comienzo previsto: ${fmt(nIni)}` : 'Se quita el comienzo previsto', ts });
+    if (nArr !== ((r && r.arranque) || '')) entradas.push({ accion: 'arranque', fecha: fd.get('fecha'), usuario, nota: nArr ? `Arranque: ${fmtMom(nArr)}` : 'Se quita el arranque', ts });
     if (cambiaAuto) entradas.unshift({ accion: nuevoAuto ? 'auto-si' : 'auto-no', fecha: fd.get('fecha'), usuario, nota: '', ts });
-    if (!entradas.length) { toast('No has cambiado nada: elige Abrir o Cerrar, o marca la cita automática.'); return; }
-    persist(a, key(k, m), { abierta: acc === 'igual' ? previa : (acc === 'abrir'), fecha: fd.get('fecha'), usuario, nota, ts,
+    if (!entradas.length) { toast('No has cambiado nada: elige Abrir, En construcción o Cerrar, o pon una fecha.'); return; }
+    persist(a, key(k, m), { abierta: acc === 'igual' ? previa : (acc === 'abrir' ? true : acc === 'obra' ? false : false),
+      obra: acc === 'igual' ? !!(r && r.obra) : acc === 'obra', inicio: nIni, arranque: nArr,
+      ...(Array.isArray(r && r.compas) ? { compas: r.compas } : {}), fecha: fd.get('fecha'), usuario, nota, ts,
       ...(fd.has('prueba') ? { prueba: String(fd.get('prueba') || '').trim() } : ((r && r.prueba) ? { prueba: r.prueba } : {})),
       ...(m === 'itc' ? { auto: nuevoAuto } : {}), hist: [...entradas, ...hist].slice(0, 60) });
     dlg.close();
