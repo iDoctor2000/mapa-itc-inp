@@ -216,6 +216,8 @@ table.fic .sq{vertical-align:-1px;cursor:default} table.fic .sq:hover{transform:
 .sq.gdp{--relleno:var(--itc);--pal:var(--itc-pal)}
 .sq.gdp.prev{border-style:dashed}
 .mx td.cell.recibe{background:color-mix(in srgb, var(--buz) 10%, transparent)}
+svg .toca{cursor:pointer}
+svg .toca:hover{stroke:color-mix(in srgb, var(--accent) 22%, transparent)}
 .tg.rec2{color:var(--buz);background:color-mix(in srgb, var(--buz) 14%, transparent)}
 .mk{font-style:normal;margin-left:5px;font-size:11px;vertical-align:1px}
 .mk.tel{color:var(--closed)} .mk.cit{color:var(--vin-x)}
@@ -1363,12 +1365,33 @@ const filaR = f => irec(f.id, 'fila') || {};
 const estadoR = f => filaR(f).estado || (f.gdp ? f.gdp.estado : 'no');
 const destinosR = f => {
   const o = filaR(f).dest;
-  if (o) return [Number(o)];
   const s = new Set();
+  AREAS.forEach(a => { const r = irec(f.id, a) || {}; if (r.dest) s.add(Number(r.dest)); });   // destinos puestos a mano por área
+  if (o) { s.add(Number(o)); return [...s].sort((x, y) => x - y); }
   if (f.sel) f.sel.rutas.forEach(r => { if (r[2]) s.add(r[1]); });
   if (f.gdp && f.gdp.dest) s.add(f.gdp.dest);
   return [...s].sort((x, y) => x - y);
 };
+// A dónde va lo que envía un área concreta: manda la corrección de esa casilla, luego la de la fila
+// y, si no hay ninguna, lo que dice el archivo para ese origen.
+function destArea(f, a) {
+  const r = irec(f.id, a) || {};
+  if (r.dest) return [Number(r.dest)];
+  const fr = filaR(f);
+  if (fr.dest) return [Number(fr.dest)];
+  const s = new Set();
+  if (f.sel) f.sel.rutas.forEach(x => { if (x[2] && x[0] === a) s.add(x[1]); });
+  if (!s.size && f.gdp && f.gdp.dest && (f.gdp.orig || []).includes(a)) s.add(f.gdp.dest);
+  if (!s.size) destinosR(f).forEach(d => s.add(d));
+  return [...s].sort((x, y) => x - y);
+}
+const destPrincipal = f => {
+  const c = {};
+  AREAS.forEach(a => { if (emiteSel(f, a) || emiteGdp(f, a)) destArea(f, a).forEach(d => { c[d] = (c[d] || 0) + 1; }); });
+  const e = Object.entries(c).sort((x, y) => y[1] - x[1]);
+  return e.length ? Number(e[0][0]) : null;
+};
+const destCambiado = (f, a) => !!(irec(f.id, a) || {}).dest;
 const llamadaR = f => { const r = filaR(f); return typeof r.llamada === 'boolean' ? r.llamada : !!(f.sel && f.sel.alerta.length); };
 const citaR = f => { const r = filaR(f); return typeof r.cita === 'boolean' ? r.cita : !!(f.gdp && f.gdp.cita); };
 const urgenteR = f => (f.gdp ? (f.gdp.prio || []).includes('URG') : false) || (f.sel ? (f.sel.prio || []).includes('URG') : false);
@@ -1411,19 +1434,22 @@ function renderItcr() {
   fijaCab('#ix');
 }
 function filaItcr(f, as) {
-  const dest = destinosR(f), est = estadoR(f);
+  const dest = destinosR(f), est = estadoR(f), princ = destPrincipal(f);
   const marcas = (llamadaR(f) ? '<i class="mk tel" title="Hace falta llamar por teléfono al hospital de destino">✆</i>' : '')
     + (citaR(f) ? '<i class="mk cit" title="Requiere cita en destino">◷</i>' : '');
   let h = `<tr class="row${FI.foco === f.id ? ' foco' : ''}" data-i="${f.id}"><th class="esp" title="${esc(f.n + ' · ' + (f.gdp && f.gdp.cod ? f.gdp.cod + ' · ' : '') + ((f.sel || {}).pruebas || []).join(', '))}">${esc(f.n)}${marcas}${marcaNueva(esNuevaItcr(f.id))}<span class="cod">${esc(f.svc)}</span></th>`;
   as.forEach(a => {
     if (!enFiltroR(f, a)) { h += '<td class="cell fuera"></td>'; return; }
     const s = emiteSel(f, a), g = emiteGdp(f, a), rec = dest.includes(a);
+    const dA = (s || g) ? destArea(f, a) : [];
+    const propio = dA.length === 1 && dA[0] === princ;
+    const tagD = (dA.length && !propio) ? `<i class="tg ${destCambiado(f, a) ? 'desv' : 'deriv'}" title="${esc(`Lo que envía el Área ${a} lo atiende ${listaSig(dA)}${destCambiado(f, a) ? ' (puesto a mano)' : ''}`)}">${dA.length > 2 ? `→${dA.length} hosp.` : '→' + dA.map(SIG).join('+')}</i>` : '';
     const t1 = `${f.n} · Área ${a} · vía actual entre Selenes: ${s ? 'la emite' : 'no la emite'}`;
     const t2 = `${f.n} · Área ${a} · Gestor de Peticiones: ${g ? 'la emite' : 'no la emite'}${est === 'prevista' && g ? ' (prevista)' : ''}`;
     h += `<td class="cell${rec ? ' recibe' : ''}${F.a ? ' hl' : ''}"><span class="pair">`
       + `<button class="sq sel${s ? ' open' : ''}${cambSel(f, a) ? ' chg' : ''}" data-i="${f.id}" data-a="${a}" title="${esc(t1)}" aria-label="${esc(t1)}"></button>`
       + `<button class="sq gdp${g ? ' open' : ''}${g && est === 'prevista' ? ' prev' : ''}${cambGdp(f, a) ? ' chg' : ''}" data-i="${f.id}" data-a="${a}" title="${esc(t2)}" aria-label="${esc(t2)}"></button>`
-      + (rec ? '<i class="tg rec2" title="Este hospital recibe la interconsulta">recibe</i>' : '') + '</span></td>';
+      + tagD + (rec ? '<i class="tg rec2" title="Este hospital recibe la interconsulta">recibe</i>' : '') + '</span></td>';
   });
   h += `<td class="tot"><span class="m">${AREAS.filter(a => emiteSel(f, a)).length}</span> · <span class="t">${AREAS.filter(a => emiteGdp(f, a)).length}</span> <span style="opacity:.6">de 9</span></td>`
     + `<td class="res"><div class="res-in"><button type="button" data-resr="${f.id}" title="${esc(textoItcr(f))}">${resumenCortoItcr(f)}</button>`
@@ -1435,7 +1461,12 @@ function filaItcr(f, as) {
 function resumenItcr(f) {
   const L = [], dest = destinosR(f), est = estadoR(f);
   const sel = AREAS.filter(a => emiteSel(f, a)), gdp = AREAS.filter(a => emiteGdp(f, a));
-  L.push(['Destino', dest.length ? `la atiende ${listaSig(dest)}${f.gdp && f.gdp.destSvc ? ` (servicio ${f.gdp.destSvc})` : ''}` : 'sin hospital de destino definido']);
+  const porDest = {};
+  AREAS.forEach(a => { if (emiteSel(f, a) || emiteGdp(f, a)) destArea(f, a).forEach(d => { (porDest[d] = porDest[d] || []).push(a); }); });
+  const repart = Object.entries(porDest).sort((x, y) => y[1].length - x[1].length);
+  L.push(['Destino', !dest.length ? 'sin hospital de destino definido'
+    : repart.length > 1 ? repart.map(([d, as2]) => `${SIG(Number(d))} atiende ${loDe(listaAreas(as2))}`).join('; ')
+    : `la atiende ${listaSig(dest)}${f.gdp && f.gdp.destSvc ? ` (servicio ${f.gdp.destSvc})` : ''}`]);
   L.push(['Vía actual, entre Selenes', f.sel
     ? `montada en ${listaAreas(sel)}${sel.length < 9 ? `, falta ${listaAreas(AREAS.filter(a => !sel.includes(a)))}` : ''}. Pruebas ${f.sel.pruebas.join(' y ')}`
     : 'no existe: nace directamente en el Gestor de Peticiones']);
@@ -1499,7 +1530,8 @@ function svgItcr(f) {
   const arcos = [];
   AREAS.forEach(a => {
     const s = emiteSel(f, a), g = emiteGdp(f, a);
-    dest.forEach(d => { if (s) arcos.push({ a, h: d, via: 'sel' }); if (g) arcos.push({ a, h: d, via: 'gdp' }); });
+    if (!s && !g) return;
+    destArea(f, a).forEach(d => { if (s) arcos.push({ a, h: d, via: 'sel' }); if (g) arcos.push({ a, h: d, via: 'gdp' }); });
   });
   let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Circuito de ${esc(f.n)}"><defs>${
     dest.map(d => `<marker id="rr-${d}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="${DCOL(d)}"/></marker>`).join('')}</defs>
@@ -1508,8 +1540,10 @@ function svgItcr(f) {
   arcos.forEach((x, i) => {
     const y1 = yy(x.a) + (x.via === 'gdp' ? 5 : -5), y2 = yy(x.h) + (x.via === 'gdp' ? 5 : -5);
     const x1 = xA + wA + 4, x2 = xH - 7, cx = 60 + Math.min(72, Math.abs(y2 - y1) / 2);
-    s += `<path d="M${x1},${y1} C${x1 + cx},${y1} ${x2 - cx},${y2} ${x2},${y2}" fill="none" stroke="${x.via === 'gdp' ? DCOL(x.h) : 'var(--vin-b)'}"
-      stroke-width="${x.via === 'gdp' ? 2.4 : 1.6}"${x.via === 'sel' ? ' stroke-dasharray="6 4"' : ''} stroke-linecap="round" marker-end="url(#rr-${x.h})" opacity="${x.via === 'gdp' ? .95 : .8}"><title>${esc(`Área ${x.a} → ${SIG(x.h)} · ${x.via === 'gdp' ? 'Gestor de Peticiones' : 'vía actual entre Selenes'}`)}</title></path>`;
+    const d = `M${x1},${y1} C${x1 + cx},${y1} ${x2 - cx},${y2} ${x2},${y2}`;
+    s += `<path d="${d}" fill="none" stroke="${x.via === 'gdp' ? DCOL(x.h) : 'var(--vin-b)'}"
+      stroke-width="${x.via === 'gdp' ? 2.4 : 1.6}"${x.via === 'sel' ? ' stroke-dasharray="6 4"' : ''} stroke-linecap="round" marker-end="url(#rr-${x.h})" opacity="${x.via === 'gdp' ? .95 : .8}"></path>`
+      + `<path class="toca" d="${d}" fill="none" stroke="transparent" stroke-width="12" data-arco="${f.id}|${x.a}"><title>${esc(`Área ${x.a} → ${SIG(x.h)} · ${x.via === 'gdp' ? 'Gestor de Peticiones' : 'vía actual entre Selenes'} · pulsa para cambiarlo`)}</title></path>`;
   });
   const caja = (x, y, w, txt, sub, c, gr) => `<rect x="${x}" y="${y - 13}" width="${w}" height="26" rx="6" fill="var(--surface)" stroke="${c}" stroke-width="${gr ? 1.6 : 1.3}"/>
     <text x="${x + 9}" y="${y + 4}" font-size="12" font-weight="600" fill="var(--ink)">${esc(txt)}</text>
@@ -1600,10 +1634,16 @@ function openItcrFlujo(id) {
       <span><i class="ln" style="background:var(--vin-b)"></i> vía actual, entre Selenes (discontinua)</span>
       ${dest.map(d => `<span><i class="ln" style="background:${DCOL(d)}"></i> por el Gestor hacia ${SIG(d)}</span>`).join('')}
       ${llamadaR(f) ? '<span>✆ hace falta llamar por teléfono</span>' : ''}
+      <span>Pulsa una flecha para cambiar a dónde va lo que envía esa área.</span>
     </div>
     <div class="actions"><span class="spacer"></span><button type="button" class="btn" id="ifcCerrar">Cerrar</button>
       <button type="button" class="btn primary" id="ifcFicha">Ver la ficha</button></div>`;
   const dlg = $('#dlg'); dlg.showModal();
+  $('#dlgIn').querySelector('svg').addEventListener('click', e => {
+    const p = e.target.closest('[data-arco]'); if (!p) return;
+    const [fid, ar] = p.dataset.arco.split('|');
+    dlg.close(); openItcrDlg(fid, Number(ar));
+  });
   $('#ifcCerrar').onclick = () => dlg.close();
   $('#ifcFicha').onclick = () => { dlg.close(); openItcrFicha(id); };
 }
@@ -1628,11 +1668,12 @@ function openItcrDlg(id, a) {
     <form class="edit" id="itcrCelda">
       <label class="chk full"><input type="checkbox" name="sel" ${s ? 'checked' : ''}> La emite por la vía actual, entre Selenes</label>
       <label class="chk full"><input type="checkbox" name="gdp" ${g ? 'checked' : ''}> La emite por el Gestor de Peticiones</label>
+      <label class="full">Hospital que atiende lo que envía esta área <select name="dest"><option value="">Según el archivo (${destArea(f, a).map(SIG).join(' + ') || '—'})</option>${AREAS.map(h => `<option value="${h}"${String((irec(id, a) || {}).dest || '') === String(h) ? ' selected' : ''}>${SIG(h)} · Área ${h}</option>`).join('')}</select></label>
       <label>Fecha <input type="date" name="fecha" value="${today()}" required></label>
       <label>Quién lo registra <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
       <textarea name="nota" placeholder="Observaciones (opcional)"></textarea>
       <div class="actions">
-        ${(typeof r.sel === 'boolean' || typeof r.gdp === 'boolean') ? '<button type="button" class="btn ghost" id="icReset">Restablecer al archivo</button>' : ''}
+        ${(typeof r.sel === 'boolean' || typeof r.gdp === 'boolean' || r.dest) ? '<button type="button" class="btn ghost" id="icReset">Restablecer al archivo</button>' : ''}
         <span class="spacer"></span>
         <button type="button" class="btn" id="icCancel">Cancelar</button>
         <button type="submit" class="btn primary">Guardar</button>
@@ -1644,7 +1685,7 @@ function openItcrDlg(id, a) {
   const rb = $('#icReset'); if (rb) rb.onclick = () => {
     const usuario = quien(); if (!usuario) { toast('Indica quién registra el cambio'); return; }
     const ts = new Date().toISOString();
-    persistCells(a, { [ikey(id, a)]: { sel: null, gdp: null, fecha: today(), usuario, ts, hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'Vuelve a lo que dice el archivo', ts }, ...hist].slice(0, 60) } });
+    persistCells(a, { [ikey(id, a)]: { sel: null, gdp: null, dest: null, fecha: today(), usuario, ts, hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'Vuelve a lo que dice el archivo', ts }, ...hist].slice(0, 60) } });
     dlg.close();
   };
   $('#itcrCelda').onsubmit = ev => {
@@ -1652,11 +1693,13 @@ function openItcrDlg(id, a) {
     const fd = new FormData(ev.target), usuario = quien();
     if (!usuario) { toast('Indica quién registra el cambio'); return; }
     const nS = !!fd.get('sel'), nG = !!fd.get('gdp'), ts = new Date().toISOString(), fecha = fd.get('fecha'), nota = String(fd.get('nota') || '').trim();
+    const nD = fd.get('dest') ? Number(fd.get('dest')) : null, dAnt = (irec(id, a) || {}).dest || null;
     const ent = [];
     if (nS !== s) ent.push({ accion: nS ? 'sel-si' : 'sel-no', fecha, usuario, nota, ts });
     if (nG !== g) ent.push({ accion: nG ? 'gdp-si' : 'gdp-no', fecha, usuario, nota, ts });
+    if (String(nD || '') !== String(dAnt || '')) ent.push({ accion: 'dest', fecha, usuario, nota: nD ? `Lo que envía el Área ${a} pasa a atenderlo ${SIG(nD)}${nota ? ' — ' + nota : ''}` : 'El destino vuelve al del archivo', ts });
     if (!ent.length) { toast('No has cambiado nada.'); return; }
-    persistCells(a, { [ikey(id, a)]: { sel: nS === baseSel(f, a) ? null : nS, gdp: nG === baseGdp(f, a) ? null : nG, fecha, usuario, nota, ts, hist: [...ent, ...hist].slice(0, 60) } });
+    persistCells(a, { [ikey(id, a)]: { sel: nS === baseSel(f, a) ? null : nS, gdp: nG === baseGdp(f, a) ? null : nG, dest: nD, fecha, usuario, nota, ts, hist: [...ent, ...hist].slice(0, 60) } });
     dlg.close();
   };
 }
@@ -2306,6 +2349,7 @@ function svgFlujo(f) {
     const col = DCOL(x.h);
     s += `<path d="M${x1},${y1} C${x1 + cx},${y1} ${x2 - cx},${y2.toFixed(1)} ${x2},${y2.toFixed(1)}" fill="none" stroke="${col}"
       stroke-width="${x.tipo === 'prep' ? 1.3 : gr}"${x.tipo === 'prep' ? ' stroke-dasharray="5 4"' : ''} stroke-linecap="round" marker-end="url(#fl-h${x.h})" opacity="${x.tipo === 'prep' ? .7 : .92}"><title>${esc(`Área ${x.a} → ${SIG(x.h)} · ${ETQ[x.tipo]} · ${x.todos ? 'todos los centros del área' : x.n + ' de ' + x.tot + ' emisores'}`)}</title></path>`;
+    s += `<path class="toca" d="M${x1},${y1} C${x1 + cx},${y1} ${x2 - cx},${y2.toFixed(1)} ${x2},${y2.toFixed(1)}" fill="none" stroke="transparent" stroke-width="12" data-arco="${x.a}"><title>${esc(`Área ${x.a} → ${SIG(x.h)} · pulsa para cambiar el direccionamiento`)}</title></path>`;
     if (!x.todos && x.n) s += `<text x="${((x1 + x2) / 2).toFixed(1)}" y="${((y1 + y2) / 2 - 4).toFixed(1)}" font-size="8.5" font-weight="600" text-anchor="middle" fill="${col}" stroke="var(--surface)" stroke-width="2.6" paint-order="stroke" stroke-linejoin="round">${x.n} centro${x.n === 1 ? '' : 's'}</text>`;
   });
   AREAS.forEach(a => {
@@ -2437,11 +2481,15 @@ function openFlujoDlg(k, fid, secA, secG) {
       ${dest.map(([h, n]) => `<span><i class="ln" style="background:${DCOL(h)}"></i> ${SIG(h)} · ${n} ruta${n === 1 ? '' : 's'}</span>`).join('')}
       ${conta('prep') ? '<span><i class="ln pun"></i> discontinua: ruta preparada, sin oferta en primaria</span>' : ''}
     </div>
-    <p class="help" style="margin:0;font-size:11.5px">Todas las rutas con el mismo destino se dibujan igual; el grosor va con el número de centros que la usan.
+    <p class="help" style="margin:0;font-size:11.5px">Pulsa una flecha para cambiar su direccionamiento. Todas las rutas con el mismo destino se dibujan igual; el grosor va con el número de centros que la usan.
       ${[[conta('propio'), 'al hospital de su área'], [conta('deriv'), 'derivadas'], [conta('desv'), 'desviadas'], [conta('sindest'), 'sin buzón de destino'], [conta('prep'), 'preparadas']].filter(x => x[0]).map(x => `<b>${x[0]}</b> ${x[1]}`).join(' · ')}.</p>
     <div class="actions"><span class="spacer"></span><button type="button" class="btn" id="fluCerrar">Cerrar</button>
       <button type="button" class="btn primary" data-ir-buz="${f.id}">Ver en Visión HOS</button></div>`;
   const dlg = $('#dlg'); dlg.showModal();
+  $('#dlgIn').querySelector('svg').addEventListener('click', e => {
+    const p = e.target.closest('[data-arco]'); if (!p) return;
+    dlg.close(); openRutasDlg(f.id, Number(p.dataset.arco));
+  });
   $('#fluCerrar').onclick = () => dlg.close();
   $('#dlgIn').querySelectorAll('[data-flu]').forEach(b => b.onclick = () => openFlujoDlg(k, b.dataset.flu, secA, secG));
   $('#dlgIn').querySelectorAll('[data-sect]').forEach(b => b.onclick = () => openFlujoDlg(k, f.id, Number(b.dataset.sect), secG));
@@ -2458,6 +2506,7 @@ const filasDe = k => INP ? FILAS.filter(f => f.k === k) : [];
 const listaAreas = as => !as.length ? 'ninguna área' : as.length === 9 ? 'las 9 áreas'
   : as.length === 1 ? `el Área ${as[0]}` : `las áreas ${as.slice(0, -1).join(', ')} y ${as[as.length - 1]}`;
 const listaSig = hs => yLista(hs.map(SIG));
+const loDe = s => s.startsWith('el ') ? 'lo del ' + s.slice(3) : 'lo de ' + s;
 function yLista(xs) { return xs.length < 2 ? (xs[0] || '') : `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}`; }
 
 function datosEsp(k) {
