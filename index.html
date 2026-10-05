@@ -468,6 +468,7 @@ form.edit .full{grid-column:1/-1}
       <button role="tab" aria-selected="false" data-view="buzones" data-ap>Visión HOS</button>
       <button role="tab" aria-selected="false" data-view="itcr" data-ho>ITC-R</button>
       <button role="tab" aria-selected="false" data-view="registro">Registro <span id="regCount" class="mono"></span></button>
+      <button role="tab" aria-selected="false" data-view="cotejo">Cotejo <span id="cotCount" class="mono"></span></button>
       <button role="tab" aria-selected="false" data-view="catalogo">Clasificación</button>
     </div>
     <div class="spacer"></div>
@@ -636,6 +637,21 @@ form.edit .full{grid-column:1/-1}
     <button class="btn ghost" id="expReg">Exportar registro (CSV)</button>
   </div>
   <div class="reg"><table class="rg" id="rg"></table></div>
+</section>
+
+<section id="viewCotejo" hidden>
+  <div class="tools">
+    <select id="cotFiltro" aria-label="Qué mostrar">
+      <option value="">Todas las correcciones</option>
+      <option value="ya">Solo las que el archivo ya recoge</option>
+      <option value="dif">Solo las que siguen difiriendo</option>
+    </select>
+    <button class="btn" id="cotTodas" hidden>Retirar todas las que ya recoge el archivo</button>
+    <button class="btn ghost" id="expCot">Exportar cotejo (CSV)</button>
+  </div>
+  <p class="help">Aquí se compara <b>lo que has corregido a mano</b> con <b>lo que dicen los archivos</b> (el extracto de OMI-AP, el despliegue de buzones, el COMPAS y el ITC-R). Cuando llega un archivo nuevo, las correcciones que ya recoge se pueden retirar de un clic, y las que siguen difiriendo quedan señaladas. Retirar una corrección no borra nada: deja lo que dice el archivo y queda anotado en el registro.</p>
+  <p class="help" id="cotResumen" style="color:var(--ink)"></p>
+  <div class="reg"><table class="rg" id="cot"></table></div>
 </section>
 
 <section id="viewCatalogo" hidden>
@@ -930,6 +946,15 @@ async function persistGrupos() {
   if (mode === 'db') { try { await dbWrite('config/catalogo', { extraGrupos }); } catch (e) { toast('No se pudo guardar: ' + (e.message || e)); } }
   else { saveLocal(); scheduleRemoteSave(); }
 }
+let avisoCot = false;
+function avisaCotejo() {
+  if (!$('#viewCotejo')) return;
+  const n = cotPend();
+  $('#cotCount').textContent = n ? `(${n})` : '';     // el contador de la pestaña, se vea o no la vista
+  if (avisoCot || !n) return;
+  avisoCot = true;
+  showNote(`Los archivos ya recogen <b>${n}</b> ${n === 1 ? 'corrección hecha a mano' : 'correcciones hechas a mano'}. Puedes retirarlas en <b>Cotejo</b> para que el cuadro quede limpio.`);
+}
 function showNote(t) { const n = $('#note'); n.innerHTML = t; n.classList.add('on'); }
 let toastT; function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2600); }
 
@@ -954,7 +979,7 @@ function rowVisible(c) {
 }
 
 // ---------------- render ----------------
-function render() { MEMO.clear(); sincronizaAltas(); renderGroupOptions(); renderChips(); renderKpis(); renderMatrix(); renderBuz(); renderItcr(); renderReg(); renderCat(); }
+function render() { MEMO.clear(); sincronizaAltas(); renderGroupOptions(); renderChips(); renderKpis(); renderMatrix(); renderBuz(); renderItcr(); renderReg(); renderCat(); renderCotejo(); avisaCotejo(); }
 function renderChips() {
   $('#areaChips').innerHTML = [['', 'Todas']].concat(AREAS.map(a => [String(a), 'Área ' + a]))
     .map(([v, l]) => `<button data-a="${v}" aria-pressed="${F.a === v}">${l}</button>`).join('');
@@ -1866,6 +1891,145 @@ function histBuz() {
     r.hist.forEach(hh => out.push({ ...hh, k: kk, e, g, a, m: 'buz' }));
   }));
   return out;
+}
+
+// ---------------- cotejo: lo corregido a mano frente a lo que dicen los archivos ----------------
+// Cuando llega un archivo nuevo, aquí se ve de un vistazo qué correcciones ya recoge el archivo
+// (y se pueden retirar de un clic) y cuáles siguen difiriendo.
+const K_ARCHIVO = new Set(CAT.map(c => c.k));
+const F_ARCHIVO = new Set(INP ? INP.filas.map(f => f.id) : []);
+const I_ARCHIVO = new Set(ITCR ? ITCR.filas.map(f => f.id) : []);
+const N_ARCHIVO = new Set([...CAT.map(c => norm(c.e)), ...(INP ? INP.filas.map(f => norm(f.n)) : []), ...(ITCR ? ITCR.filas.map(f => norm(f.n)) : [])]);
+const rutaTxt = rs => rs.length
+  ? rs.slice().sort((x, y) => x.h - y.h).map(x => `${(x.em || []).length ? (x.em || []).length + ' centros' : 'todo el área'} a ${SIG(Number(x.h))}`).join('; ')
+  : 'sin ruta: al hospital de su área';
+const rutaClave = rs => rs.slice().sort((x, y) => x.h - y.h || (x.em || []).length - (y.em || []).length)
+  .map(x => `${x.h}:${((x.em || []).slice().sort()).join(',')}`).join('|');
+function destAreaArchivo(f, a) {
+  const s = new Set();
+  if (f.sel) f.sel.rutas.forEach(x => { if (x[2] && x[0] === a) s.add(x[1]); });
+  if (!s.size && f.gdp && f.gdp.dest && (f.gdp.orig || []).includes(a)) s.add(f.gdp.dest);
+  return [...s].sort((x, y) => x - y);
+}
+function cotejo() {
+  const L = [];
+  const add = (x) => L.push(x);
+  // --- despliegue: modalidades abiertas o cerradas a mano ---
+  AREAS.forEach(a => Object.entries(ov[a] || {}).forEach(([kk, r]) => {
+    if (!r) return;
+    if (/^[a-z0-9-]+\|(most|inp|itc|inpc)$/.test(kk) && typeof r.abierta === 'boolean') {
+      const [k, m] = kk.split('|'); const c = BYK[k]; if (!c) return;
+      const arc = baseOpen(k, a, m);
+      add({ vista: 'Despliegue', q: `${c.e} · Área ${a}`, t: ML[m], arc: arc ? 'abierta' : 'cerrada', cua: r.abierta ? 'abierta' : 'cerrada',
+        ok: arc === r.abierta, ir: () => { verVista('matriz'); openDlg(k, a, m); },
+        ret: (usuario) => persist(a, kk, { ...r, abierta: null, hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'El archivo ya lo recoge', ts: new Date().toISOString() }, ...(r.hist || [])].slice(0, 60) }) });
+    }
+  }));
+  if (INP) AREAS.forEach(a => Object.entries(ov[a] || {}).forEach(([kk, r]) => {
+    if (!r || !kk.startsWith('h-')) return;
+    const [id, tipo] = kk.slice(2).split('|');
+    // --- buzones ---
+    if (tipo === 'buz') {
+      const f = BYF[id]; if (!f) return;
+      const e = entradaPrincipal(f, a), arcB = !!e, arcM = (e && e[2]) || 'Sin configurar', arcT = e ? e[4] : '';
+      const cuaB = typeof r.buzon === 'boolean' ? r.buzon : arcB, cuaM = r.modo || arcM, cuaT = r.tipo || arcT;
+      if (typeof r.buzon !== 'boolean' && !r.modo && !r.tipo) return;
+      add({ vista: 'Visión HOS', q: `${f.n} · ${SIG(a)}`, t: 'Buzón',
+        arc: `${arcB ? 'montado' : 'sin buzón'}${arcB ? ' · ' + arcM.toLowerCase() + (arcT ? ' · ' + (arcT === 'LIBERA' ? 'libera' : 'bloquea') : '') : ''}`,
+        cua: `${cuaB ? 'montado' : 'sin buzón'}${cuaB ? ' · ' + String(cuaM).toLowerCase() + (cuaT ? ' · ' + (cuaT === 'LIBERA' ? 'libera' : 'bloquea') : '') : ''}`,
+        ok: cuaB === arcB && String(cuaM) === String(arcM) && String(cuaT) === String(arcT),
+        ir: () => { verVista('buzones'); openBuzDlg(id, a); },
+        ret: (usuario) => persistCells(a, { [kk]: { ...r, buzon: null, modo: null, tipo: null, hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'El archivo ya lo recoge', ts: new Date().toISOString() }, ...(r.hist || [])].slice(0, 60) } }) });
+    }
+    // --- direccionamiento del COMPAS ---
+    if ((tipo === 'rut' && Array.isArray(r.rutas) && r.rutas.length) || (tipo === 'dest' && r.dest)) {
+      const f = BYF[id]; if (!f) return;
+      const arch = rutasDeArchivo(f, a);
+      const mio = tipo === 'rut' ? r.rutas : [{ h: Number(r.dest), em: [] }];
+      add({ vista: 'Visión HOS', q: `${f.n} · Área ${a}`, t: 'Direccionamiento', arc: rutaTxt(arch), cua: rutaTxt(mio),
+        ok: rutaClave(arch) === rutaClave(mio), ir: () => { verVista('buzones'); openRutasDlg(id, a); },
+        ret: (usuario) => persistCells(a, { [kk]: { ...r, ...(tipo === 'rut' ? { rutas: null } : { dest: null }), hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'El COMPAS ya lo recoge', ts: new Date().toISOString() }, ...(r.hist || [])].slice(0, 60) } }) });
+    }
+    // --- incidencias marcadas como resueltas ---
+    if (tipo === 'inc' && r.resuelta) {
+      const iid = id.slice(4), i = INC_BY[iid];
+      add({ vista: 'Visión HOS', q: i ? `${i.t}${i.a ? ' · Área ' + i.a : ''}` : iid, t: 'Incidencia resuelta',
+        arc: i ? 'sigue en el archivo' : 'ya no está en el archivo', cua: 'marcada como resuelta', ok: !i,
+        ir: () => { verVista('buzones'); FB.vista = 'inc'; $('#bVista').value = 'inc'; renderBuz(); },
+        ret: (usuario) => persistCells(a, { [kk]: { ...r, resuelta: false, hist: [{ accion: 'inc-re', fecha: today(), usuario, nota: 'La incidencia ya no está en el archivo', ts: new Date().toISOString() }, ...(r.hist || [])].slice(0, 30) } }) });
+    }
+  }));
+  if (ITCR) AREAS.forEach(a => Object.entries(ov[a] || {}).forEach(([kk, r]) => {
+    if (!r || !kk.startsWith('r-')) return;
+    const [id, tipo] = kk.slice(2).split('|');
+    const f = BYI[id]; if (!f) return;
+    if (tipo === 'fila') {
+      const arcEst = f.gdp ? f.gdp.estado : 'no', arcLl = !!(f.sel && f.sel.alerta.length), arcCi = !!(f.gdp && f.gdp.cita);
+      const partes = [];
+      if (r.estado && r.estado !== arcEst) partes.push(['Estado', EST_R[arcEst][0], EST_R[r.estado][0]]);
+      if (r.dest) partes.push(['Hospital que atiende', destinosR(f).map(SIG).join(' + ') || '—', SIG(Number(r.dest))]);
+      if (typeof r.llamada === 'boolean' && r.llamada !== arcLl) partes.push(['Llamada', arcLl ? 'sí' : 'no', r.llamada ? 'sí' : 'no']);
+      if (typeof r.cita === 'boolean' && r.cita !== arcCi) partes.push(['Cita', arcCi ? 'sí' : 'no', r.cita ? 'sí' : 'no']);
+      if (r.estado && r.estado === arcEst) partes.push(['Estado', EST_R[arcEst][0], EST_R[r.estado][0]]);
+      partes.forEach(([et, arc, cua]) => add({ vista: 'ITC-R', q: f.n, t: et, arc, cua, ok: arc === cua,
+        ir: () => { verVista('itcr'); openItcrFicha(id); },
+        ret: (usuario) => persistCells(1, { [kk]: { ...r, ...(et === 'Estado' ? { estado: null } : et === 'Hospital que atiende' ? { dest: null } : et === 'Llamada' ? { llamada: null } : { cita: null }), hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'El archivo ya lo recoge', ts: new Date().toISOString() }, ...(r.hist || [])].slice(0, 60) } }) }));
+    } else if (/^\d$/.test(tipo)) {
+      const ar = Number(tipo);
+      if (typeof r.sel === 'boolean') add({ vista: 'ITC-R', q: `${f.n} · Área ${ar}`, t: 'Vía Selene', arc: baseSel(f, ar) ? 'la pide' : 'no la pide', cua: r.sel ? 'la pide' : 'no la pide',
+        ok: r.sel === baseSel(f, ar), ir: () => { verVista('itcr'); openItcrDlg(id, ar); },
+        ret: (usuario) => persistCells(ar, { [kk]: { ...r, sel: null, hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'El archivo ya lo recoge', ts: new Date().toISOString() }, ...(r.hist || [])].slice(0, 60) } }) });
+      if (typeof r.gdp === 'boolean') add({ vista: 'ITC-R', q: `${f.n} · Área ${ar}`, t: 'Vía Gestor', arc: baseGdp(f, ar) ? 'la pide' : 'no la pide', cua: r.gdp ? 'la pide' : 'no la pide',
+        ok: r.gdp === baseGdp(f, ar), ir: () => { verVista('itcr'); openItcrDlg(id, ar); },
+        ret: (usuario) => persistCells(ar, { [kk]: { ...r, gdp: null, hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'El archivo ya lo recoge', ts: new Date().toISOString() }, ...(r.hist || [])].slice(0, 60) } }) });
+      if (r.dest) { const d = destAreaArchivo(f, ar);
+        add({ vista: 'ITC-R', q: `${f.n} · Área ${ar}`, t: 'Hospital que atiende', arc: d.length ? d.map(SIG).join(' + ') : 'sin destino propio', cua: SIG(Number(r.dest)),
+          ok: d.length === 1 && d[0] === Number(r.dest), ir: () => { verVista('itcr'); openItcrDlg(id, ar); },
+          ret: (usuario) => persistCells(ar, { [kk]: { ...r, dest: null, hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'El archivo ya lo recoge', ts: new Date().toISOString() }, ...(r.hist || [])].slice(0, 60) } }) });
+      }
+    }
+  }));
+  // --- altas a mano que el archivo ya trae ---
+  [['esp', 'Despliegue', 'Especialidad', K_ARCHIVO], ['fila', 'Visión HOS', 'Prueba INP', F_ARCHIVO], ['itcr', 'ITC-R', 'Interconsulta', I_ARCHIVO]].forEach(([t, vista, et, ids]) => {
+    altas(t).forEach(([id, r]) => {
+      const ya = ids.has(id) || N_ARCHIVO.has(norm(r.n));
+      add({ vista, q: r.n, t: `${et} añadida a mano`, arc: ya ? 'ya viene en el archivo' : 'no está en el archivo', cua: 'añadida a mano', ok: ya,
+        ir: () => { verVista(t === 'esp' ? 'matriz' : t === 'fila' ? 'buzones' : 'itcr'); },
+        ret: (usuario) => guardaAlta(t, id, { retirada: true }, 'retirada', 'El archivo ya la trae', usuario, today(), '') });
+    });
+  });
+  return L.sort((x, y) => (y.ok - x.ok) || x.vista.localeCompare(y.vista, 'es') || x.q.localeCompare(y.q, 'es'));
+}
+let COT = [];
+const cotPend = () => cotejo().filter(x => x.ok).length;
+function renderCotejo() {
+  if ($('#viewCotejo').hidden) return;
+  COT = cotejo();
+  const ya = COT.filter(x => x.ok), dif = COT.filter(x => !x.ok);
+  const v = $('#cotFiltro').value;
+  const L = v === 'ya' ? ya : v === 'dif' ? dif : COT;
+  $('#cotResumen').innerHTML = !COT.length
+    ? 'No hay nada corregido a mano: el cuadro dice exactamente lo que dicen los archivos.'
+    : `Hay <b>${COT.length}</b> ${COT.length === 1 ? 'corrección hecha' : 'correcciones hechas'} a mano. <b>${ya.length}</b> ${ya.length === 1 ? 'coincide ya' : 'coinciden ya'} con el archivo y ${ya.length === 1 ? 'se puede retirar' : 'se pueden retirar'}; <b>${dif.length}</b> ${dif.length === 1 ? 'sigue' : 'siguen'} difiriendo.`;
+  $('#cotTodas').hidden = !ya.length;
+  let h = '<thead><tr><th>Vista</th><th>Qué</th><th>Tipo</th><th>Lo que dice el archivo</th><th>Lo que dice el cuadro</th><th>Estado</th><th></th></tr></thead><tbody>';
+  if (!L.length) h += '<tr><td colspan="7" class="empty">Nada que cotejar aquí.</td></tr>';
+  L.forEach((x, i) => {
+    h += `<tr><td data-l="Vista">${esc(x.vista)}</td><td data-l="Qué"><b>${esc(x.q)}</b></td><td data-l="Tipo">${esc(x.t)}</td>
+      <td data-l="Archivo">${esc(x.arc)}</td><td data-l="Cuadro"><b>${esc(x.cua)}</b></td>
+      <td data-l="Estado"><span class="pill ${x.ok ? 'ap' : 'base'}">${x.ok ? 'ya lo recoge' : 'sigue difiriendo'}</span></td>
+      <td data-l=""><button class="btn ghost" data-cotir="${COT.indexOf(x)}">Ver</button>${x.ok ? ` <button class="btn" data-cotret="${COT.indexOf(x)}">Retirar</button>` : ''}</td></tr>`;
+  });
+  $('#cot').innerHTML = h + '</tbody>';
+  const n = ya.length;
+  $('#cotCount').textContent = n ? `(${n})` : '';
+}
+function retiraCotejo(i) {
+  const x = COT[i]; if (!x) return;
+  const usuario = $('#userName').value.trim();
+  if (!usuario) { toast('Escribe tu nombre arriba antes de retirar'); $('#userName').focus(); return; }
+  x.ret(usuario);
+  toast('Corrección retirada: queda lo que dice el archivo');
 }
 
 // ---------------- altas a mano: especialidades, modalidades, pruebas INP e ITC-R ----------------
@@ -3025,6 +3189,24 @@ $('#rBase').onchange = e => { R.base = e.target.checked; renderReg(); };
 $('#cq').oninput = e => { C.q = e.target.value; renderCat(); };
 $('#cGrupo').onchange = e => { C.g = e.target.value; renderCat(); };
 $('#cMod').onchange = e => { C.mod = e.target.checked; renderCat(); };
+$('#cotFiltro').onchange = renderCotejo;
+$('#cot').addEventListener('click', e => {
+  const v = e.target.closest('[data-cotir]'); if (v) { const x = COT[Number(v.dataset.cotir)]; if (x) x.ir(); return; }
+  const r = e.target.closest('[data-cotret]'); if (r) retiraCotejo(Number(r.dataset.cotret));
+});
+$('#cotTodas').onclick = () => {
+  const usuario = $('#userName').value.trim();
+  if (!usuario) { toast('Escribe tu nombre arriba antes de retirar'); $('#userName').focus(); return; }
+  const ya = cotejo().filter(x => x.ok);
+  if (!ya.length) { toast('No hay ninguna que el archivo ya recoja.'); return; }
+  ya.forEach(x => x.ret(usuario));
+  toast(`${ya.length} correcciones retiradas: queda lo que dicen los archivos`);
+};
+$('#expCot').onclick = () => {
+  const rows = [['Vista', 'Qué', 'Tipo', 'Lo que dice el archivo', 'Lo que dice el cuadro', 'Estado']];
+  cotejo().forEach(x => rows.push([x.vista, x.q, x.t, x.arc, x.cua, x.ok ? 'ya lo recoge el archivo' : 'sigue difiriendo']));
+  offer(`cotejo-${today()}.csv`, csv(rows), 'text/csv;charset=utf-8');
+};
 $('#sync').onclick = openSyncDlg;
 $('#masMapa').onclick = openAltaMapaDlg;
 if (INP) $('#masInp').onclick = openAltaInpDlg; else $('#masInp').hidden = true;
@@ -3087,11 +3269,11 @@ function verVista(v) {
   if (amb && amb !== ambito) verAmbito(amb);
   document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x.dataset.view === v ? 'true' : 'false'));
   $('#viewMatriz').hidden = v !== 'matriz'; $('#viewBuzones').hidden = v !== 'buzones'; $('#viewItcr').hidden = v !== 'itcr';
-  $('#viewRegistro').hidden = v !== 'registro'; $('#viewCatalogo').hidden = v !== 'catalogo';
+  $('#viewRegistro').hidden = v !== 'registro'; $('#viewCatalogo').hidden = v !== 'catalogo'; $('#viewCotejo').hidden = v !== 'cotejo';
   // búsqueda, grupo y área son comunes al mapa y a los buzones
   $('#q').value = F.q; $('#bq').value = F.q; $('#fGrupo').value = F.g; $('#bGrupo').value = F.g; $('#fArea').value = F.a; $('#bArea').value = F.a;
   if (ITCR) { $('#iq').value = F.q; $('#iArea').value = F.a; }
-  renderChips(); renderKpis(); renderMatrix(); renderBuz(); renderItcr(); renderReg(); renderCat();
+  renderChips(); renderKpis(); renderMatrix(); renderBuz(); renderItcr(); renderReg(); renderCat(); renderCotejo();
   try { localStorage.setItem('sms-itc-vista', v); } catch (e) {}
 }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => verVista(b.dataset.view));
