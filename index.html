@@ -272,6 +272,14 @@ dialog .legend{gap:4px 14px;padding:0;margin:0}
 .org-area{margin-top:10px;font:600 11px/1.2 "IBM Plex Sans Condensed",sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .org-rec{margin:8px 0 0;padding:8px 0 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
 .org-rec b{color:var(--ink);font-weight:600;white-space:nowrap}
+.ruta{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.ruta:first-child{border-top:0}
+.ruta select,.ruta input[type=text],.ruta input:not([type]){padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-size:12.5px;min-width:0;width:100%}
+.ruta .btn{padding:5px 9px;font-size:12px}
+.ruta .cen{grid-column:1/-1;max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:7px;padding:7px 9px;display:grid;grid-template-columns:1fr 1fr;gap:1px 12px;background:var(--surface-2)}
+.ruta .cen label{display:flex;gap:6px;align-items:center;font-size:11.5px;color:var(--ink)}
+.ruta .cen-bar{grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--muted);padding-bottom:4px}
+@media (max-width:720px){ .ruta{grid-template-columns:1fr 1fr} .ruta .cen{grid-template-columns:1fr} }
 .lnk{border:0;background:none;padding:0;color:var(--accent);font-weight:500;text-decoration:underline;text-underline-offset:2px}
 .rg tr.res td{opacity:.55}
 form.edit select{padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);width:100%;min-width:0;max-width:100%;text-overflow:ellipsis}
@@ -1115,6 +1123,18 @@ function cambiadoBuz(f, h) {
 function destinos(f, a) {
   return memo(`d|${f.id}|${a}`, () => {
     const E = INP.emi[a] || [];
+    const orv = rutOv(f, a);
+    if (orv) {                                   // direccionamiento corregido a mano
+      const g = orv.rutas.map(x => {
+        const h = Number(x.h), em = (x.em || []).slice();
+        return { h, todos: !em.length, n: em.length || E.length, em: em.sort(), sd: x.sd ? [x.sd] : [], c: x.c ? [x.c] : [],
+          ok: x.c ? buzCodeOn(f, x.c, h) : buzOn(f, h), codMal: [] };
+      });
+      const cub = new Set(orv.rutas.flatMap(x => x.em || []));
+      const sueltos = orv.rutas.some(x => !(x.em || []).length) ? [] : E.filter(e => !cub.has(e));
+      if (sueltos.length) g.push({ h: a, todos: false, n: sueltos.length, em: sueltos, sd: [], c: [], ok: buzOn(f, a), codMal: [] });
+      return { manual: true, sinRuta: false, g: g.sort((x, y) => (y.todos - x.todos) || (y.n - x.n) || (x.h - y.h)) };
+    }
     const od = hrec(f.id, a, 'dest');
     if (od && od.dest) { const h = Number(od.dest); return { manual: true, sinRuta: false, g: [{ h, todos: true, n: E.length, em: [], sd: [], c: [], ok: buzOn(f, h), codMal: [] }] }; }
     const rs = INP.rut[`${f.id}|${a}`] || [];
@@ -1193,7 +1213,7 @@ function enFiltroB(f, a) {
   const m = FB.modo; if (!m) return true;
   if (m === 'auto') return buzOn(f, a) && modoDe(f, a) === 'Automática';
   if (m === 'bloq') return buzOn(f, a) && modoDe(f, a) === 'Automática' && tipoDe(f, a) === 'BLOQUEA';
-  if (m === 'cambios') return cambiadoBuz(f, a) || !!(hrec(f.id, a, 'dest') || {}).dest;
+  if (m === 'cambios') return cambiadoBuz(f, a) || !!(hrec(f.id, a, 'dest') || {}).dest || !!rutOv(f, a);
   if (m === 'excep') return (INP.rut[`${f.id}|${a}`] || []).some(x => x[1] !== '*');
   if (m === 'prep') return rutaPreparada(f, a).length > 0;
   const st = estadoB(f, a);
@@ -1285,7 +1305,7 @@ function filaBuz(f, as, hijo) {
     if (!enFiltroB(f, a)) { h += '<td class="cell fuera"></td>'; return; }
     const x = apInfo(f, a), mod = x ? x[1] : 'inp', ap = apOn(f, a), hb = buzOn(f, a), st = estadoB(f, a);
     const mo = hb ? modoDe(f, a) : '', ti = hb ? tipoDe(f, a) : '';
-    const chAP = !!(hrec(f.id, a, 'dest') || {}).dest, chH = cambiadoBuz(f, a);
+    const chAP = !!(hrec(f.id, a, 'dest') || {}).dest || !!rutOv(f, a), chH = cambiadoBuz(f, a);
     let tag = '';
     if (st === 'deriv' || st === 'desv') {
       const fuera = destinos(f, a).g.filter(g => g.h !== a);
@@ -1652,7 +1672,7 @@ function datosFila(f) {
     sinCfg: hb.filter(a => ['Sin configurar', 'Sin modo'].includes(modoDe(f, a))),
     est, prep: AREAS.filter(a => rutaPreparada(f, a).length),
     excep: AREAS.filter(a => (INP.rut[`${f.id}|${a}`] || []).some(x => x[1] !== '*')),
-    camb: AREAS.filter(a => cambiadoBuz(f, a) || (hrec(f.id, a, 'dest') || {}).dest),
+    camb: AREAS.filter(a => cambiadoBuz(f, a) || (hrec(f.id, a, 'dest') || {}).dest || rutOv(f, a)),
     recibe: hb.filter(a => !apOn(f, a) && recibeDe(f, a).length),
     inc: INP.inc.filter(i => pend(i) && i.sev !== 'info'), avisos: INP.inc.filter(i => pend(i) && i.sev === 'info')
   };
@@ -1785,10 +1805,124 @@ function histBuz() {
     const [id, t] = kk.slice(2).split('|');
     let e, g;
     if (t === 'inc') { const i = INC_BY[id.slice(4)]; e = 'Incidencia · ' + (i ? i.t : id.slice(4)); g = 'Visión HOS'; }
-    else { const f = BYF[id]; e = (f ? f.n : id) + (t === 'dest' ? ` · destino desde el Área ${a}` : ` · buzón de ${SIG(a)}`); g = f ? grupoF(f) : ''; }
+    else { const f = BYF[id]; e = (f ? f.n : id) + (t === 'dest' ? ` · destino desde el Área ${a}` : t === 'rut' ? ` · direccionamiento desde el Área ${a}` : ` · buzón de ${SIG(a)}`); g = f ? grupoF(f) : ''; }
     r.hist.forEach(hh => out.push({ ...hh, k: kk, e, g, a, m: 'buz' }));
   }));
   return out;
+}
+
+// ---------------- direccionamiento del COMPAS, editable ----------------
+// Las rutas corregidas a mano se guardan en ov[área de primaria] con la clave «h-<fila>|rut»
+// y mandan sobre las del archivo: de ellas salen las etiquetas, las flechas y los indicadores.
+const rutOv = (f, a) => { const r = hrec(f.id, a, 'rut'); return (r && Array.isArray(r.rutas) && r.rutas.length) ? r : null; };
+const nomEmi = e => { const c = INP.cen[e]; if (c) return c[0]; const cab = INP.cen[e.slice(0, 5) + '10']; return cab ? 'Consultorio de ' + cab[0] : 'Emisor ' + e; };
+const rutasDeArchivo = (f, a) => {
+  const rs = INP.rut[`${f.id}|${a}`] || [];
+  const g = new Map();
+  rs.forEach(([c, e, h, sd]) => {
+    const k = `${h}|${sd}|${c}`;
+    if (!g.has(k)) g.set(k, { h, sd: sd || '', c: c || '', em: [] });
+    if (e !== '*') g.get(k).em.push(e);
+  });
+  return [...g.values()];
+};
+
+function openRutasDlg(id, a) {
+  const f = BYF[id]; if (!f) return;
+  const E = INP.emi[a] || [], ov0 = rutOv(f, a);
+  let ed = (ov0 ? ov0.rutas : rutasDeArchivo(f, a)).map(x => ({ h: Number(x.h), sd: x.sd || '', c: x.c || '', em: (x.em || []).slice() }));
+  const cubiertos = () => new Set(ed.flatMap(x => x.em));
+  const resto = () => ed.some(x => !x.em.length) ? [] : E.filter(e => !cubiertos().has(e));
+  const cuentas = () => {
+    ed.forEach((x, i) => {
+      const b = $(`[data-cen="${i}"]`); if (b) b.textContent = x.em.length ? `${x.em.length} centro${x.em.length === 1 ? '' : 's'}` : 'todo el área';
+      const s = $(`[data-lista="${i}"] .cen-bar span`); if (s) s.textContent = x.em.length ? `${x.em.length} de ${E.length}` : 'sin elegir: va todo el área';
+    });
+    const r = resto();
+    $('#rutResto').innerHTML = r.length
+      ? `Los otros <b>${r.length}</b> centros del área seguirán yendo a <b>${SIG(a)}</b>, el hospital de su área.`
+      : (ed.some(x => !x.em.length) ? 'Hay una ruta para todo el área, así que no queda ningún centro suelto.' : 'Todos los centros del área están repartidos en las rutas de arriba.');
+  };
+  const pinta = () => {
+    $('#rutLista').innerHTML = ed.map((x, i) => `
+      <div class="ruta" data-n="${i}">
+        <select data-k="h" aria-label="Hospital de destino">${AREAS.map(h => `<option value="${h}"${h === x.h ? ' selected' : ''}>${SIG(h)} · Área ${h}</option>`).join('')}</select>
+        <input data-k="sd" value="${esc(x.sd)}" placeholder="servicio de destino (opcional)" aria-label="Servicio de destino">
+        <button type="button" class="btn ghost" data-cen="${i}">${x.em.length ? `${x.em.length} centro${x.em.length === 1 ? '' : 's'}` : 'todo el área'}</button>
+        <button type="button" class="btn ghost" data-del="${i}" title="Quitar esta ruta">✕</button>
+        <div class="cen" data-lista="${i}" hidden>
+          <div class="cen-bar"><button type="button" class="lnk" data-todos="${i}">Todos</button> · <button type="button" class="lnk" data-ninguno="${i}">Ninguno</button>
+            <span>${x.em.length ? `${x.em.length} de ${E.length}` : 'sin elegir: va todo el área'}</span></div>
+          ${E.map(e => `<label><input type="checkbox" data-em="${i}" value="${e}"${x.em.includes(e) ? ' checked' : ''}> ${esc(nomEmi(e))} <span class="mono" style="color:var(--muted)">${e}</span></label>`).join('')}
+        </div>
+      </div>`).join('') || '<div style="color:var(--muted);padding:6px 0">Sin rutas: todo el área iría al hospital de su área.</div>';
+    cuentas();
+  };
+  $('#dlgIn').innerHTML = `
+    <h2>Direccionamiento del COMPAS</h2>
+    <div class="meta"><span>${esc(f.n)}</span><span class="pill buz">Área ${a}</span><span>${esc(espDe(f))}</span></div>
+    <p style="margin:0;color:var(--muted);font-size:12.5px">Así sale hoy desde el Área ${a}. Puedes mandar <b>todo el área</b> a un hospital o <b>elegir centros</b> y mandarlos a otro, como hace el COMPAS. Lo que guardes aquí manda sobre el archivo y cambia las etiquetas, las flechas del circuito y los indicadores.</p>
+    <div class="box"><div id="rutLista"></div>
+      <div style="margin-top:8px"><button type="button" class="btn" id="rutAdd">+ Añadir ruta</button></div>
+      <div id="rutResto" style="margin-top:8px;color:var(--muted);font-size:12px"></div>
+    </div>
+    <form class="edit" id="rutForm">
+      <label>Fecha <input type="date" name="fecha" value="${today()}" required></label>
+      <label>Quién lo registra <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
+      <textarea name="nota" placeholder="Observaciones (opcional): quién lo ha pedido, desde cuándo…"></textarea>
+      <div class="actions">
+        ${ov0 ? '<button type="button" class="btn ghost" id="rutReset">Volver a lo que dice el COMPAS</button>' : ''}
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="rutCancel">Cancelar</button>
+        <button type="submit" class="btn primary">Guardar</button>
+      </div>
+    </form>`;
+  const dlg = $('#dlg'); dlg.showModal(); pinta();
+  $('#rutCancel').onclick = () => dlg.close();
+  $('#rutAdd').onclick = () => { ed.push({ h: a, sd: '', c: '', em: [] }); pinta(); };
+  $('#rutLista').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.del !== undefined) { ed.splice(Number(b.dataset.del), 1); pinta(); return; }
+    if (b.dataset.cen !== undefined) { const l = $(`[data-lista="${b.dataset.cen}"]`); l.hidden = !l.hidden; return; }
+    if (b.dataset.todos !== undefined) { ed[Number(b.dataset.todos)].em = E.slice(); pinta(); $(`[data-lista="${b.dataset.todos}"]`).hidden = false; return; }
+    if (b.dataset.ninguno !== undefined) { ed[Number(b.dataset.ninguno)].em = []; pinta(); $(`[data-lista="${b.dataset.ninguno}"]`).hidden = false; }
+  });
+  $('#rutLista').addEventListener('change', e => {
+    const em = e.target.closest('input[data-em]');
+    if (em) {
+      const i = Number(em.dataset.em), x = ed[i];
+      if (em.checked) {
+        if (!x.em.includes(em.value)) x.em.push(em.value);
+        ed.forEach((y, j) => { if (j !== i) y.em = y.em.filter(v => v !== em.value); });   // un centro, una sola ruta
+      } else x.em = x.em.filter(v => v !== em.value);
+      cuentas();            // sin repintar la lista, para no perder el sitio donde vas marcando
+      ed.forEach((y, j) => { if (j !== i) $(`[data-lista="${j}"]`).querySelectorAll('input[data-em]').forEach(c => { c.checked = y.em.includes(c.value); }); });
+      return;
+    }
+    const c = e.target.closest('[data-k]'); if (!c) return;
+    const i = Number(c.closest('.ruta').dataset.n);
+    ed[i][c.dataset.k] = c.dataset.k === 'h' ? Number(c.value) : c.value.trim();   // el destino y el servicio no cambian la lista
+  });
+  const br = $('#rutReset'); if (br) br.onclick = () => {
+    const usuario = String(new FormData($('#rutForm')).get('usuario') || '').trim();
+    if (!usuario) { toast('Indica quién registra el cambio'); return; }
+    const ts = new Date().toISOString();
+    persistCells(a, { [hk(id, 'rut')]: { rutas: null, fecha: today(), usuario, ts, hist: [{ accion: 'reset', fecha: today(), usuario, nota: 'El direccionamiento vuelve a lo que dice el COMPAS', ts }, ...((ov0 && ov0.hist) || [])].slice(0, 60) } }, 'Direccionamiento restablecido');
+    dlg.close();
+  };
+  $('#rutForm').onsubmit = ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target), usuario = String(fd.get('usuario') || '').trim();
+    if (!usuario) { toast('Indica quién registra el cambio'); return; }
+    try { localStorage.setItem('sms-itc-user', usuario); } catch (e) {}
+    $('#userName').value = usuario;
+    if (!ed.length) { toast('Deja al menos una ruta, o usa «Volver a lo que dice el COMPAS».'); return; }
+    const resumen = ed.map(x => `${x.em.length ? x.em.length + ' centros' : 'todo el área'} a ${SIG(x.h)}`).join('; ');
+    const ts = new Date().toISOString(), fecha = fd.get('fecha'), nota = String(fd.get('nota') || '').trim();
+    persistCells(a, { [hk(id, 'rut')]: { rutas: ed, fecha, usuario, nota, ts,
+      hist: [{ accion: 'rut', fecha, usuario, nota: `Desde el Área ${a}: ${resumen}${nota ? ' — ' + nota : ''}`, ts }, ...((ov0 && ov0.hist) || [])].slice(0, 60) } }, 'Direccionamiento guardado');
+    dlg.close();
+  };
 }
 
 // ---------------- diálogo de buzón ----------------
@@ -1812,7 +1946,8 @@ function openBuzDlg(id, a) {
       ${x ? `<div>${ap ? `La primaria del área <b>ofrece</b> esta INP${apBase(f, a) ? '' : ' (abierta en el mapa después del extracto)'}` : (apBase(f, a) ? 'La INP está <b>cerrada en el mapa</b>: la primaria del área ya no la ofrece' : `La primaria del área <b>no ofrece</b> esta INP: no venía en el extracto de OMI-AP del ${fmt(FECHA_BASE)}. Si ya está disponible, ábrela en <b>${esc(BYK[x[0]].e)}</b> en el mapa y aquí contará al momento`)}${ap || apBase(f, a) ? ` dentro de <b>${esc(BYK[x[0]].e)}</b>${mod === 'inpc' ? ' como ITCa' : ''}` : ''}. <button type="button" class="lnk" data-ir-mapa="${x[0]}">Ver en el mapa</button></div>`
         : '<div style="color:var(--muted)">La primaria del área no ofrece esta INP en el extracto de OMI-AP.</div>'}
     </div>
-    <div class="box"><h3>Destino${D.manual ? ' · corregido a mano' : ' según el COMPAS'}</h3>
+    <div class="box"><h3>Destino${D.manual ? ' · corregido a mano' : ' según el COMPAS'}
+      <button type="button" class="lnk" id="editaRutas" style="float:right;font-size:11.5px">Editar el direccionamiento</button></h3>
       ${!hayDest ? `<div style="color:var(--muted)">No hay rutas desde el Área ${a}.</div>` : `
       ${!ap ? `<div style="color:var(--muted);margin-bottom:4px">Ruta preparada: hoy la primaria del área no la ofrece${rutas.length ? '' : ', y no hay ruta en el COMPAS'}.</div>` : ''}
       ${D.sinRuta ? `<div style="color:var(--muted);margin-bottom:4px">No hay ruta en el COMPAS: va al hospital de su área.</div>` : ''}
@@ -1850,6 +1985,7 @@ function openBuzDlg(id, a) {
     </form>`;
   const dlg = $('#dlg'); dlg.showModal();
   $('#bCancel').onclick = () => dlg.close();
+  $('#editaRutas').onclick = () => { dlg.close(); openRutasDlg(id, a); };
   $('#dlgIn').querySelectorAll('[data-ir-mapa]').forEach(b => b.onclick = () => { dlg.close(); irAMapa(b.dataset.irMapa, a); });
   const quien = () => { const u = String(new FormData($('#buzForm')).get('usuario') || '').trim(); if (u) { $('#userName').value = u; try { localStorage.setItem('sms-itc-user', u); } catch (e) {} } return u; };
   const br = $('#bReset'); if (br) br.onclick = () => {
@@ -2297,7 +2433,7 @@ const ACC = { abrir: ['Apertura', 'ap'], cerrar: ['Cierre', 'ci'], 'auto-si': ['
   'sel-si': ['Empieza a pedirla por Selene', 'ap'], 'sel-no': ['Deja de pedirla por Selene', 'ci'],
   'gdp-si': ['Pasa al Gestor de Peticiones', 'ap'], 'gdp-no': ['Sale del Gestor de Peticiones', 'ci'],
   estado: ['Cambia el estado', 'au'], 'llam-si': ['Pasa a necesitar llamada', 'au'], 'llam-no': ['Deja de necesitar llamada', 'rs'],
-  'cita-si': ['Pasa a requerir cita', 'au'], 'cita-no': ['Deja de requerir cita', 'rs'] };
+  'cita-si': ['Pasa a requerir cita', 'au'], 'cita-no': ['Deja de requerir cita', 'rs'], rut: ['Cambia el direccionamiento', 'au'] };
 function renderReg() {
   if ($('#viewRegistro').hidden) return;
   let es = allEntries(R.base);
