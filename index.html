@@ -345,6 +345,7 @@ table.rg.cat{min-width:640px}
 
 /* ---------- dialog ---------- */
 dialog{border:0;border-radius:12px;padding:0;background:var(--surface);color:var(--ink);box-shadow:var(--shadow);width:min(560px,94vw);max-height:90vh}
+dialog.ancha{width:min(1180px,96vw)}
 dialog::backdrop{background:rgba(10,20,15,.45)}
 .dlg{padding:18px 20px 20px;display:flex;flex-direction:column;gap:14px;overflow:auto;max-height:90vh}
 .dlg h2{margin:0;font:600 20px/1.2 "IBM Plex Sans Condensed",sans-serif;text-wrap:balance}
@@ -558,7 +559,7 @@ form.edit .full{grid-column:1/-1}
     <span><i class="sq itc"></i> ITC cerrada</span>
     <span><i class="sq itc obra"></i> en construcción</span>
     <span><i class="sq itc open auto"></i> ITC con cita automática</span>
-    <span><i class="sq inp open"><i class="dv"></i></i> INP que va a otro hospital (ámbar: desviada, roja: sin buzón)</span>
+    <span title="Ámbar: desviada, el hospital del área tiene el buzón y aun así el COMPAS la manda fuera. Roja: la ruta va a un hospital sin ese buzón."><i class="sq inp open"><i class="dv"></i></i> INP que va a otro hospital (ámbar: desviada, roja: sin buzón)</span>
     <span><i class="sq inp open auto"></i> INP con cita automática en el hospital</span>
     <span><i class="sq inpc open"></i> ITCa abierta</span>
     <span><i class="sq inpc"></i> ITCa cerrada</span>
@@ -599,7 +600,7 @@ form.edit .full{grid-column:1/-1}
     <button class="btn mas" id="masInp" title="Añadir una prueba INP">+ Añadir</button>
     <button class="btn ghost" id="expBuz">Exportar (CSV)</button>
   </div>
-  <p class="help" id="bHelp">Cada casilla cruza la <b>primaria</b> de un área (AP: la INP que ofrece OMI-AP, tal como está en el mapa) con el <b>hospital</b> de esa misma área (H: buzón montado en Selene). La etiqueta dice a dónde la manda el COMPAS cuando no es a su propio hospital; sin ruta en el COMPAS, la INP va al hospital de su área. Pulsa un cuadrado para ver el detalle, las rutas por centro y corregir la configuración.</p>
+  <p class="help" id="bHelp">Cada casilla cruza la <b>primaria</b> de un área (AP: la INP que ofrece OMI-AP, tal como está en el mapa) con el <b>hospital</b> de esa misma área (H: buzón montado en Selene). La etiqueta dice a dónde la manda el COMPAS cuando no es a su propio hospital; sin ruta en el COMPAS, la INP va al hospital de su área. <b>Derivada</b> es que el hospital de su área no tiene montado ese buzón y el COMPAS la lleva al que sí la atiende; <b>desviada</b> es que sí lo tiene y aun así se manda fuera, toda el área o solo desde unos centros, que es lo que conviene revisar. Pulsa un cuadrado para ver el detalle, las rutas por centro y corregir la configuración.</p>
   <div class="legend" id="bLegend">
     <span><i class="sq inp open"></i> AP · la primaria la ofrece</span>
     <span><i class="sq inp"></i> AP no la ofrece</span>
@@ -608,9 +609,9 @@ form.edit .full{grid-column:1/-1}
     <span><i class="sq buz open auto"></i> cita automática</span>
     <span><i class="sq buz open man"></i> cita manual</span>
     <span><i class="sq buz open auto"><i class="lk"></i></i> bloquea el hueco (sin marca: lo libera)</span>
-    <span><i class="tg deriv">→HCUVA</i> derivada</span>
-    <span><i class="tg desv">↗HGRS</i> desviada</span>
-    <span><i class="tg sindest">sin buzón</i> sin destino</span>
+    <span title="El hospital del área no tiene montado ese buzón, así que el COMPAS la manda al que sí la atiende."><i class="tg deriv">→HCUVA</i> derivada · su hospital no tiene ese buzón</span>
+    <span title="El hospital del área sí tiene montado ese buzón y, aun así, el COMPAS manda fuera toda el área o parte de sus centros."><i class="tg desv">↗HGRS</i> desviada · lo tiene y aun así va a otro</span>
+    <span title="La ruta apunta a un hospital que no tiene montado ese buzón: lo que se mande ahí no llega a ningún sitio."><i class="tg sindest">sin buzón</i> sin destino</span>
     <span><i class="tg recibe">←3</i> recibe de 3 áreas</span>
     <span><i class="tg prep">→HCUVA</i> ruta preparada en el COMPAS, sin oferta en la primaria</span>
     <span><i class="sq inpc open"></i> ITCa · INP citable</span>
@@ -1651,6 +1652,10 @@ function svgItcr(f) {
   return s + '</svg>';
 }
 
+// Las ventanas con tablas, gráficos o listas se abren anchas; los formularios se quedan
+// estrechos, que se leen mejor. En pantallas pequeñas manda el ancho de la pantalla.
+function abreDlg(ancha) { const d = $('#dlg'); d.classList.toggle('ancha', !!ancha); if (!d.open) d.showModal(); return d; }
+
 // ---------------- ficha de la interconsulta ----------------
 function openItcrFicha(id) {
   const f = BYI[id]; if (!f) return;
@@ -1693,7 +1698,7 @@ function openItcrFicha(id) {
         <button type="submit" class="btn primary">Guardar</button>
       </div>
     </form>`;
-  const dlg = $('#dlg'); dlg.showModal();
+  const dlg = abreDlg(true);
   $('#ifCerrar').onclick = () => dlg.close();
   const ir = $('#ifRetira'); if (ir) ir.onclick = () => retiraAlta('itcr', id, f.n);
   $('#ifFlujo').onclick = () => { dlg.close(); openItcrFlujo(id); };
@@ -1732,7 +1737,7 @@ function openItcrFlujo(id) {
     </div>
     <div class="actions"><span class="spacer"></span><button type="button" class="btn" id="ifcCerrar">Cerrar</button>
       <button type="button" class="btn primary" id="ifcFicha">Ver la ficha</button></div>`;
-  const dlg = $('#dlg'); dlg.showModal();
+  const dlg = abreDlg(true);
   $('#dlgIn').querySelector('svg').addEventListener('click', e => {
     const p = e.target.closest('[data-arco]'); if (!p) return;
     const [fid, ar] = p.dataset.arco.split('|');
@@ -1773,7 +1778,7 @@ function openItcrDlg(id, a) {
         <button type="submit" class="btn primary">Guardar</button>
       </div>
     </form>`;
-  const dlg = $('#dlg'); dlg.showModal();
+  const dlg = abreDlg();
   $('#icCancel').onclick = () => dlg.close();
   const quien = () => { const u = String(new FormData($('#itcrCelda')).get('usuario') || '').trim(); if (u) { $('#userName').value = u; try { localStorage.setItem('sms-itc-user', u); } catch (e) {} } return u; };
   const rb = $('#icReset'); if (rb) rb.onclick = () => {
@@ -1901,7 +1906,7 @@ function openPruebaDlg(fid) {
       <button type="button" class="btn" id="pfCerrar">Cerrar</button>
       ${f.k ? `<button type="button" class="btn" data-ir-mapa="${f.k}">Ver en el mapa</button>` : ''}
       <button type="button" class="btn primary" id="pfFlujo">Ver el circuito del COMPAS</button></div>`;
-  const dlg = $('#dlg'); dlg.showModal();
+  const dlg = abreDlg(true);
   $('#pfCerrar').onclick = () => dlg.close();
   const pr = $('#pfRetira'); if (pr) pr.onclick = () => retiraAlta('fila', fid, f.n);
   $('#pfFlujo').onclick = () => { dlg.close(); openFlujoDlg(f.k, f.id); };
@@ -2214,7 +2219,7 @@ function openAltaMapaDlg() {
       ${pieAlta('am')}
     </form>
     ${cajaRetiradas('esp')}`;
-  const dlg = $('#dlg'); dlg.showModal(); enlazaRetiradas();
+  const dlg = abreDlg(); enlazaRetiradas();
   const ver = t => {
     $('#altaEsp').hidden = t !== 'esp'; $('#altaMod').hidden = t !== 'mod';
     $('#dlgIn').querySelectorAll('[data-alta]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.alta === t)));
@@ -2261,7 +2266,7 @@ function openAltaInpDlg() {
       ${pieAlta('ai')}
     </form>
     ${cajaRetiradas('fila')}`;
-  const dlg = $('#dlg'); dlg.showModal(); enlazaRetiradas();
+  const dlg = abreDlg(); enlazaRetiradas();
   $('#aiCancel').onclick = () => dlg.close();
   $('#altaInp').onsubmit = ev => {
     ev.preventDefault();
@@ -2295,7 +2300,7 @@ function openAltaItcrDlg() {
       ${pieAlta('ar')}
     </form>
     ${cajaRetiradas('itcr')}`;
-  const dlg = $('#dlg'); dlg.showModal(); enlazaRetiradas();
+  const dlg = abreDlg(); enlazaRetiradas();
   $('#arCancel').onclick = () => dlg.close();
   $('#altaItcr').onsubmit = ev => {
     ev.preventDefault();
@@ -2418,7 +2423,7 @@ function openRutasBase(cfg) {
         <button type="submit" class="btn primary">Guardar</button>
       </div>
     </form>`;
-  const dlg = $('#dlg'); dlg.showModal(); pinta(); pintaAvisos();
+  const dlg = abreDlg(true); pinta(); pintaAvisos();
   const cerrar = () => { dlg.close(); if (volver) setTimeout(volver, 60); };
   $('#rutCancel').onclick = cerrar;
   $('#rutAdd').onclick = () => { ed.push({ h: a, sd: '', c: '', em: [] }); pinta(); };
@@ -2526,7 +2531,7 @@ function openBuzDlg(id, a) {
         <button type="submit" class="btn primary">Guardar</button>
       </div>
     </form>`;
-  const dlg = $('#dlg'); dlg.showModal();
+  const dlg = abreDlg(true);
   $('#bCancel').onclick = () => dlg.close();
   $('#editaRutas').onclick = () => { dlg.close(); openRutasDlg(id, a); };
   $('#dlgIn').querySelectorAll('[data-ir-mapa]').forEach(b => b.onclick = () => { dlg.close(); irAMapa(b.dataset.irMapa, a); });
@@ -2751,7 +2756,7 @@ function openFlujoDlg(k, fid, secA, secG) {
       ${[[conta('propio'), 'al hospital de su área'], [conta('deriv'), 'derivadas'], [conta('desv'), 'desviadas'], [conta('sindest'), 'sin buzón de destino'], [conta('prep'), 'preparadas']].filter(x => x[0]).map(x => `<b>${x[0]}</b> ${x[1]}`).join(' · ')}.</p>
     <div class="actions"><button type="button" class="btn" id="fluInforme" title="Imprimir o guardar lo que estás viendo: el circuito y la sectorización tal y como la tienes puesta">Informe</button><span class="spacer"></span><button type="button" class="btn" id="fluCerrar">Cerrar</button>
       <button type="button" class="btn primary" data-ir-buz="${f.id}">Ver en Visión HOS</button></div>`;
-  const dlg = $('#dlg'); dlg.showModal();
+  const dlg = abreDlg(true);
   $('#dlgIn').querySelector('svg').addEventListener('click', e => {
     const p = e.target.closest('[data-arco]'); if (!p) return;
     dlg.close(); openRutasDlg(f.id, Number(p.dataset.arco));
@@ -2862,7 +2867,7 @@ function openCompasDlg() {
     <div class="box"><h3>${vis.length} ruta${vis.length === 1 ? '' : 's'} en lo que estás mirando <small style="font-weight:400;color:var(--muted)">· ${pruebas.size} prueba${pruebas.size === 1 ? '' : 's'} · por ${CP.gr === 'hosp' ? 'hospital que recibe' : 'especialidad'}</small></h3>
       ${vis.length ? lista : '<p style="margin:0;color:var(--muted)">Nada con ese filtro.</p>'}</div>
     <div class="actions"><button type="button" class="btn" id="cpInforme">Informe</button><span class="spacer"></span><button type="button" class="btn" id="cpCerrar">Cerrar</button></div>`;
-  const dlg = $('#dlg'); if (!dlg.open) dlg.showModal();
+  const dlg = abreDlg(true);
   $('#cpCerrar').onclick = () => dlg.close();
   $('#cpInforme').onclick = () => informeDeDlg('COMPAS de interoperabilidad',
     `Direccionamiento de las INP · ${CP.a ? `Área ${CP.a} · ${SIG(CP.a)}` : 'las 9 áreas'}${CP.h ? ` → ${SIG(CP.h)}` : ''}${CP.t ? ` · ${TIPO_CP[CP.t].toLowerCase()}` : ''}${CP.q ? ` · «${CP.q}»` : ''} · ${vis.length} rutas`,
@@ -3093,7 +3098,7 @@ function openSolDlg(k) {
     </div>` : ''}
     ${cajaSM(k)}
     <div class="actions">${filasDe(k).length ? `<button type="button" class="btn" data-ir-flu="${k}">Ver el circuito del COMPAS</button>` : ''}<span class="spacer"></span><button type="button" class="btn" id="solCerrar">Cerrar</button></div>`;
-  const dlg = $('#dlg'); dlg.showModal();
+  const dlg = abreDlg(true);
   $('#solCerrar').onclick = () => dlg.close();
   $('#dlgIn').querySelectorAll('[data-ir-flu]').forEach(b => b.onclick = () => { dlg.close(); openFlujoDlg(b.dataset.irFlu); });
 }
@@ -3139,7 +3144,7 @@ function openEspDlg(k) {
         <button type="submit" class="btn primary">Guardar la nota</button>
       </div>
     </form>`;
-  const dlg = $('#dlg'); dlg.showModal();
+  const dlg = abreDlg(true);
   $('#notaCancel').onclick = () => dlg.close();
   const vf = $('#verFlujo'); if (vf) vf.onclick = () => { dlg.close(); openFlujoDlg(k); };
   const re = $('#retiraEsp'); if (re) re.onclick = () => retiraAlta('esp', k, BYK[k].e);
@@ -3277,7 +3282,7 @@ function openDlg(k, a, m) {
         <button type="submit" class="btn primary">Guardar</button>
       </div>
     </form>`;
-  const dlg = $('#dlg'); dlg.showModal();
+  const dlg = abreDlg(true);
   $('#btnCancel').onclick = () => dlg.close();
   const ah = $('#ahora'); if (ah) ah.onclick = () => {
     const d = new Date(), p = n => String(n).padStart(2, '0');
