@@ -2769,12 +2769,18 @@ function openFlujoDlg(k, fid, secA, secG) {
 // ---------------- COMPAS de interoperabilidad: todo el direccionamiento junto ----------------
 // Es el mismo dato que las flechas de cada especialidad, pero de una vez: de qué área sale cada
 // INP, a qué hospital llega y qué pruebas van por cada camino. CP guarda lo que se está mirando.
-const CP = { a: 0, h: 0, t: '', q: '' };
+const CP = { a: 0, h: 0, t: '', q: '', gr: 'esp' };
 const TIPO_CP = { propio: 'Al hospital de su área', deriv: 'Derivada', desv: 'Desviada', sindest: 'Sin buzón de destino', prep: 'Ruta preparada' };
 const TIPO_PL = { propio: n => `${n === 1 ? 'va' : 'van'} al hospital de su área`, deriv: n => `derivada${n === 1 ? '' : 's'}`,
   desv: n => `desviada${n === 1 ? '' : 's'}`, sindest: () => 'sin buzón de destino', prep: n => `preparada${n === 1 ? '' : 's'}, sin oferta todavía en primaria` };
 const deLista = as => listaAreas(as).replace(/^el /, 'del ').replace(/^las /, 'de las ');
 const TIPO_ORD = ['deriv', 'desv', 'sindest', 'prep', 'propio'];
+const TIPO_AYUDA = {
+  propio: 'La prueba la recibe el hospital del área que la envía: el circuito normal.',
+  deriv: 'El hospital del área no tiene montado ese buzón, así que el COMPAS la manda al hospital que sí la atiende.',
+  desv: 'El hospital del área sí tiene montado ese buzón y, aun así, el COMPAS manda fuera toda el área o una parte de sus centros. Es lo que conviene revisar: o sobra la ruta, o el buzón propio no se está usando.',
+  sindest: 'La ruta apunta a un hospital que no tiene montado ese buzón: lo que se mande ahí no llega a ningún sitio.',
+  prep: 'La ruta está puesta en el COMPAS pero la primaria de esa área todavía no ofrece la prueba.' };
 function arcosTodos() {
   const out = [];
   FILAS.forEach(f => arcosDe(f).forEach(x => out.push(Object.assign({ f }, x))));
@@ -2800,24 +2806,39 @@ function openCompasDlg() {
     if (!n) return `<td class="cp-0">·</td>`;
     return `<td class="${a === h ? 'cp-p' : 'cp-d'}${sel ? ' cp-sel' : ''}"><button type="button" data-cp="${a}|${h}" title="${n} ruta${n === 1 ? '' : 's'} del Área ${a} a ${SIG(h)}"${a === h ? '' : ` style="color:${DCOL(h)}"`}>${n}</button></td>`;
   };
-  // la lista, agrupada por hospital que recibe
-  const grupos = new Map();
-  vis.forEach(x => { const g = grupos.get(x.h) || []; g.push(x); grupos.set(x.h, g); });
-  const orden = [...grupos.keys()].sort((p, q) => grupos.get(q).length - grupos.get(p).length || p - q);
-  const TOPE = 400;
+  // la lista: por especialidad (lo normal) o por el hospital que recibe
+  const TOPE = 600;
   let puestos = 0;
-  const lista = orden.map(h => {
-    const g = grupos.get(h).slice().sort((p, q) => TIPO_ORD.indexOf(p.tipo) - TIPO_ORD.indexOf(q.tipo) || p.a - q.a || p.f.n.localeCompare(q.f.n, 'es'));
-    const dej = Math.max(0, TOPE - puestos); const ver = g.slice(0, dej); puestos += ver.length;
-    const des = [...new Set(g.map(x => x.a))].sort((p, q) => p - q);
-    return `<div class="cp-g"><h4><i class="ln" style="background:${DCOL(h)}"></i> ${SIG(h)} <small>recibe ${g.length} ruta${g.length === 1 ? '' : 's'} ${deLista(des)}</small></h4>
-      <ul class="cp-l">${ver.map(x => `<li><span class="pill est-${x.tipo === 'prep' ? 'nada' : x.tipo}">${esc(TIPO_CP[x.tipo])}</span>
-        <b>Área ${x.a}</b> <span class="mono" style="color:var(--muted)">→</span> ${esc(x.f.n)}
-        <small>${esc(cpTexto(x))}${x.a === x.h ? '' : ` · ${SIG(x.a)} → ${SIG(x.h)}`}</small>
-        <button type="button" class="lnk" data-cp-flu="${x.f.id}">circuito</button></li>`).join('')}
-        ${g.length > ver.length ? `<li style="color:var(--muted)">y ${g.length - ver.length} más: afina el filtro para verlas</li>` : ''}</ul></div>`;
-  }).join('');
-  const chip = (v, et, n) => `<button data-cp-t="${v}" aria-pressed="${CP.t === v}">${et}${n === undefined ? '' : ` · ${n}`}</button>`;
+  const cuantas = (g, t) => g.filter(x => x.tipo === t).length;
+  const resumenTipos = g => yLista(TIPO_ORD.filter(t => cuantas(g, t)).map(t => `${cuantas(g, t)} ${TIPO_PL[t](cuantas(g, t))}`));
+  const linea = (x, conPrueba) => `<li><span class="pill est-${x.tipo === 'prep' ? 'nada' : x.tipo}">${esc(TIPO_CP[x.tipo])}</span>
+    <b>Área ${x.a}</b> <span class="mono" style="color:var(--muted)">→</span> <b style="color:${DCOL(x.h)}">${SIG(x.h)}</b>
+    <small>${conPrueba ? `${esc(x.f.n)} · ` : ''}${esc(cpTexto(x))}</small>
+    <button type="button" class="lnk" data-cp-flu="${x.f.id}">circuito</button></li>`;
+  const bloque = (tit, sub, g, conPrueba) => {
+    const ver = g.slice(0, Math.max(0, TOPE - puestos)); puestos += ver.length;
+    return `<div class="cp-g"><h4>${tit} <small>${sub}</small></h4>
+      <ul class="cp-l">${ver.map(x => linea(x, conPrueba)).join('')}${g.length > ver.length ? `<li style="color:var(--muted)">y ${g.length - ver.length} más: afina el filtro para verlas</li>` : ''}</ul></div>`;
+  };
+  const grupos = new Map();
+  vis.forEach(x => { const kk = CP.gr === 'hosp' ? String(x.h) : (x.f.k || x.f.id); const g = grupos.get(kk) || []; g.push(x); grupos.set(kk, g); });
+  const nomEsp = kk => BYK[kk] ? BYK[kk].e : (BYF[kk] ? BYF[kk].n : kk);
+  const lista = CP.gr === 'hosp'
+    ? [...grupos.keys()].sort((p, q) => grupos.get(q).length - grupos.get(p).length || p - q).map(kk => {
+        const h = Number(kk);
+        const g = grupos.get(kk).slice().sort((p, q) => TIPO_ORD.indexOf(p.tipo) - TIPO_ORD.indexOf(q.tipo) || p.a - q.a || p.f.n.localeCompare(q.f.n, 'es'));
+        const des = [...new Set(g.map(x => x.a))].sort((p, q) => p - q);
+        return bloque(`<i class="ln" style="background:${DCOL(h)}"></i> ${SIG(h)}`,
+          `recibe ${g.length} ruta${g.length === 1 ? '' : 's'} ${deLista(des)} · ${resumenTipos(g)}`, g, true);
+      }).join('')
+    : [...grupos.keys()].sort((p, q) => nomEsp(p).localeCompare(nomEsp(q), 'es')).map(kk => {
+        const g = grupos.get(kk).slice().sort((p, q) => p.f.n.localeCompare(q.f.n, 'es') || p.a - q.a);
+        const ps = [...new Set(g.map(x => x.f.id))].map(id => BYF[id]);
+        return bloque(esc(nomEsp(kk)),
+          `${BYK[kk] ? esc(grupoDe(kk)) + ' · ' : ''}${ps.length === 1 ? `${esc(ps[0].n)} <span class="mono" title="${esc(ps[0].c.join(' · '))}">${esc(ps[0].c.slice(0, 3).join(' · '))}${ps[0].c.length > 3 ? '…' : ''}</span>` : `${ps.length} pruebas`} · ${g.length} ruta${g.length === 1 ? '' : 's'}: ${resumenTipos(g)}`,
+          g, ps.length > 1);
+      }).join('');
+  const chip = (v, et, n) => `<button data-cp-t="${v}" aria-pressed="${CP.t === v}" title="${esc(TIPO_AYUDA[v] || 'Todas las rutas, vayan donde vayan')}">${et}${n === undefined ? '' : ` · ${n}`}</button>`;
   $('#dlgIn').innerHTML = `
     <h2>COMPAS de interoperabilidad</h2>
     <div class="meta"><span>Todo el direccionamiento de las INP del SMS</span><span class="pill buz">${todos.length} rutas · ${new Set(todos.map(x => x.f.id)).size} pruebas</span></div>
@@ -2825,10 +2846,11 @@ function openCompasDlg() {
       <ul class="res-l">
         <li><b>Rutas:</b> ${todos.length} caminos entre la primaria de un área y el hospital que recibe la INP, de ${new Set(todos.map(x => x.f.id)).size} pruebas distintas.</li>
         <li><b>Reparto:</b> ${yLista(TIPO_ORD.filter(t => cuenta(t)).map(t => `${cuenta(t)} ${TIPO_PL[t](cuenta(t))}`))}${CP.a ? `, contando solo lo que sale del Área ${CP.a}` : ''}.</li>
-        <li><b>Cómo se lee:</b> «derivada» es que el hospital del área no tiene ese buzón y el COMPAS la manda a otro; «desviada» es que sí lo tiene y aun así va fuera; «ruta preparada» es que el camino está puesto pero la primaria todavía no ofrece la prueba.</li>
+        <li><b>Cómo se lee:</b> <b>derivada</b>, el hospital del área no tiene ese buzón y el COMPAS la manda al que sí la atiende; <b>desviada</b>, el hospital del área sí lo tiene y aun así se manda fuera toda el área o parte de sus centros, que es lo que conviene revisar; <b>sin buzón de destino</b>, la ruta apunta a un hospital que no lo tiene montado; <b>ruta preparada</b>, el camino está puesto pero la primaria todavía no ofrece la prueba.</li>
       </ul>
       <div class="chips" style="display:flex;padding:6px 0 0">${chip('', 'Todas', todos.length)}${TIPO_ORD.filter(t => todos.some(x => x.tipo === t)).map(t => chip(t, TIPO_CP[t], todos.filter(x => x.tipo === t).length)).join('')}</div>
       <div class="chips" style="display:flex;padding:4px 0 0"><button data-cp-a="0" aria-pressed="${!CP.a}">Las 9 áreas</button>${AREAS.map(a => `<button data-cp-a="${a}" aria-pressed="${CP.a === a}">Área ${a} · ${SIG(a)}</button>`).join('')}</div>
+      <div class="chips" style="display:flex;padding:4px 0 0"><span style="align-self:center;color:var(--muted);font-size:11px;margin-right:2px">Ordenar por</span><button data-cp-gr="esp" aria-pressed="${CP.gr !== 'hosp'}">Especialidad</button><button data-cp-gr="hosp" aria-pressed="${CP.gr === 'hosp'}">Hospital que recibe</button></div>
       <label class="cp-q">Buscar prueba, código o especialidad <input type="search" id="cpQ" value="${esc(CP.q)}" placeholder="p. ej. INPCMF, maxilofacial, HVLG"></label>
     </div>
     <div class="box"><h3>De qué área sale y a qué hospital llega</h3>
@@ -2837,7 +2859,7 @@ function openCompasDlg() {
       <tfoot><tr><th>recibe</th>${AREAS.map(h => `<th class="cp-t">${AREAS.reduce((s, a) => s + (M[`${a}|${h}`] || 0), 0)}</th>`).join('')}<th></th></tr></tfoot></table>
       <p class="help" style="margin:6px 0 0;font-size:11.5px">Las filas son el área que envía y las columnas el hospital que recibe. La diagonal es el circuito propio; lo de fuera, lo que cruza de área. Pulsa una casilla para quedarte solo con esas rutas${CP.a || CP.h ? ' · <button type="button" class="lnk" data-cp="0|0">quitar la selección</button>' : ''}.</p>
     </div>
-    <div class="box"><h3>${vis.length} ruta${vis.length === 1 ? '' : 's'} en lo que estás mirando${CP.a || CP.h || CP.t || CP.q ? ` <small style="font-weight:400;color:var(--muted)">· ${pruebas.size} prueba${pruebas.size === 1 ? '' : 's'}</small>` : ''}</h3>
+    <div class="box"><h3>${vis.length} ruta${vis.length === 1 ? '' : 's'} en lo que estás mirando <small style="font-weight:400;color:var(--muted)">· ${pruebas.size} prueba${pruebas.size === 1 ? '' : 's'} · por ${CP.gr === 'hosp' ? 'hospital que recibe' : 'especialidad'}</small></h3>
       ${vis.length ? lista : '<p style="margin:0;color:var(--muted)">Nada con ese filtro.</p>'}</div>
     <div class="actions"><button type="button" class="btn" id="cpInforme">Informe</button><span class="spacer"></span><button type="button" class="btn" id="cpCerrar">Cerrar</button></div>`;
   const dlg = $('#dlg'); if (!dlg.open) dlg.showModal();
@@ -2851,6 +2873,7 @@ function openCompasDlg() {
     openCompasDlg();
   });
   $('#dlgIn').querySelectorAll('[data-cp-t]').forEach(b => b.onclick = () => { CP.t = b.dataset.cpT; openCompasDlg(); });
+  $('#dlgIn').querySelectorAll('[data-cp-gr]').forEach(b => b.onclick = () => { CP.gr = b.dataset.cpGr; openCompasDlg(); });
   $('#dlgIn').querySelectorAll('[data-cp-a]').forEach(b => b.onclick = () => { CP.a = Number(b.dataset.cpA); openCompasDlg(); });
   $('#dlgIn').querySelectorAll('[data-cp-flu]').forEach(b => b.onclick = () => { const f = BYF[b.dataset.cpFlu]; dlg.close(); openFlujoDlg(f.k, f.id); });
   const q = $('#cpQ');
