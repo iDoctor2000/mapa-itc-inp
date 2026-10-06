@@ -547,7 +547,7 @@ form.edit .full{grid-column:1/-1}
     <button class="btn mas" id="masMapa" title="Añadir una especialidad o una modalidad nueva">+ Añadir</button>
     <button class="btn ghost" id="expMatriz">Exportar despliegue (CSV)</button>
     <button class="btn ghost" id="expInforme" title="Tabla con el resultado del filtro actual, para compartir o imprimir en PDF">Exportar informe</button>
-    <button class="btn ghost" id="expAreas" title="Informe interactivo de cita mostrador escasa para enviar a las áreas: marcan lo que proponen cerrar y te lo devuelven">Informe para las áreas</button>
+    <button class="btn ghost" id="expAreas" title="Informe interactivo de la cita mostrador para enviar a las áreas: marcan lo que proponen cerrar y te lo devuelven">Informe para las áreas</button>
     <button class="btn ghost" id="impAreas" title="Cargar las respuestas que te devuelvan las áreas">Respuestas de las áreas</button>
     <button class="btn ghost" id="expEstado" title="Guarda todos los cambios y la clasificación en un archivo">Guardar estado (JSON)</button>
     <button class="btn ghost" id="impEstado" title="Carga un archivo de estado guardado con este botón">Cargar estado…</button>
@@ -1670,11 +1670,11 @@ function abreDlg(ancha) { const d = $('#dlg'); d.classList.toggle('ancha', !!anc
 function datosInformeAreas() {
   const filas = [];
   grupos().forEach(g => {
-    CAT.filter(c => grupoDe(c.k) === g && AREAS.some(a => cmEscasa(c.k, a)))
+    CAT.filter(c => grupoDe(c.k) === g && AREAS.some(a => isOpen(c.k, a, 'most')))
       .sort((x, y) => x.e.localeCompare(y.e, 'es'))
       .forEach(c => {
         const cel = {};
-        AREAS.forEach(a => { cel[a] = !isOpen(c.k, a, 'most') ? 'x' : (usoCM(c.k, a) < POCOS ? usoCM(c.k, a) : '+'); });
+        AREAS.forEach(a => { cel[a] = isOpen(c.k, a, 'most') ? usoCM(c.k, a) : 'x'; });
         filas.push({ g, e: c.e, k: c.k, c: cel });
       });
   });
@@ -1684,12 +1684,13 @@ function datosInformeAreas() {
 }
 function informeAreasHTML() {
   const D = datosInformeAreas();
-  const celdas = D.filas.reduce((s, f) => s + AREAS.filter(a => typeof f.c[a] === 'number').length, 0);
+  const abiertas = D.filas.reduce((s, f) => s + AREAS.filter(a => typeof f.c[a] === 'number').length, 0);
+  const escasas = D.filas.reduce((s, f) => s + AREAS.filter(a => typeof f.c[a] === 'number' && f.c[a] < POCOS).length, 0);
   const ceros = D.filas.reduce((s, f) => s + AREAS.filter(a => f.c[a] === 0).length, 0);
   const datos = JSON.stringify(D).replace(/</g, '\\u003c');
   const per = D.periodo ? `uso de la cita mostrador del ${fmt(D.periodo.desde)} al ${fmt(D.periodo.hasta)} · ` : '';
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cita mostrador con uso escaso o nulo · respuesta del área</title>
+<title>Revisión de la cita mostrador · respuesta del área</title>
 <style>
 :root{--bg:#FBFAF7;--surface:#fff;--ink:#18241F;--muted:#5C6C66;--line:#D5DDD8;--line2:#B9C5BF;--ok:#1F7A4D;--ok-s:#E3F2E8;--bad:#A3341F;--bad-s:#FBE6E0;--warn:#8A6E4B;--warn-s:#F6EDDA;--azul:#1F5F8B}
 *{box-sizing:border-box}
@@ -1715,7 +1716,8 @@ tbody th{text-align:left;font-weight:500;position:sticky;left:0;background:var(-
 tr.g th{background:#F3F6F3;text-transform:uppercase;letter-spacing:.04em;font-size:11px;font-weight:700;text-align:left;position:sticky;left:0;z-index:3}
 td.x{color:#9AA7A1;font-size:11px} td.p{font-weight:700;color:var(--warn)}
 td.mia{padding:0}
-td.mia button{width:100%;padding:4px 6px;border:0;background:none;font:inherit;font-weight:700;color:var(--warn);cursor:pointer;border-radius:0}
+td.mia button{width:100%;padding:4px 6px;border:0;background:none;font:inherit;font-weight:600;color:var(--muted);cursor:pointer;border-radius:0}
+td.mia.poco button{color:var(--warn);font-weight:700}
 td.mia button:hover{background:#F3F6F3}
 td.mia.cerrar button{background:var(--bad-s);color:var(--bad)} td.mia.mantener button{background:var(--ok-s);color:var(--ok)}
 th.col,td.col{background:#F7FAF8}
@@ -1741,10 +1743,10 @@ button.b:disabled{opacity:.5;cursor:not-allowed}
 }
 .idprint{display:none;font-size:13px;margin:0 0 10px}
 </style></head><body><div class="pg">
-<h1>Cita mostrador con uso escaso o nulo</h1>
+<h1>Revisión de la cita mostrador</h1>
 <p class="sub">Interconsultas de Atención Primaria · Servicio Murciano de Salud · extracto OMI-AP del ${fmt(D.extracto)} · ${per}informe del ${fmt(D.generado)}</p>
-<div class="res"><b>${celdas}</b> casillas con cita mostrador abierta y menos de 10 interconsultas en 2026, en <b>${D.filas.length}</b> especialidades: <b>${ceros}</b> sin ningún uso y <b>${celdas - ceros}</b> con entre 1 y 9.<br>
-<small>Se pide a cada área que revise las casillas de su columna y señale cuáles propone <b>cerrar</b> y cuáles quiere <b>mantener abiertas</b>.</small></div>
+<div class="res"><b>${abiertas}</b> casillas con cita mostrador abierta en <b>${D.filas.length}</b> especialidades. <b>${escasas}</b> tuvieron menos de 10 interconsultas en 2026, <b>${ceros}</b> de ellas ninguna: son el motivo del informe, pero <b>se puede marcar cualquiera</b>.<br>
+<small>Se pide a cada área que revise las casillas de su columna y señale cuáles propone <b>cerrar</b> y cuáles quiere <b>mantener abiertas</b>. Diez interconsultas al año ya es muy poco, y una con más uso también se puede cerrar si en su lugar queda la <b>INP como vía única</b>.</small></div>
 <p class="idprint" id="idprint"></p>
 <div class="caja"><h2>Quién responde</h2>
   <div class="id">
@@ -1755,10 +1757,10 @@ button.b:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </div>
 <div class="leg">
-  <span><b>Cada casilla</b> da las interconsultas por cita mostrador en 2026 (0 a 9)</span>
+  <span><b>Cada casilla</b> da las interconsultas por cita mostrador en 2026</span>
+  <span><b>En ámbar</b>, las que no llegan a 10</span>
   <span><b>cerrada</b>: el área no tiene cita mostrador para esa especialidad</span>
-  <span><b>≥10</b>: la tiene y se usa 10 veces o más</span>
-  <span>Pulsa una casilla de tu columna: <span class="mk c">cerrar</span> → <span class="mk m">mantener</span> → sin decidir</span>
+  <span>Pulsa cualquier casilla de tu columna: <span class="mk c">cerrar</span> → <span class="mk m">mantener</span> → sin decidir</span>
 </div>
 <div class="tw"><table id="tb"></table></div>
 <div class="caja" style="margin-top:14px"><h2>Lo que has marcado · <span id="cuenta">nada todavía</span></h2>
@@ -1790,11 +1792,12 @@ function fecha(d){ return dosD(d.getDate()) + '/' + dosD(d.getMonth()+1) + '/' +
 function hora(d){ return dosD(d.getHours()) + ':' + dosD(d.getMinutes()); }
 function listo(){ return !!(S.a && S.nom.trim()); }
 function marcables(f){ var n=0; AS.forEach(function(a){ if (typeof f.c[a] === 'number') n++; }); return n; }
+function escasasF(f){ var n=0; AS.forEach(function(a){ if (typeof f.c[a] === 'number' && f.c[a] < 10) n++; }); return n; }
 
 function tabla(){
   var h = '<thead><tr><th style="text-align:left">Especialidad</th>';
   AS.forEach(function(a){ h += '<th class="' + (String(a)===String(S.a)?'col':'') + '">Área ' + a + '<br>' + esc(D.sig[a]) + '</th>'; });
-  h += '<th>Casillas</th></tr></thead><tbody>';
+  h += '<th>Abiertas<br>(con &#60;10)</th></tr></thead><tbody>';
   var gr = '';
   D.filas.forEach(function(f){
     if (f.g !== gr) { gr = f.g; h += '<tr class="g"><th colspan="' + (AS.length+2) + '">' + esc(gr) + '</th></tr>'; }
@@ -1802,13 +1805,13 @@ function tabla(){
     AS.forEach(function(a){
       var v = f.c[a], mia = String(a) === String(S.a), col = mia ? ' col' : '';
       if (v === 'x') { h += '<td class="x' + col + '">cerrada</td>'; return; }
-      if (v === '+') { h += '<td class="n' + col + '">&#8805;10</td>'; return; }
-      if (!mia) { h += '<td class="p">' + v + '</td>'; return; }
+      var poco = v < 10;
+      if (!mia) { h += '<td class="' + (poco ? 'p' : 'n') + col + '">' + v + '</td>'; return; }
       var mk = (S.m[f.k] || {}).acc || '';
       var et = mk === 'cerrar' ? 'cerrar' : mk === 'mantener' ? 'mantener' : '';
-      h += '<td class="mia col ' + mk + '"><button type="button" data-k="' + esc(f.k) + '" data-v="' + v + '" title="' + esc(f.e) + ' · Área ' + a + ': ' + v + ' interconsultas en 2026. Pulsa para proponer el cierre.">' + v + (et ? ' · ' + et : '') + '</button></td>';
+      h += '<td class="mia col' + (poco ? ' poco' : '') + ' ' + mk + '"><button type="button" data-k="' + esc(f.k) + '" data-v="' + v + '" title="' + esc(f.e) + ' · Área ' + a + ': ' + v + ' interconsultas por cita mostrador en 2026. Pulsa para proponer el cierre.">' + v + (et ? ' · ' + et : '') + '</button></td>';
     });
-    h += '<td class="n">' + marcables(f) + '</td></tr>';
+    h += '<td class="n" title="Casillas con cita mostrador abierta · entre paréntesis, las que no llegan a 10 usos">' + marcables(f) + ' <small>(' + escasasF(f) + ')</small></td></tr>';
   });
   document.getElementById('tb').innerHTML = h + '</tbody>';
 }
@@ -1855,7 +1858,7 @@ document.getElementById('tb').addEventListener('click', function(ev){
   if (!sig) delete S.m[k];
   else S.m[k] = { acc: sig, motivo: r.motivo || '', ts: d.toISOString(), f: fecha(d), h: hora(d), uso: uso(k) };
   guarda();
-  b.parentNode.className = 'mia col ' + sig;
+  b.parentNode.className = 'mia col' + (Number(b.getAttribute('data-v')) < 10 ? ' poco' : '') + ' ' + sig;
   b.textContent = b.getAttribute('data-v') + (sig ? ' \u00b7 ' + sig : '');
   panel();
 });
@@ -1873,7 +1876,7 @@ function respuesta(){
 }
 function resumen(){
   var R = respuesta(), L = [];
-  L.push('RESPUESTA DEL ÁREA ' + R.area + ' · ' + R.sig + ' — Cita mostrador con uso escaso o nulo');
+  L.push('RESPUESTA DEL ÁREA ' + R.area + ' · ' + R.sig + ' — Revisión de la cita mostrador');
   L.push('Responde: ' + R.usuario + (R.puesto ? ' (' + R.puesto + ')' : ''));
   L.push('Fecha: ' + fecha(new Date()) + ' a las ' + hora(new Date()) + ' · informe del ' + R.informe + ' · extracto OMI-AP del ' + R.extracto);
   L.push('');
@@ -1971,7 +1974,7 @@ function openRespDlg() {
   };
   $('#dlgIn').innerHTML = `
     <h2>Respuestas de las áreas</h2>
-    <div class="meta"><span>Cita mostrador con uso escaso o nulo</span><span class="pill buz">${Object.keys(regs).length} respuesta${Object.keys(regs).length === 1 ? '' : 's'} · ${fs.length} casilla${fs.length === 1 ? '' : 's'} marcadas</span></div>
+    <div class="meta"><span>Revisión de la cita mostrador</span><span class="pill buz">${Object.keys(regs).length} respuesta${Object.keys(regs).length === 1 ? '' : 's'} · ${fs.length} casilla${fs.length === 1 ? '' : 's'} marcadas</span></div>
     <div class="box"><h3>Cargar lo que te han devuelto</h3>
       <p style="margin:0 0 6px;color:var(--muted);font-size:12px">Vale el archivo <b>.json</b> que descarga el informe o el <b>resumen pegado</b> del correo (con la línea final que no hay que borrar). Puedes cargar varios a la vez.</p>
       <div class="actions" style="margin:0 0 6px"><button type="button" class="btn" id="rspFileBtn">Elegir archivos…</button><input type="file" id="rspFile" accept="application/json,.json,.txt" multiple hidden></div>
