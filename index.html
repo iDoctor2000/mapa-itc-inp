@@ -1700,6 +1700,7 @@ function abreDlg(ancha) { const d = $('#dlg'); d.classList.toggle('ancha', !!anc
 // PORTAL DE RESPUESTAS (03/11/2026): dirección del servicio que recibe lo que marcan las
 // áreas y que devuelve, en JSON, todo lo recibido. Vacía, el informe sigue funcionando por
 // archivo y por correo. Es el único sitio donde hay que ponerla.
+const PORTAL_CLAVE = false;   // true: el portal pide la contraseña del cuadro; false: se abre directo
 const PORTAL_URL = 'https://script.google.com/macros/s/AKfycbzMa7H5VvgWgtidMkqMQ59H72R8fLcvm1k5fLjWIzwUf-dfEIJJOXDiCFAqy6w6slZ-Fw/exec';
 
 // ---------------- informe interactivo para las áreas (06/10/2026) ----------------
@@ -1718,7 +1719,7 @@ function datosInformeAreas() {
         filas.push({ g, e: c.e, k: c.k, c: cel });
       });
   });
-  return { tipo: 'informe-cm-escasa', v: 1, extracto: FECHA_BASE, generado: today(), portal: PORTAL_URL, check: CHECK,
+  return { tipo: 'informe-cm-escasa', v: 1, extracto: FECHA_BASE, generado: today(), portal: PORTAL_URL, check: PORTAL_CLAVE ? CHECK : null,
     periodo: USOINFO ? { desde: USOINFO.desde, hasta: USOINFO.hasta } : null,
     sig: Object.fromEntries(AREAS.map(a => [a, SIG(a)])), filas };
 }
@@ -1795,7 +1796,7 @@ body.locked #gate{display:flex}
 #gate button{width:100%;justify-content:center}
 #gate .firma{margin-top:16px;text-align:center;color:#2E7D8F;font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em}
 </style></head><body>
-<div id="gate"><form id="gateForm">
+${D.check ? `<div id="gate"><form id="gateForm">
   <h1>Revisión de la cita mostrador</h1>
   <p>Interconsultas de Atención Primaria · Servicio Murciano de Salud. Escribe la contraseña del cuadro para ver el informe y responder.</p>
   <input type="password" id="gatePass" placeholder="Contraseña" autocomplete="current-password" required autofocus>
@@ -1803,7 +1804,7 @@ body.locked #gate{display:flex}
   <div class="err" id="gateErr"></div>
   <button class="b p" type="submit">Entrar</button>
   <div class="firma">iDoctor@2026</div>
-</form></div>
+</form></div>` : ''}
 <div class="pg">
 <h1>Revisión de la cita mostrador</h1>
 <p class="sub">Interconsultas de Atención Primaria · Servicio Murciano de Salud · extracto OMI-AP del ${fmt(D.extracto)} · ${per}informe del ${fmt(D.generado)}</p>
