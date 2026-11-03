@@ -555,7 +555,7 @@ form.edit .full{grid-column:1/-1}
     <button class="btn ghost" id="expInforme" title="Tabla con el resultado del filtro actual, para compartir o imprimir en PDF">Exportar informe</button>
     <button class="btn ghost" id="lnkAreas" title="El enlace del portal para mandar a cada área o a cada responsable, acotado a los grupos que tengas marcados">Enlace para las áreas</button>
     <button class="btn ghost" id="expAreas" title="El mismo informe como archivo suelto, para guardarlo o para publicarlo de nuevo">Descargar el informe</button>
-    <button class="btn ghost" id="impAreas" title="Cargar las respuestas que te devuelvan las áreas">Respuestas de las áreas</button>
+    <button class="btn ghost" id="impAreas" title="Lo que van contestando las áreas: quién ha respondido, qué pide cada una y aplicar los cierres">Lo que dicen las áreas</button>
     <button class="btn ghost" id="expEstado" title="Guarda todos los cambios y la clasificación en un archivo">Guardar estado (JSON)</button>
     <button class="btn ghost" id="impEstado" title="Carga un archivo de estado guardado con este botón">Cargar estado…</button>
     <input type="file" id="impFile" accept="application/json,.json" hidden>
@@ -2068,7 +2068,7 @@ const PK = k => `pr-${k}|most`;
 const propsDe = (k, a) => (((ov[a] || {})[PK(k)] || {}).props) || [];
 const propCierre = (k, a) => propsDe(k, a).filter(p => p.acc === 'cerrar');
 const hayPropuesta = k => AREAS.some(a => propsDe(k, a).length);
-let RESP_NUEVAS = [];
+let RESP_NUEVAS = [], RESP_YA = false, RESP_CARGANDO = false;
 
 function leeRespuesta(txt, origen) {
   let t = String(txt || '').trim();
@@ -2136,8 +2136,9 @@ function openEnlaceDlg() {
   $('#dlgIn').querySelectorAll('[data-cop]').forEach(b => b.onclick = () => copia(b.dataset.cop, 'Enlace copiado'));
   $('#copTodos').onclick = () => copia(AREAS.map(a => `Área ${a} · ${SIG(a)}: ${enlacePortal(a)}`).join('\n'), 'Los nueve enlaces, copiados');
 }
-async function traeDelPortal(btn) {
+async function traeDelPortal(btn, callado) {
   if (!PORTAL_URL) return;
+  RESP_YA = true; RESP_CARGANDO = true;
   if (btn) { btn.disabled = true; btn.textContent = 'Consultando…'; }
   try {
     const r = await fetch(PORTAL_URL + (PORTAL_URL.includes('?') ? '&' : '?') + 'v=' + Date.now(), { cache: 'no-store' });
@@ -2150,20 +2151,22 @@ async function traeDelPortal(btn) {
       RESP_NUEVAS = RESP_NUEVAS.filter(x => !(x.area === R.area && x.usuario === R.usuario && x.enviado === R.enviado));
       RESP_NUEVAS.push(R); n++;
     });
-    toast(n ? `${n} respuesta${n === 1 ? '' : 's'} nueva${n === 1 ? '' : 's'} del portal` : 'Sin respuestas nuevas en el portal');
+    if (n || !callado) toast(n ? `${n} respuesta${n === 1 ? '' : 's'} nueva${n === 1 ? '' : 's'} del portal` : 'Sin respuestas nuevas en el portal');
   } catch (e) { toast('No se ha podido consultar el portal: ' + (e.message || e)); }
-  openRespDlg();
+  RESP_CARGANDO = false;
+  if ($('#dlg').open) openRespDlg();
 }
-function cajaSeguimiento(fs) {
+function cajaSeguimiento(fs, hayPortal) {
   const por = {};
   fs.forEach(f => { const r = por[f.a] = por[f.a] || { n: 0, c: 0, u: f.p.usuario, f: f.p.fecha, nueva: f.nueva }; r.n++; if (f.p.acc === 'cerrar') r.c++; });
   const hechas = AREAS.filter(a => por[a]);
-  return `<div class="box"><h3>Quién va contestando <small style="font-weight:400;color:var(--muted)">· ${hechas.length} de 9 áreas</small></h3>
+  return `<div class="box"><h3>Quién va contestando <small style="font-weight:400;color:var(--muted)">· ${hechas.length} de 9 áreas${RESP_CARGANDO ? ' · consultando el portal…' : ''}</small></h3>
     <div class="chips" style="display:flex;flex-wrap:wrap;padding:0">${AREAS.map(a => {
       const r = por[a];
       return `<span class="pill ${r ? 'ap' : 'ci'}" style="margin:0 6px 6px 0" title="${r ? esc(`${r.u} · ${fmt(r.f)} · ${r.c} cierres de ${r.n} marcadas`) : 'Todavía no ha contestado'}">Área ${a} · ${SIG(a)}${r ? ` — ${r.c}/${r.n}` : ' — pendiente'}</span>`;
     }).join('')}</div>
     ${hechas.length ? `<p style="margin:4px 0 0;color:var(--muted);font-size:12px">Última: ${(() => { const u = hechas.map(a => por[a]).sort((x, y) => (y.f || '').localeCompare(x.f || ''))[0]; return `${esc(u.u)} el ${fmt(u.f)}`; })()}.</p>` : ''}
+    ${hayPortal ? `<div class="actions" style="margin:8px 0 0"><button type="button" class="btn" id="rspPortal">Volver a consultar el portal</button><span class="spacer"></span><span style="color:var(--muted);font-size:12px">Se consulta solo cada vez que abres esta ventana.</span></div>` : ''}
   </div>`;
 }
 function openRespDlg() {
@@ -2182,30 +2185,32 @@ function openRespDlg() {
       <td>${f.p.acc === 'cerrar' && abierta ? `<label class="chk"><input type="checkbox" class="apl" data-a="${f.a}" data-k="${esc(f.k)}" data-u="${esc(f.p.usuario)}" data-t="${esc(f.p.ts || '')}" checked></label>` : ''}</td></tr>`;
   };
   $('#dlgIn').innerHTML = `
-    <h2>Respuestas de las áreas</h2>
+    <h2>Lo que dicen las áreas</h2>
     <div class="meta"><span>Revisión de la cita mostrador</span><span class="pill buz">${Object.keys(regs).length} respuesta${Object.keys(regs).length === 1 ? '' : 's'} · ${fs.length} casilla${fs.length === 1 ? '' : 's'} marcadas</span></div>
-    ${cajaSeguimiento(fs)}
-    <div class="box"><h3>Cargar lo que te han devuelto</h3>
-      <p style="margin:0 0 6px;color:var(--muted);font-size:12px">${PORTAL_URL ? 'Lo que las áreas envían desde el portal se trae con el botón de abajo. ' : ''}También vale el archivo <b>.json</b> que descarga el informe o el <b>resumen pegado</b> del correo (con la línea final que no hay que borrar). Puedes cargar varios a la vez.</p>
-      <div class="actions" style="margin:0 0 6px">${PORTAL_URL ? '<button type="button" class="btn primary" id="rspPortal">Traer lo que haya en el portal</button>' : ''}<button type="button" class="btn" id="rspFileBtn">Elegir archivos…</button><input type="file" id="rspFile" accept="application/json,.json,.txt" multiple hidden></div>
-      <textarea id="rspTxt" placeholder="…o pega aquí el correo que te han enviado" style="width:100%;min-height:70px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px"></textarea>
-      <div class="actions" style="margin:6px 0 0"><button type="button" class="btn" id="rspLeer">Leer lo pegado</button><span class="spacer"></span><span id="rspMsg" style="color:var(--muted);font-size:12px"></span></div>
-    </div>
+    ${cajaSeguimiento(fs, !!PORTAL_URL)}
+
     ${Object.keys(regs).length ? `<div class="box"><h3>Quién ha contestado</h3>
       <table class="fic"><thead><tr><th>Área</th><th>Quién</th><th>Fecha</th><th>Propone cerrar</th><th>Marcadas</th><th></th></tr></thead>
       <tbody>${Object.values(regs).sort((x, y) => x.a - y.a).map(r => `<tr><td class="mono">Área ${r.a} · ${SIG(r.a)}</td><td><b>${esc(r.u)}</b>${r.pu ? ` <small style="color:var(--muted)">${esc(r.pu)}</small>` : ''}</td><td class="mono">${fmt(r.f)}</td><td class="mono">${r.c}</td><td class="mono">${r.n}</td><td>${r.nueva ? '<span class="pill rs">sin registrar</span>' : '<span class="pill ap">registrada</span>'}</td></tr>`).join('')}</tbody></table>
       ${Object.values(regs).filter(r => r.nota).map(r => `<p style="margin:6px 0 0;font-size:12.5px"><b>Nota del Área ${r.a}:</b> ${esc(r.nota)}</p>`).join('')}
     </div>` : ''}
-    ${fs.length ? `<div class="box"><h3>Lo que piden las áreas</h3>
+    ${fs.length ? `<div class="box"><h3>Lo que piden</h3>
       <table class="fic"><thead><tr><th>Área</th><th>Especialidad</th><th>Uso</th><th>Pide</th><th>Motivo</th><th>Quién y cuándo</th><th>La casilla</th><th>Aplicar</th></tr></thead>
       <tbody>${fs.map(fila).join('')}</tbody></table>
       <p style="margin:6px 0 0;color:var(--muted);font-size:12px">Al aplicar, la cita mostrador de esa casilla se cierra y en su historial queda quién lo pidió, de qué área y con qué fecha. Lo que no apliques se queda guardado igual, como propuesta.</p>
-    </div>` : '<p style="margin:0;color:var(--muted)">Todavía no has cargado ninguna respuesta.</p>'}
+    </div>` : `<p style="margin:0;color:var(--muted)">${PORTAL_URL ? 'Todavía no ha contestado ninguna área.' : 'Todavía no has cargado ninguna respuesta.'}</p>`}
+    <details class="box" style="padding-top:10px"><summary style="cursor:pointer;font:600 11px/1.4 'IBM Plex Sans Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)">Si alguien te la manda por correo en vez de enviarla</summary>
+      <p style="margin:8px 0 6px;color:var(--muted);font-size:12px">Vale el archivo <b>.json</b> que descarga el informe o el <b>resumen pegado</b> del correo, con la línea final que no hay que borrar. Puedes cargar varios a la vez.</p>
+      <div class="actions" style="margin:0 0 6px"><button type="button" class="btn" id="rspFileBtn">Elegir archivos…</button><input type="file" id="rspFile" accept="application/json,.json,.txt" multiple hidden><span class="spacer"></span><span id="rspMsg" style="color:var(--muted);font-size:12px"></span></div>
+      <textarea id="rspTxt" placeholder="…o pega aquí el correo que te han enviado" style="width:100%;min-height:62px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px"></textarea>
+      <div class="actions" style="margin:6px 0 0"><span class="spacer"></span><button type="button" class="btn" id="rspLeer">Leer lo pegado</button></div>
+    </details>
     <div class="actions">
       ${RESP_NUEVAS.length ? '<button type="button" class="btn primary" id="rspReg">Registrar las respuestas nuevas</button>' : ''}
       ${pend.length ? `<button type="button" class="btn" id="rspAplica">Aplicar los cierres marcados (${pend.length})</button>` : ''}
       <span class="spacer"></span><button type="button" class="btn" id="rspCerrar">Cerrar</button></div>`;
   const dlg = abreDlg(true);
+  if (PORTAL_URL && !RESP_YA) traeDelPortal(null, true);
   $('#rspCerrar').onclick = () => dlg.close();
   $('#rspFileBtn').onclick = () => $('#rspFile').click();
   const bp = $('#rspPortal'); if (bp) bp.onclick = () => traeDelPortal(bp);
