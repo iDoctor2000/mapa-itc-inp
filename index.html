@@ -133,6 +133,9 @@ body.plegado .wrap,body.plegado .reg{max-height:calc(100vh - 62px);margin-top:12
 .ms-panel label{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:13px;cursor:pointer}
 .ms-panel label:hover{background:var(--surface-2)}
 .ms-panel input{accent-color:var(--accent)}
+.ms-panel.grp{max-height:60vh;overflow:auto}
+.ms-panel.grp label span.n{margin-left:auto;color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.ms-panel.grp label.todos{border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;margin-bottom:2px;padding-bottom:9px}
 .ms-panel .sq{cursor:default;flex:none}
 .ms-panel .sq::before{display:none}
 .chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);padding:6px 8px;border:1px solid transparent;border-radius:6px}
@@ -515,7 +518,10 @@ form.edit .full{grid-column:1/-1}
 <section id="viewMatriz">
   <div class="tools">
     <input type="search" id="q" placeholder="Buscar especialidad…" aria-label="Buscar especialidad">
-    <select id="fGrupo" aria-label="Grupo de servicio"><option value="">Todos los grupos</option></select>
+    <div class="ms">
+      <button type="button" class="ms-btn" id="msGrpBtn" aria-expanded="false" aria-haspopup="true"><span id="msGrpLabel">Todos los grupos</span><span class="caret">▼</span></button>
+      <div class="ms-panel grp" id="msGrpPanel" hidden></div>
+    </div>
     <select id="fArea" aria-label="Área"><option value="">Las 9 áreas</option></select>
     <select id="fModo" aria-label="Filtro de situación">
       <option value="">Todas las modalidades</option>
@@ -578,7 +584,10 @@ form.edit .full{grid-column:1/-1}
 <section id="viewBuzones" hidden>
   <div class="tools">
     <input type="search" id="bq" placeholder="Buscar prueba, código o especialidad…" aria-label="Buscar prueba, código o especialidad">
-    <select id="bGrupo" aria-label="Grupo de servicio"><option value="">Todos los grupos</option></select>
+    <div class="ms">
+      <button type="button" class="ms-btn" id="msGrpBtnB" aria-expanded="false" aria-haspopup="true"><span id="msGrpLabelB">Todos los grupos</span><span class="caret">▼</span></button>
+      <div class="ms-panel grp" id="msGrpPanelB" hidden></div>
+    </div>
     <select id="bArea" aria-label="Área y hospital"><option value="">Las 9 áreas</option></select>
     <select id="bModo" aria-label="Situación del circuito">
       <option value="">Todas las situaciones</option>
@@ -1010,9 +1019,9 @@ function showNote(t) { const n = $('#note'); n.innerHTML = t; n.classList.add('o
 let toastT; function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2600); }
 
 // ---------------- filtros ----------------
-const F = { q: '', g: '', a: '', modo: '' };
+const F = { q: '', g: [], a: '', modo: '' };   // g: los grupos marcados; vacío = todos
 function rowVisible(c) {
-  if (F.g && grupoDe(c.k) !== F.g) return false;
+  if (F.g.length && !F.g.includes(grupoDe(c.k))) return false;
   if (F.q && !norm([c.e, codigosDe(c.k)].join(' ')).includes(norm(F.q))) return false;
   if (F.modo) {
     const as = F.a ? [Number(F.a)] : AREAS;
@@ -1042,9 +1051,35 @@ function renderChips() {
 }
 function renderGroupOptions() {
   const gs = grupos();
-  ['#fGrupo', '#cGrupo', '#bGrupo'].forEach(sel => {
-    const el = $(sel), cur = el.value;
-    el.innerHTML = '<option value="">Todos los grupos</option>' + gs.map(g => `<option${g === cur ? ' selected' : ''}>${esc(g)}</option>`).join('');
+  const el = $('#cGrupo'), cur = el.value;          // el de Clasificación sigue siendo un desplegable
+  el.innerHTML = '<option value="">Todos los grupos</option>' + gs.map(g => `<option${g === cur ? ' selected' : ''}>${esc(g)}</option>`).join('');
+  F.g = F.g.filter(g => gs.includes(g));
+  PANELES_GRP.forEach(sel => {
+    const pn = $(sel); if (!pn) return;
+    pn.innerHTML = `<label class="todos"><input type="checkbox" data-g="*"><b>Todos los grupos</b><span class="n">${CAT.length}</span></label>`
+      + gs.map(g => `<label><input type="checkbox" data-g="${esc(g)}">${esc(g)}<span class="n">${CAT.filter(c => grupoDe(c.k) === g).length}</span></label>`).join('');
+  });
+  renderGrpLabel();
+}
+const PANELES_GRP = ['#msGrpPanel', '#msGrpPanelB'];
+const BOTONES_GRP = [['#msGrpBtn', '#msGrpPanel', '#msGrpLabel'], ['#msGrpBtnB', '#msGrpPanelB', '#msGrpLabelB']];
+function renderGrpLabel() {
+  const gs = grupos();
+  if (F.g.length === gs.length && gs.length) F.g = [];
+  const t = !F.g.length ? 'Todos los grupos' : F.g.length === 1 ? F.g[0] : `${F.g.length} grupos`;
+  BOTONES_GRP.forEach(([b, pn, lb]) => {
+    const e = $(lb); if (e) e.textContent = t;
+    const bt = $(b); if (bt) bt.title = F.g.length ? F.g.join(' · ') : 'Todas las especialidades, de todos los grupos';
+    const pe = $(pn); if (!pe) return;
+    pe.querySelectorAll('input[data-g]').forEach(i => { i.checked = i.dataset.g === '*' ? !F.g.length : F.g.includes(i.dataset.g); });
+  });
+}
+function togglePanelGrp(open, cual) {
+  BOTONES_GRP.forEach(([b, pn]) => {
+    const pe = $(pn), bt = $(b); if (!pe) return;
+    const mio = cual === undefined || cual === pn;
+    const show = !mio ? false : (open === undefined ? pe.hidden : open);
+    pe.hidden = !show; bt.setAttribute('aria-expanded', String(show));
   });
 }
 function renderKpis() {
@@ -1080,7 +1115,7 @@ function renderKpis() {
   const partes = [`<b>${rows.length}</b> ${rows.length === 1 ? 'especialidad' : 'especialidades'}`,
     F.a ? `<b>Área ${F.a}</b>` : '<b>las 9 áreas</b>',
     ms.length === MODS.length ? MODS.map(m => ML[m]).join(' · ') : '<b>solo ' + ms.map(m => ML[m]).join(' · ') + '</b>'];
-  if (F.g) partes.splice(1, 0, `grupo <b>${esc(F.g)}</b>`);
+  if (F.g.length) partes.splice(1, 0, `${F.g.length === 1 ? 'grupo' : 'grupos'} <b>${esc(F.g.join(' · '))}</b>`);
   if (F.q) partes.push(`búsqueda «<b>${esc(F.q)}</b>»`);
   if (F.modo) partes.push(`filtro <b>${esc($('#fModo').selectedOptions[0].textContent)}</b>`);
   if (F.modo === 'solo-inp' || F.modo === 'cm-escasa') partes.push('solo se pintan las casillas que cumplen');
@@ -1309,14 +1344,14 @@ function cajaHospital(k, a, m) {
 function irABuzones(id, a) {
   const f = BYF[id]; if (!f) return;
   collapsed.delete(grupoF(f));
-  F.q = ''; F.g = ''; F.a = a ? String(a) : '';
+  F.q = ''; F.g = []; F.a = a ? String(a) : '';
   FB.modo = ''; $('#bModo').value = ''; FB.vista = 'cuadro'; $('#bVista').value = 'cuadro'; FB.foco = id;
   verVista('buzones');
   const tr = document.querySelector(`#bx tr[data-f="${id}"]`); if (tr) tr.scrollIntoView({ block: 'center' });
 }
 function irAMapa(k, a) {
   collapsed.delete(grupoDe(k));
-  F.q = BYK[k].e; F.g = ''; F.a = String(a); F.modo = ''; $('#fModo').value = '';
+  F.q = BYK[k].e; F.g = []; F.a = String(a); F.modo = ''; $('#fModo').value = '';
   verVista('matriz');
 }
 
@@ -1334,7 +1369,7 @@ function enFiltroB(f, a) {
 }
 function filaVisibleB(f) {
   if (FB.modo === 'nuevas') return esNuevaFila(f.id);
-  if (F.g && grupoF(f) !== F.g) return false;
+  if (F.g.length && !F.g.includes(grupoF(f))) return false;
   if (F.q && !norm([f.n, f.id, espDe(f), f.c.join(' '), f.svc || ''].join(' ')).includes(norm(F.q))) return false;
   if (FB.modo) { const as = F.a ? [Number(F.a)] : AREAS; return as.some(a => enFiltroB(f, a)); }
   return true;
@@ -1372,7 +1407,7 @@ function renderKpisBuz() {
     k('au', 'Cita automática', auto, `${bloq} bloquean · ${auto - bloq} liberan${man ? ` · ${man} manual${man === 1 ? '' : 'es'}` : ''}`) +
     k('', 'Incidencias', pend.length, `pendientes · ${pend.filter(i => i.sev === 'alta').length} altas`);
   const partes = [`<b>${rows.length}</b> ${rows.length === 1 ? 'prueba INP' : 'pruebas INP'}`, F.a ? `<b>Área ${F.a} · ${SIG(Number(F.a))}</b>` : '<b>las 9 áreas y sus hospitales</b>'];
-  if (F.g) partes.splice(1, 0, `grupo <b>${esc(F.g)}</b>`);
+  if (F.g.length) partes.splice(1, 0, `${F.g.length === 1 ? 'grupo' : 'grupos'} <b>${esc(F.g.join(' · '))}</b>`);
   if (F.q) partes.push(`búsqueda «<b>${esc(F.q)}</b>»`);
   if (FB.modo) partes.push(`filtro <b>${esc($('#bModo').selectedOptions[0].textContent)}</b>`, 'solo se pintan las casillas que cumplen');
   $('#ambito').innerHTML = `Mostrando ${partes.join(' · ')}. Casillas en la selección: <b>${cas}</b>. Excel de despliegue y COMPAS del ${fmt(INP.fecha)}.`;
@@ -1662,6 +1697,11 @@ function svgItcr(f) {
 // estrechos, que se leen mejor. En pantallas pequeñas manda el ancho de la pantalla.
 function abreDlg(ancha) { const d = $('#dlg'); d.classList.toggle('ancha', !!ancha); if (!d.open) d.showModal(); return d; }
 
+// PORTAL DE RESPUESTAS (03/11/2026): dirección del servicio que recibe lo que marcan las
+// áreas y que devuelve, en JSON, todo lo recibido. Vacía, el informe sigue funcionando por
+// archivo y por correo. Es el único sitio donde hay que ponerla.
+const PORTAL_URL = '';
+
 // ---------------- informe interactivo para las áreas (06/10/2026) ----------------
 // La misma tabla de «cita mostrador con uso escaso o nulo», pero como página que se envía por
 // correo: cada área marca lo que propone cerrar y lo que quiere mantener, con su nombre y la
@@ -1678,7 +1718,7 @@ function datosInformeAreas() {
         filas.push({ g, e: c.e, k: c.k, c: cel });
       });
   });
-  return { tipo: 'informe-cm-escasa', v: 1, extracto: FECHA_BASE, generado: today(),
+  return { tipo: 'informe-cm-escasa', v: 1, extracto: FECHA_BASE, generado: today(), portal: PORTAL_URL,
     periodo: USOINFO ? { desde: USOINFO.desde, hasta: USOINFO.hasta } : null,
     sig: Object.fromEntries(AREAS.map(a => [a, SIG(a)])), filas };
 }
@@ -1690,6 +1730,7 @@ function informeAreasHTML() {
   const datos = JSON.stringify(D).replace(/</g, '\\u003c');
   const per = D.periodo ? `uso de la cita mostrador del ${fmt(D.periodo.desde)} al ${fmt(D.periodo.hasta)} · ` : '';
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
 <title>Revisión de la cita mostrador · respuesta del área</title>
 <style>
 :root{--bg:#FBFAF7;--surface:#fff;--ink:#18241F;--muted:#5C6C66;--line:#D5DDD8;--line2:#B9C5BF;--ok:#1F7A4D;--ok-s:#E3F2E8;--bad:#A3341F;--bad-s:#FBE6E0;--warn:#8A6E4B;--warn-s:#F6EDDA;--azul:#1F5F8B}
@@ -1769,11 +1810,13 @@ button.b:disabled{opacity:.5;cursor:not-allowed}
   <textarea id="nota" placeholder="Lo que quieras añadir: criterios que habéis seguido, casos que hay que mirar con calma…"></textarea>
 </div>
 <div class="acc">
-  <button class="b p" id="bFile" disabled>Devolver respuesta (archivo)</button>
+  ${D.portal ? '<button class="b p" id="bEnviar" disabled>Enviar la respuesta</button>' : ''}
+  <button class="b${D.portal ? '' : ' p'}" id="bFile" disabled>Devolver respuesta (archivo)</button>
   <button class="b" id="bTxt" disabled>Copiar el resumen</button>
   <button class="b" id="bMail" disabled>Abrir el correo</button>
   <button class="b" id="bPrint">Imprimir</button>
   <span id="msg" class="ok" style="align-self:center"></span>
+  <span id="enviado" class="q" style="align-self:center;color:#5C6C66;font-size:12.5px"></span>
 </div>
 <p class="firma">iDoctor@2026</p>
 </div>
@@ -1828,7 +1871,9 @@ function panel(){
       + '<input data-mot="' + esc(k) + '" value="' + esc(r.motivo || '') + '" placeholder="Motivo (opcional)"></li>';
   });
   document.getElementById('lst').innerHTML = h || '<li class="q">Todavía no has marcado ninguna casilla de tu columna.</li>';
-  ['bFile','bTxt','bMail'].forEach(function(id){ document.getElementById(id).disabled = !(listo() && ks.length); });
+  ['bEnviar','bFile','bTxt','bMail'].forEach(function(id){ var e = document.getElementById(id); if (e) e.disabled = !(listo() && ks.length); });
+  var en = document.getElementById('enviado');
+  if (en) en.textContent = S.enviado ? 'Enviada el ' + S.enviado.slice(8,10) + '/' + S.enviado.slice(5,7) + '/' + S.enviado.slice(0,4) + ' a las ' + new Date(S.enviado).toTimeString().slice(0,5) + '. Si cambias algo, vuelve a enviarla.' : '';
 }
 function nom(k){ for (var i=0;i<D.filas.length;i++) if (D.filas[i].k === k) return D.filas[i].e; return k; }
 function uso(k){ for (var i=0;i<D.filas.length;i++) if (D.filas[i].k === k) return D.filas[i].c[S.a]; return ''; }
@@ -1896,6 +1941,23 @@ function resumen(){
   return L.join('\\n');
 }
 function msg(t){ var m = document.getElementById('msg'); m.textContent = t; setTimeout(function(){ if (m.textContent === t) m.textContent = ''; }, 6000); }
+var bEnv = document.getElementById('bEnviar');
+if (bEnv) bEnv.onclick = function(){
+  var R = respuesta();
+  bEnv.disabled = true; bEnv.textContent = 'Enviando…';
+  fetch(D.portal, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(R) })
+    .then(function(r){ return r.text(); })
+    .then(function(t){
+      if (String(t).indexOf('OK') < 0) throw new Error(String(t).slice(0, 90));
+      S.enviado = new Date().toISOString(); guarda(); panel();
+      bEnv.textContent = 'Enviar la respuesta'; bEnv.disabled = false;
+      msg('Respuesta enviada. Gracias: ya la estamos viendo.');
+    })
+    .catch(function(e){
+      bEnv.textContent = 'Enviar la respuesta'; bEnv.disabled = false;
+      msg('No se ha podido enviar (' + (e.message || e) + '). Usa «Devolver respuesta (archivo)» y mándalo por correo.');
+    });
+};
 document.getElementById('bFile').onclick = function(){
   var R = respuesta();
   var b = new Blob([JSON.stringify(R, null, 1)], { type:'application/json' });
@@ -1957,6 +2019,36 @@ function filasResp() {
   }));
   return out.sort((x, y) => x.a - y.a || x.e.localeCompare(y.e, 'es'));
 }
+async function traeDelPortal(btn) {
+  if (!PORTAL_URL) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Consultando…'; }
+  try {
+    const r = await fetch(PORTAL_URL + (PORTAL_URL.includes('?') ? '&' : '?') + 'v=' + Date.now(), { cache: 'no-store' });
+    const j = await r.json();
+    const rs = (j.respuestas || j || []).filter(x => x && x.tipo === 'respuesta-cm-escasa');
+    let n = 0;
+    rs.forEach(R => {
+      const ya = AREAS.some(a => a === R.area) && propsDe((R.marcas[0] || {}).k || '', R.area).some(p => p.usuario === R.usuario && p.ts === (R.marcas[0] || {}).ts);
+      if (ya) return;
+      RESP_NUEVAS = RESP_NUEVAS.filter(x => !(x.area === R.area && x.usuario === R.usuario && x.enviado === R.enviado));
+      RESP_NUEVAS.push(R); n++;
+    });
+    toast(n ? `${n} respuesta${n === 1 ? '' : 's'} nueva${n === 1 ? '' : 's'} del portal` : 'Sin respuestas nuevas en el portal');
+  } catch (e) { toast('No se ha podido consultar el portal: ' + (e.message || e)); }
+  openRespDlg();
+}
+function cajaSeguimiento(fs) {
+  const por = {};
+  fs.forEach(f => { const r = por[f.a] = por[f.a] || { n: 0, c: 0, u: f.p.usuario, f: f.p.fecha, nueva: f.nueva }; r.n++; if (f.p.acc === 'cerrar') r.c++; });
+  const hechas = AREAS.filter(a => por[a]);
+  return `<div class="box"><h3>Quién va contestando <small style="font-weight:400;color:var(--muted)">· ${hechas.length} de 9 áreas</small></h3>
+    <div class="chips" style="display:flex;flex-wrap:wrap;padding:0">${AREAS.map(a => {
+      const r = por[a];
+      return `<span class="pill ${r ? 'ap' : 'ci'}" style="margin:0 6px 6px 0" title="${r ? esc(`${r.u} · ${fmt(r.f)} · ${r.c} cierres de ${r.n} marcadas`) : 'Todavía no ha contestado'}">Área ${a} · ${SIG(a)}${r ? ` — ${r.c}/${r.n}` : ' — pendiente'}</span>`;
+    }).join('')}</div>
+    ${hechas.length ? `<p style="margin:4px 0 0;color:var(--muted);font-size:12px">Última: ${(() => { const u = hechas.map(a => por[a]).sort((x, y) => (y.f || '').localeCompare(x.f || ''))[0]; return `${esc(u.u)} el ${fmt(u.f)}`; })()}.</p>` : ''}
+  </div>`;
+}
 function openRespDlg() {
   const fs = filasResp();
   const regs = {};
@@ -1975,9 +2067,10 @@ function openRespDlg() {
   $('#dlgIn').innerHTML = `
     <h2>Respuestas de las áreas</h2>
     <div class="meta"><span>Revisión de la cita mostrador</span><span class="pill buz">${Object.keys(regs).length} respuesta${Object.keys(regs).length === 1 ? '' : 's'} · ${fs.length} casilla${fs.length === 1 ? '' : 's'} marcadas</span></div>
+    ${cajaSeguimiento(fs)}
     <div class="box"><h3>Cargar lo que te han devuelto</h3>
-      <p style="margin:0 0 6px;color:var(--muted);font-size:12px">Vale el archivo <b>.json</b> que descarga el informe o el <b>resumen pegado</b> del correo (con la línea final que no hay que borrar). Puedes cargar varios a la vez.</p>
-      <div class="actions" style="margin:0 0 6px"><button type="button" class="btn" id="rspFileBtn">Elegir archivos…</button><input type="file" id="rspFile" accept="application/json,.json,.txt" multiple hidden></div>
+      <p style="margin:0 0 6px;color:var(--muted);font-size:12px">${PORTAL_URL ? 'Lo que las áreas envían desde el portal se trae con el botón de abajo. ' : ''}También vale el archivo <b>.json</b> que descarga el informe o el <b>resumen pegado</b> del correo (con la línea final que no hay que borrar). Puedes cargar varios a la vez.</p>
+      <div class="actions" style="margin:0 0 6px">${PORTAL_URL ? '<button type="button" class="btn primary" id="rspPortal">Traer lo que haya en el portal</button>' : ''}<button type="button" class="btn" id="rspFileBtn">Elegir archivos…</button><input type="file" id="rspFile" accept="application/json,.json,.txt" multiple hidden></div>
       <textarea id="rspTxt" placeholder="…o pega aquí el correo que te han enviado" style="width:100%;min-height:70px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px"></textarea>
       <div class="actions" style="margin:6px 0 0"><button type="button" class="btn" id="rspLeer">Leer lo pegado</button><span class="spacer"></span><span id="rspMsg" style="color:var(--muted);font-size:12px"></span></div>
     </div>
@@ -1998,6 +2091,7 @@ function openRespDlg() {
   const dlg = abreDlg(true);
   $('#rspCerrar').onclick = () => dlg.close();
   $('#rspFileBtn').onclick = () => $('#rspFile').click();
+  const bp = $('#rspPortal'); if (bp) bp.onclick = () => traeDelPortal(bp);
   const avisa = t => { const m = $('#rspMsg'); if (m) m.textContent = t; };
   const mete = (txt, origen) => {
     const { R, err } = leeRespuesta(txt, origen);
@@ -2346,7 +2440,7 @@ function incidencias() {
   const S = { alta: 0, media: 1, info: 2 };
   return din.concat(INP.inc)
     .filter(i => (!F.a || i.a === Number(F.a))
-      && (!F.g || !i.f || !BYF[i.f] || grupoF(BYF[i.f]) === F.g)
+      && (!F.g.length || !i.f || !BYF[i.f] || F.g.includes(grupoF(BYF[i.f])))
       && (!F.q || norm([i.x, i.t, i.f || '', i.f && BYF[i.f] ? BYF[i.f].n : ''].join(' ')).includes(norm(F.q))))
     .sort((x, y) => (S[x.sev] - S[y.sev]) || ((x.a || 0) - (y.a || 0)) || x.t.localeCompare(y.t, 'es'));
 }
@@ -3920,7 +4014,17 @@ AREAS.forEach(a => { $('#fArea').insertAdjacentHTML('beforeend', `<option value=
   if (INP) $('#bArea').insertAdjacentHTML('beforeend', `<option value="${a}">Área ${a} · ${SIG(a)}</option>`);
   if (ITCR) $('#iArea').insertAdjacentHTML('beforeend', `<option value="${a}">Área ${a} · ${SIG(a)}</option>`); });
 $('#q').oninput = e => filtroComun('q', e.target.value);
-$('#fGrupo').onchange = e => filtroComun('g', e.target.value);
+BOTONES_GRP.forEach(([b, pn]) => {
+  $(b).onclick = e => { e.stopPropagation(); toggleModPanel(false); togglePanelGrp(undefined, pn); };
+  $(pn).addEventListener('click', e => e.stopPropagation());
+  $(pn).addEventListener('change', e => {
+    const i = e.target.closest('input[data-g]'); if (!i) return;
+    if (i.dataset.g === '*') F.g = [];
+    else if (i.checked) F.g = [...new Set([...F.g, i.dataset.g])];
+    else F.g = F.g.filter(g => g !== i.dataset.g);
+    filtroComun('g', F.g);
+  });
+});
 $('#fArea').onchange = e => filtroComun('a', e.target.value);
 $('#areaChips').addEventListener('click', e => {
   const b = e.target.closest('button[data-a]'); if (!b) return;
@@ -3975,7 +4079,7 @@ function toggleModPanel(open) {
   const show = open === undefined ? p.hidden : open;
   p.hidden = !show; b.setAttribute('aria-expanded', String(show));
 }
-$('#msModBtn').onclick = e => { e.stopPropagation(); toggleModPanel(); };
+$('#msModBtn').onclick = e => { e.stopPropagation(); togglePanelGrp(false); toggleModPanel(); };
 $('#msModPanel').addEventListener('click', e => e.stopPropagation());
 $('#msModPanel').addEventListener('change', e => {
   const i = e.target.closest('input[data-m]'); if (!i) return;
@@ -3985,8 +4089,8 @@ $('#msModPanel').addEventListener('change', e => {
   try { localStorage.setItem('sms-itc-mods', JSON.stringify(modsOn)); } catch (x) {}
   renderModLabel(); renderKpis(); renderMatrix();
 });
-document.addEventListener('click', () => toggleModPanel(false));
-document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleModPanel(false); });
+document.addEventListener('click', () => { toggleModPanel(false); togglePanelGrp(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { toggleModPanel(false); togglePanelGrp(false); } });
 $('#addGrupo').onclick = () => {
   const g = $('#newGrupo').value.trim();
   if (!g) { toast('Escribe el nombre del grupo nuevo'); return; }
@@ -4019,7 +4123,7 @@ function verVista(v) {
   $('#viewMatriz').hidden = v !== 'matriz'; $('#viewBuzones').hidden = v !== 'buzones'; $('#viewItcr').hidden = v !== 'itcr';
   $('#viewRegistro').hidden = v !== 'registro'; $('#viewCatalogo').hidden = v !== 'catalogo'; $('#viewCotejo').hidden = v !== 'cotejo';
   // búsqueda, grupo y área son comunes al mapa y a los buzones
-  $('#q').value = F.q; $('#bq').value = F.q; $('#fGrupo').value = F.g; $('#bGrupo').value = F.g; $('#fArea').value = F.a; $('#bArea').value = F.a;
+  $('#q').value = F.q; $('#bq').value = F.q; $('#fArea').value = F.a; $('#bArea').value = F.a; renderGrpLabel();
   if (ITCR) { $('#iq').value = F.q; $('#iArea').value = F.a; }
   renderChips(); renderKpis(); renderMatrix(); renderBuz(); renderItcr(); renderReg(); renderCat(); renderCotejo();
   try { localStorage.setItem('sms-itc-vista', v); } catch (e) {}
@@ -4032,14 +4136,13 @@ document.body.dataset.amb = 'ap';
 function filtroComun(campo, valor) {
   F[campo] = valor;
   if (campo === 'q') { $('#q').value = valor; $('#bq').value = valor; }
-  if (campo === 'g') { $('#fGrupo').value = valor; $('#bGrupo').value = valor; }
+  if (campo === 'g') renderGrpLabel();
   if (campo === 'q' && ITCR) $('#iq').value = valor;
   if (campo === 'a') { $('#fArea').value = valor; $('#bArea').value = valor; if (ITCR) $('#iArea').value = valor; renderChips(); }
   FB.foco = null; if (typeof FI === 'object') FI.foco = null;
   renderKpis(); if (vista === 'buzones') renderBuz(); else if (vista === 'itcr') renderItcr(); else renderMatrix();
 }
 $('#bq').oninput = e => filtroComun('q', e.target.value);
-$('#bGrupo').onchange = e => filtroComun('g', e.target.value);
 $('#bArea').onchange = e => filtroComun('a', e.target.value);
 $('#bChips').addEventListener('click', e => {
   const b = e.target.closest('button[data-a]'); if (!b) return;
