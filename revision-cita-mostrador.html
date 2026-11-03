@@ -68,7 +68,7 @@ body.locked #gate{display:flex}
 <div class="pg">
 <h1>Revisión de la cita mostrador</h1>
 <p class="sub">Interconsultas de Atención Primaria · Servicio Murciano de Salud · extracto OMI-AP del 02/09/2026 · uso de la cita mostrador del 02/01/2026 al 01/09/2026 · informe del 03/11/2026</p>
-<div class="res"><b>867</b> casillas con cita mostrador abierta en <b>115</b> especialidades. <b>494</b> tuvieron menos de 10 interconsultas en 2026, <b>247</b> de ellas ninguna: son el motivo del informe, pero <b>se puede marcar cualquiera</b>.<br>
+<div class="res" id="res"><b>867</b> casillas con cita mostrador abierta en <b>115</b> especialidades. <b>494</b> tuvieron menos de 10 interconsultas en 2026, <b>247</b> de ellas ninguna: son el motivo del informe, pero <b>se puede marcar cualquiera</b>.<br>
 <small>Se pide a cada área que revise las casillas de su columna y señale cuáles propone <b>cerrar</b> y cuáles quiere <b>mantener abiertas</b>. Diez interconsultas al año ya es muy poco, y una con más uso también se puede cerrar si en su lugar queda la <b>INP como vía única</b>.</small></div>
 <p class="idprint" id="idprint"></p>
 <div class="caja"><h2>Quién responde</h2>
@@ -110,6 +110,25 @@ var AS = [1,2,3,4,5,6,7,8,9];
 var LS = 'sms-cm-escasa-' + D.extracto;
 var S = { a:'', nom:'', pue:'', nota:'', m:{} };
 try { var g = localStorage.getItem(LS); if (g) S = Object.assign(S, JSON.parse(g)); } catch(e){}
+// el enlace puede venir acotado: ?g=Grupo,Grupo y ?a=5
+var Q = new URLSearchParams(location.search);
+var GRUPOS = (Q.get('g') || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+var TODOS = D.filas.slice();
+if (GRUPOS.length) { var vale = TODOS.filter(function(f){ return GRUPOS.indexOf(f.g) >= 0; }); if (vale.length) D.filas = vale; else GRUPOS = []; }
+if (!S.a && /^[1-9]$/.test(Q.get('a') || '')) S.a = Q.get('a');
+var VIS = {}; D.filas.forEach(function(f){ VIS[f.k] = 1; });
+function cuenta(fn){ var n = 0; D.filas.forEach(function(f){ AS.forEach(function(a){ if (fn(f.c[a])) n++; }); }); return n; }
+function pintaRes(){
+  var ab = cuenta(function(v){ return typeof v === 'number'; });
+  var es = cuenta(function(v){ return typeof v === 'number' && v < 10; });
+  var ce = cuenta(function(v){ return v === 0; });
+  var e = document.getElementById('res'); if (!e) return;
+  e.innerHTML = '<b>' + ab + '</b> casillas con cita mostrador abierta en <b>' + D.filas.length + '</b> especialidades'
+    + (GRUPOS.length ? ' de <b>' + esc(GRUPOS.join(' · ')) + '</b>' : '')
+    + '. <b>' + es + '</b> tuvieron menos de 10 interconsultas en 2026, <b>' + ce + '</b> de ellas ninguna: son el motivo del informe, pero <b>se puede marcar cualquiera</b>.<br>'
+    + '<small>Se pide a cada área que revise las casillas de su columna y señale cuáles propone <b>cerrar</b> y cuáles quiere <b>mantener abiertas</b>. '
+    + 'Diez interconsultas al año ya es muy poco, y una con más uso también se puede cerrar si en su lugar queda la <b>INP como vía única</b>.</small>';
+}
 function guarda(){ try { localStorage.setItem(LS, JSON.stringify(S)); } catch(e){} }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
 function dosD(n){ return (n<10?'0':'') + n; }
@@ -141,7 +160,7 @@ function tabla(){
   document.getElementById('tb').innerHTML = h + '</tbody>';
 }
 function panel(){
-  var ks = Object.keys(S.m).filter(function(k){ return S.m[k] && S.m[k].acc; });
+  var ks = Object.keys(S.m).filter(function(k){ return S.m[k] && S.m[k].acc && VIS[k]; });
   var ce = ks.filter(function(k){ return S.m[k].acc === 'cerrar'; });
   var ma = ks.filter(function(k){ return S.m[k].acc === 'mantener'; });
   document.getElementById('cuenta').textContent = ks.length ? (ce.length + ' para cerrar, ' + ma.length + ' para mantener') : 'nada todavía';
@@ -157,13 +176,14 @@ function panel(){
   var en = document.getElementById('enviado');
   if (en) en.textContent = S.enviado ? 'Enviada el ' + S.enviado.slice(8,10) + '/' + S.enviado.slice(5,7) + '/' + S.enviado.slice(0,4) + ' a las ' + new Date(S.enviado).toTimeString().slice(0,5) + '. Si cambias algo, vuelve a enviarla.' : '';
 }
-function nom(k){ for (var i=0;i<D.filas.length;i++) if (D.filas[i].k === k) return D.filas[i].e; return k; }
-function uso(k){ for (var i=0;i<D.filas.length;i++) if (D.filas[i].k === k) return D.filas[i].c[S.a]; return ''; }
+function nom(k){ for (var i=0;i<TODOS.length;i++) if (TODOS[i].k === k) return TODOS[i].e; return k; }
+function uso(k){ for (var i=0;i<TODOS.length;i++) if (TODOS[i].k === k) return TODOS[i].c[S.a]; return ''; }
 function idprint(){
-  var t = listo() ? ('Responde: ' + S.nom + (S.pue ? ' (' + S.pue + ')' : '') + ' · Área ' + S.a + ' · ' + D.sig[S.a]) : 'Sin rellenar quién responde';
+  var t = (listo() ? ('Responde: ' + S.nom + (S.pue ? ' (' + S.pue + ')' : '') + ' · Área ' + S.a + ' · ' + D.sig[S.a]) : 'Sin rellenar quién responde')
+    + (GRUPOS.length ? ' · ' + GRUPOS.join(' · ') : '');
   document.getElementById('idprint').textContent = t;
 }
-function pinta(){ tabla(); panel(); idprint(); }
+function pinta(){ tabla(); panel(); idprint(); pintaRes(); }
 
 document.getElementById('selA').value = S.a || '';
 document.getElementById('nom').value = S.nom || '';
@@ -195,15 +215,16 @@ document.getElementById('lst').addEventListener('input', function(ev){
 });
 function respuesta(){
   var d = new Date();
-  var marcas = Object.keys(S.m).filter(function(k){ return S.m[k].acc; }).map(function(k){
+  var marcas = Object.keys(S.m).filter(function(k){ return S.m[k].acc && VIS[k]; }).map(function(k){
     return { k:k, e:nom(k), acc:S.m[k].acc, motivo:(S.m[k].motivo||'').trim(), ts:S.m[k].ts, uso:S.m[k].uso };
   });
-  return { tipo:'respuesta-cm-escasa', v:1, area:Number(S.a), sig:D.sig[S.a], usuario:S.nom.trim(), puesto:S.pue.trim(),
+  return { tipo:'respuesta-cm-escasa', v:1, area:Number(S.a), sig:D.sig[S.a], grupos:GRUPOS, usuario:S.nom.trim(), puesto:S.pue.trim(),
     enviado:d.toISOString(), extracto:D.extracto, informe:D.generado, nota:S.nota.trim(), marcas:marcas };
 }
 function resumen(){
   var R = respuesta(), L = [];
-  L.push('RESPUESTA DEL ÁREA ' + R.area + ' · ' + R.sig + ' — Revisión de la cita mostrador');
+  L.push('RESPUESTA DEL ÁREA ' + R.area + ' · ' + R.sig + ' — Revisión de la cita mostrador'
+    + (GRUPOS.length ? ' (' + GRUPOS.join(' · ') + ')' : ''));
   L.push('Responde: ' + R.usuario + (R.puesto ? ' (' + R.puesto + ')' : ''));
   L.push('Fecha: ' + fecha(new Date()) + ' a las ' + hora(new Date()) + ' · informe del ' + R.informe + ' · extracto OMI-AP del ' + R.extracto);
   L.push('');

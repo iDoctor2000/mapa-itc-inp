@@ -553,7 +553,8 @@ form.edit .full{grid-column:1/-1}
     <button class="btn mas" id="masMapa" title="Añadir una especialidad o una modalidad nueva">+ Añadir</button>
     <button class="btn ghost" id="expMatriz">Exportar despliegue (CSV)</button>
     <button class="btn ghost" id="expInforme" title="Tabla con el resultado del filtro actual, para compartir o imprimir en PDF">Exportar informe</button>
-    <button class="btn ghost" id="expAreas" title="Informe interactivo de la cita mostrador para enviar a las áreas: marcan lo que proponen cerrar y te lo devuelven">Informe para las áreas</button>
+    <button class="btn ghost" id="lnkAreas" title="El enlace del portal para mandar a cada área o a cada responsable, acotado a los grupos que tengas marcados">Enlace para las áreas</button>
+    <button class="btn ghost" id="expAreas" title="El mismo informe como archivo suelto, para guardarlo o para publicarlo de nuevo">Descargar el informe</button>
     <button class="btn ghost" id="impAreas" title="Cargar las respuestas que te devuelvan las áreas">Respuestas de las áreas</button>
     <button class="btn ghost" id="expEstado" title="Guarda todos los cambios y la clasificación en un archivo">Guardar estado (JSON)</button>
     <button class="btn ghost" id="impEstado" title="Carga un archivo de estado guardado con este botón">Cargar estado…</button>
@@ -1700,6 +1701,7 @@ function abreDlg(ancha) { const d = $('#dlg'); d.classList.toggle('ancha', !!anc
 // PORTAL DE RESPUESTAS (03/11/2026): dirección del servicio que recibe lo que marcan las
 // áreas y que devuelve, en JSON, todo lo recibido. Vacía, el informe sigue funcionando por
 // archivo y por correo. Es el único sitio donde hay que ponerla.
+const PORTAL_PAGE = 'https://idoctor2000.github.io/mapa-itc-inp/revision-cita-mostrador.html';
 const PORTAL_CLAVE = false;   // true: el portal pide la contraseña del cuadro; false: se abre directo
 const PORTAL_URL = 'https://script.google.com/macros/s/AKfycbzMa7H5VvgWgtidMkqMQ59H72R8fLcvm1k5fLjWIzwUf-dfEIJJOXDiCFAqy6w6slZ-Fw/exec';
 
@@ -1808,7 +1810,7 @@ ${D.check ? `<div id="gate"><form id="gateForm">
 <div class="pg">
 <h1>Revisión de la cita mostrador</h1>
 <p class="sub">Interconsultas de Atención Primaria · Servicio Murciano de Salud · extracto OMI-AP del ${fmt(D.extracto)} · ${per}informe del ${fmt(D.generado)}</p>
-<div class="res"><b>${abiertas}</b> casillas con cita mostrador abierta en <b>${D.filas.length}</b> especialidades. <b>${escasas}</b> tuvieron menos de 10 interconsultas en 2026, <b>${ceros}</b> de ellas ninguna: son el motivo del informe, pero <b>se puede marcar cualquiera</b>.<br>
+<div class="res" id="res"><b>${abiertas}</b> casillas con cita mostrador abierta en <b>${D.filas.length}</b> especialidades. <b>${escasas}</b> tuvieron menos de 10 interconsultas en 2026, <b>${ceros}</b> de ellas ninguna: son el motivo del informe, pero <b>se puede marcar cualquiera</b>.<br>
 <small>Se pide a cada área que revise las casillas de su columna y señale cuáles propone <b>cerrar</b> y cuáles quiere <b>mantener abiertas</b>. Diez interconsultas al año ya es muy poco, y una con más uso también se puede cerrar si en su lugar queda la <b>INP como vía única</b>.</small></div>
 <p class="idprint" id="idprint"></p>
 <div class="caja"><h2>Quién responde</h2>
@@ -1850,6 +1852,25 @@ var AS = [1,2,3,4,5,6,7,8,9];
 var LS = 'sms-cm-escasa-' + D.extracto;
 var S = { a:'', nom:'', pue:'', nota:'', m:{} };
 try { var g = localStorage.getItem(LS); if (g) S = Object.assign(S, JSON.parse(g)); } catch(e){}
+// el enlace puede venir acotado: ?g=Grupo,Grupo y ?a=5
+var Q = new URLSearchParams(location.search);
+var GRUPOS = (Q.get('g') || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+var TODOS = D.filas.slice();
+if (GRUPOS.length) { var vale = TODOS.filter(function(f){ return GRUPOS.indexOf(f.g) >= 0; }); if (vale.length) D.filas = vale; else GRUPOS = []; }
+if (!S.a && /^[1-9]$/.test(Q.get('a') || '')) S.a = Q.get('a');
+var VIS = {}; D.filas.forEach(function(f){ VIS[f.k] = 1; });
+function cuenta(fn){ var n = 0; D.filas.forEach(function(f){ AS.forEach(function(a){ if (fn(f.c[a])) n++; }); }); return n; }
+function pintaRes(){
+  var ab = cuenta(function(v){ return typeof v === 'number'; });
+  var es = cuenta(function(v){ return typeof v === 'number' && v < 10; });
+  var ce = cuenta(function(v){ return v === 0; });
+  var e = document.getElementById('res'); if (!e) return;
+  e.innerHTML = '<b>' + ab + '</b> casillas con cita mostrador abierta en <b>' + D.filas.length + '</b> especialidades'
+    + (GRUPOS.length ? ' de <b>' + esc(GRUPOS.join(' · ')) + '</b>' : '')
+    + '. <b>' + es + '</b> tuvieron menos de 10 interconsultas en 2026, <b>' + ce + '</b> de ellas ninguna: son el motivo del informe, pero <b>se puede marcar cualquiera</b>.<br>'
+    + '<small>Se pide a cada área que revise las casillas de su columna y señale cuáles propone <b>cerrar</b> y cuáles quiere <b>mantener abiertas</b>. '
+    + 'Diez interconsultas al año ya es muy poco, y una con más uso también se puede cerrar si en su lugar queda la <b>INP como vía única</b>.</small>';
+}
 function guarda(){ try { localStorage.setItem(LS, JSON.stringify(S)); } catch(e){} }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
 function dosD(n){ return (n<10?'0':'') + n; }
@@ -1881,7 +1902,7 @@ function tabla(){
   document.getElementById('tb').innerHTML = h + '</tbody>';
 }
 function panel(){
-  var ks = Object.keys(S.m).filter(function(k){ return S.m[k] && S.m[k].acc; });
+  var ks = Object.keys(S.m).filter(function(k){ return S.m[k] && S.m[k].acc && VIS[k]; });
   var ce = ks.filter(function(k){ return S.m[k].acc === 'cerrar'; });
   var ma = ks.filter(function(k){ return S.m[k].acc === 'mantener'; });
   document.getElementById('cuenta').textContent = ks.length ? (ce.length + ' para cerrar, ' + ma.length + ' para mantener') : 'nada todavía';
@@ -1897,13 +1918,14 @@ function panel(){
   var en = document.getElementById('enviado');
   if (en) en.textContent = S.enviado ? 'Enviada el ' + S.enviado.slice(8,10) + '/' + S.enviado.slice(5,7) + '/' + S.enviado.slice(0,4) + ' a las ' + new Date(S.enviado).toTimeString().slice(0,5) + '. Si cambias algo, vuelve a enviarla.' : '';
 }
-function nom(k){ for (var i=0;i<D.filas.length;i++) if (D.filas[i].k === k) return D.filas[i].e; return k; }
-function uso(k){ for (var i=0;i<D.filas.length;i++) if (D.filas[i].k === k) return D.filas[i].c[S.a]; return ''; }
+function nom(k){ for (var i=0;i<TODOS.length;i++) if (TODOS[i].k === k) return TODOS[i].e; return k; }
+function uso(k){ for (var i=0;i<TODOS.length;i++) if (TODOS[i].k === k) return TODOS[i].c[S.a]; return ''; }
 function idprint(){
-  var t = listo() ? ('Responde: ' + S.nom + (S.pue ? ' (' + S.pue + ')' : '') + ' · Área ' + S.a + ' · ' + D.sig[S.a]) : 'Sin rellenar quién responde';
+  var t = (listo() ? ('Responde: ' + S.nom + (S.pue ? ' (' + S.pue + ')' : '') + ' · Área ' + S.a + ' · ' + D.sig[S.a]) : 'Sin rellenar quién responde')
+    + (GRUPOS.length ? ' · ' + GRUPOS.join(' · ') : '');
   document.getElementById('idprint').textContent = t;
 }
-function pinta(){ tabla(); panel(); idprint(); }
+function pinta(){ tabla(); panel(); idprint(); pintaRes(); }
 
 document.getElementById('selA').value = S.a || '';
 document.getElementById('nom').value = S.nom || '';
@@ -1935,15 +1957,16 @@ document.getElementById('lst').addEventListener('input', function(ev){
 });
 function respuesta(){
   var d = new Date();
-  var marcas = Object.keys(S.m).filter(function(k){ return S.m[k].acc; }).map(function(k){
+  var marcas = Object.keys(S.m).filter(function(k){ return S.m[k].acc && VIS[k]; }).map(function(k){
     return { k:k, e:nom(k), acc:S.m[k].acc, motivo:(S.m[k].motivo||'').trim(), ts:S.m[k].ts, uso:S.m[k].uso };
   });
-  return { tipo:'respuesta-cm-escasa', v:1, area:Number(S.a), sig:D.sig[S.a], usuario:S.nom.trim(), puesto:S.pue.trim(),
+  return { tipo:'respuesta-cm-escasa', v:1, area:Number(S.a), sig:D.sig[S.a], grupos:GRUPOS, usuario:S.nom.trim(), puesto:S.pue.trim(),
     enviado:d.toISOString(), extracto:D.extracto, informe:D.generado, nota:S.nota.trim(), marcas:marcas };
 }
 function resumen(){
   var R = respuesta(), L = [];
-  L.push('RESPUESTA DEL ÁREA ' + R.area + ' · ' + R.sig + ' — Revisión de la cita mostrador');
+  L.push('RESPUESTA DEL ÁREA ' + R.area + ' · ' + R.sig + ' — Revisión de la cita mostrador'
+    + (GRUPOS.length ? ' (' + GRUPOS.join(' · ') + ')' : ''));
   L.push('Responde: ' + R.usuario + (R.puesto ? ' (' + R.puesto + ')' : ''));
   L.push('Fecha: ' + fecha(new Date()) + ' a las ' + hora(new Date()) + ' · informe del ' + R.informe + ' · extracto OMI-AP del ' + R.extracto);
   L.push('');
@@ -2071,6 +2094,47 @@ function filasResp() {
         fecha: (x.ts || R.enviado || '').slice(0, 10), uso: x.uso, informe: R.informe || '', nota: R.nota || '' } });
   }));
   return out.sort((x, y) => x.a - y.a || x.e.localeCompare(y.e, 'es'));
+}
+// EL ENLACE PARA LAS ÁREAS (03/11/2026): la misma página del portal, acotada por el enlace
+// a los grupos marcados y, si se quiere, al área que responde. Un enlace por responsable.
+function enlacePortal(a) {
+  const q = [];
+  if (F.g.length) q.push('g=' + F.g.map(encodeURIComponent).join(','));
+  if (a) q.push('a=' + a);
+  return PORTAL_PAGE + (q.length ? '?' + q.join('&') : '');
+}
+function openEnlaceDlg() {
+  const gs = F.g.length ? F.g : null;
+  const esp = CAT.filter(c => (!gs || gs.includes(grupoDe(c.k))) && AREAS.some(a => isOpen(c.k, a, 'most'))).length;
+  const fila = a => `<tr><td class="mono">Área ${a} · ${SIG(a)}</td>
+    <td class="mono" style="word-break:break-all;font-size:11px;color:var(--muted)">${esc(enlacePortal(a))}</td>
+    <td><button type="button" class="btn ghost" data-cop="${esc(enlacePortal(a))}">Copiar</button></td></tr>`;
+  $('#dlgIn').innerHTML = `
+    <h2>Enlace para las áreas</h2>
+    <div class="meta"><span>Revisión de la cita mostrador</span><span class="pill buz">${gs ? esc(gs.join(' · ')) : 'Todos los grupos'} · ${esp} especialidades</span></div>
+    <div class="box"><h3>Qué lleva el enlace</h3>
+      <ul class="res-l">
+        <li><b>Lo que ves ahora:</b> el enlace se acota a ${gs ? `los grupos <b>${esc(gs.join(' · '))}</b>` : '<b>todos los grupos</b>'}. Si quieres otro recorte, cierra esto, marca los grupos arriba y vuelve a entrar.</li>
+        <li><b>Un enlace por área:</b> cada uno abre la página con su área ya elegida, así solo tienen que poner su nombre y marcar.</li>
+        <li><b>Sin contraseña:</b> se abre directo. Lo que marquen se guarda en su navegador y te llega cuando pulsan «Enviar la respuesta».</li>
+      </ul>
+      <div class="actions" style="margin:8px 0 0"><button type="button" class="btn primary" data-cop="${esc(enlacePortal(0))}">Copiar el enlace general</button><span class="spacer"></span><span id="copMsg" style="color:var(--ok-ink);font-size:12px"></span></div>
+    </div>
+    <div class="box"><h3>Uno para cada área</h3>
+      <table class="fic"><thead><tr><th>Área</th><th>Enlace</th><th></th></tr></thead><tbody>${AREAS.map(fila).join('')}</tbody></table>
+      <div class="actions" style="margin:8px 0 0"><button type="button" class="btn" id="copTodos">Copiar los nueve, en lista</button></div>
+    </div>
+    <p style="margin:0;color:var(--muted);font-size:12px">La página del portal lleva los datos del día en que se publicó. Si has cambiado cosas en el cuadro, pide que se vuelva a publicar antes de mandar los enlaces.</p>
+    <div class="actions"><span class="spacer"></span><button type="button" class="btn" id="enlCerrar">Cerrar</button></div>`;
+  const dlg = abreDlg(true);
+  $('#enlCerrar').onclick = () => dlg.close();
+  const avisa = t => { const m = $('#copMsg'); if (m) { m.textContent = t; setTimeout(() => { if (m.textContent === t) m.textContent = ''; }, 4000); } };
+  const copia = async (t, msg) => {
+    try { await navigator.clipboard.writeText(t); avisa(msg); toast(msg); }
+    catch (e) { prompt('Copia el enlace:', t); }
+  };
+  $('#dlgIn').querySelectorAll('[data-cop]').forEach(b => b.onclick = () => copia(b.dataset.cop, 'Enlace copiado'));
+  $('#copTodos').onclick = () => copia(AREAS.map(a => `Área ${a} · ${SIG(a)}: ${enlacePortal(a)}`).join('\n'), 'Los nueve enlaces, copiados');
 }
 async function traeDelPortal(btn) {
   if (!PORTAL_URL) return;
@@ -4014,6 +4078,7 @@ thead{display:table-header-group} tr{break-inside:avoid}
 $('#btnCompas').onclick = () => openCompasDlg();
 $('#expAreas').onclick = () => offer(`informe-cita-mostrador-areas-${today()}.html`, informeAreasHTML(), 'text/html;charset=utf-8');
 $('#impAreas').onclick = () => openRespDlg();
+$('#lnkAreas').onclick = () => openEnlaceDlg();
 $('#expInforme').onclick = () => offer(`informe-${F.modo === 'cm-escasa' ? 'cita-mostrador-escasa' : 'mapa-itc-inp'}-${today()}.html`, informeHTML(), 'text/html;charset=utf-8');
 
 $('#expMatriz').onclick = () => {
