@@ -1700,7 +1700,7 @@ function abreDlg(ancha) { const d = $('#dlg'); d.classList.toggle('ancha', !!anc
 // PORTAL DE RESPUESTAS (03/11/2026): dirección del servicio que recibe lo que marcan las
 // áreas y que devuelve, en JSON, todo lo recibido. Vacía, el informe sigue funcionando por
 // archivo y por correo. Es el único sitio donde hay que ponerla.
-const PORTAL_URL = '';
+const PORTAL_URL = 'https://script.google.com/macros/s/AKfycbzMa7H5VvgWgtidMkqMQ59H72R8fLcvm1k5fLjWIzwUf-dfEIJJOXDiCFAqy6w6slZ-Fw/exec';
 
 // ---------------- informe interactivo para las áreas (06/10/2026) ----------------
 // La misma tabla de «cita mostrador con uso escaso o nulo», pero como página que se envía por
@@ -1718,7 +1718,7 @@ function datosInformeAreas() {
         filas.push({ g, e: c.e, k: c.k, c: cel });
       });
   });
-  return { tipo: 'informe-cm-escasa', v: 1, extracto: FECHA_BASE, generado: today(), portal: PORTAL_URL,
+  return { tipo: 'informe-cm-escasa', v: 1, extracto: FECHA_BASE, generado: today(), portal: PORTAL_URL, check: CHECK,
     periodo: USOINFO ? { desde: USOINFO.desde, hasta: USOINFO.hasta } : null,
     sig: Object.fromEntries(AREAS.map(a => [a, SIG(a)])), filas };
 }
@@ -1783,7 +1783,28 @@ button.b:disabled{opacity:.5;cursor:not-allowed}
   .idprint{display:block!important}
 }
 .idprint{display:none;font-size:13px;margin:0 0 10px}
-</style></head><body><div class="pg">
+body.locked > *:not(#gate){display:none !important}
+#gate{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+body.locked #gate{display:flex}
+#gate form{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:26px 24px;box-shadow:0 18px 40px rgba(18,62,86,.12)}
+#gate h1{margin:0 0 6px;font-size:21px;color:#123E56}
+#gate p{margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.5}
+#gate input[type=password]{width:100%;padding:10px 12px;border:1px solid var(--line2);border-radius:8px;font-size:15px}
+#gate label{display:flex;gap:8px;align-items:center;margin:10px 0 14px;font-size:12.5px;color:var(--muted)}
+#gate .err{min-height:18px;color:var(--bad);font-size:12.5px;margin-bottom:6px}
+#gate button{width:100%;justify-content:center}
+#gate .firma{margin-top:16px;text-align:center;color:#2E7D8F;font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em}
+</style></head><body>
+<div id="gate"><form id="gateForm">
+  <h1>Revisión de la cita mostrador</h1>
+  <p>Interconsultas de Atención Primaria · Servicio Murciano de Salud. Escribe la contraseña del cuadro para ver el informe y responder.</p>
+  <input type="password" id="gatePass" placeholder="Contraseña" autocomplete="current-password" required autofocus>
+  <label><input type="checkbox" id="gateRem" checked> Recordar en este equipo</label>
+  <div class="err" id="gateErr"></div>
+  <button class="b p" type="submit">Entrar</button>
+  <div class="firma">iDoctor@2026</div>
+</form></div>
+<div class="pg">
 <h1>Revisión de la cita mostrador</h1>
 <p class="sub">Interconsultas de Atención Primaria · Servicio Murciano de Salud · extracto OMI-AP del ${fmt(D.extracto)} · ${per}informe del ${fmt(D.generado)}</p>
 <div class="res"><b>${abiertas}</b> casillas con cita mostrador abierta en <b>${D.filas.length}</b> especialidades. <b>${escasas}</b> tuvieron menos de 10 interconsultas en 2026, <b>${ceros}</b> de ellas ninguna: son el motivo del informe, pero <b>se puede marcar cualquiera</b>.<br>
@@ -1979,6 +2000,37 @@ document.getElementById('bMail').onclick = function(){
 };
 document.getElementById('bPrint').onclick = function(){ window.print(); };
 pinta();
+
+// la misma contraseña del cuadro: se comprueba descifrando el centinela, sin red
+var SC = (window.crypto && window.crypto.subtle) ? window.crypto.subtle : null;
+var TE = new TextEncoder();
+function ub64(x){ return Uint8Array.from(atob(x), function(c){ return c.charCodeAt(0); }); }
+function abreCon(clave){
+  return SC.importKey('raw', TE.encode(clave), 'PBKDF2', false, ['deriveKey'])
+    .then(function(km){ return SC.deriveKey({ name:'PBKDF2', salt: ub64(D.check.kdf.salt), iterations: D.check.kdf.it || 310000, hash:'SHA-256' },
+      km, { name:'AES-GCM', length:256 }, false, ['decrypt']); })
+    .then(function(k){ return SC.decrypt({ name:'AES-GCM', iv: ub64(D.check.iv) }, k, ub64(D.check.ct)); });
+}
+if (D.check && SC) {
+  document.body.classList.add('locked');
+  var guardada = null;
+  try { guardada = localStorage.getItem('sms-itc-pass'); } catch (e) {}
+  var entra = function(){ document.body.classList.remove('locked'); };
+  if (guardada) abreCon(guardada).then(entra).catch(function(){ try { localStorage.removeItem('sms-itc-pass'); } catch (e) {} });
+  document.getElementById('gateForm').onsubmit = function(ev){
+    ev.preventDefault();
+    var c = document.getElementById('gatePass').value;
+    var b = ev.target.querySelector('button[type=submit]');
+    b.disabled = true; b.textContent = 'Comprobando…';
+    abreCon(c).then(function(){
+      if (document.getElementById('gateRem').checked) { try { localStorage.setItem('sms-itc-pass', c); } catch (e) {} }
+      entra();
+    }).catch(function(){
+      document.getElementById('gateErr').textContent = 'Contraseña incorrecta. Vuelve a intentarlo.';
+      document.getElementById('gatePass').value = ''; document.getElementById('gatePass').focus();
+    }).then(function(){ b.disabled = false; b.textContent = 'Entrar'; });
+  };
+}
 })();
 <\/script>
 </body></html>`;
