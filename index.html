@@ -185,6 +185,8 @@ table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:1
 .mx td.res{padding:2px 10px;font-size:11.5px;line-height:1.45;color:var(--muted);text-align:left;vertical-align:middle}
 .mx td.res button[data-res]{display:block;width:100%;text-align:left;border:0;background:none;padding:0;color:inherit;font:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mx td.res button[data-res]:hover{color:var(--ink)}
+.mx td.res button[data-resr]{display:block;width:100%;text-align:left;border:0;background:none;padding:0;color:inherit;font:inherit;white-space:normal;cursor:pointer}
+.mx td.res button[data-resr]:hover{color:var(--ink)}
 .mx td.res b{font-weight:600} .mx td.res .b{color:var(--buz)} .mx td.res .u{color:var(--vin-x)}
 .mx td.res .f{color:var(--accent)} .mx td.res .s{color:var(--closed)} .mx td.res .n{color:var(--warn-ink)}
 .mx td.res .nota{color:var(--itc);font-weight:600}
@@ -472,6 +474,69 @@ form.edit .full{grid-column:1/-1}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
 @media print{ .bar,.tools,.legend,.kpis{display:none} .wrap{max-height:none;overflow:visible;border:0} .pie{border:0} }
+/* ITC-R · seguimiento del montaje, mapa de derivaciones, correo con formato (10/11/2026) */
+#ix td.mont{min-width:124px;padding:3px 10px}
+.pasos{display:flex;flex-direction:column;gap:3px;width:100%;border:0;background:none;padding:3px 0;color:var(--muted);font:500 10.5px/1.25 "IBM Plex Sans",sans-serif;text-align:left;white-space:nowrap}
+.pasos .seg{display:grid;grid-template-columns:repeat(6,1fr);gap:2px}
+.pasos .seg i{height:7px;border-radius:2px;background:var(--line-strong);opacity:.55}
+.pasos .seg i.on{background:var(--open);opacity:1}
+.pasos .tx b{color:var(--ink);font-weight:600}
+.pasos.no{opacity:.45}
+.pasos:hover .tx{color:var(--ink)} .pasos:hover .seg i{opacity:1}
+.pasos-l{display:flex;flex-direction:column}
+.pasos-l .paso{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.pasos-l .paso:first-child{border-top:0}
+.pasos-l .paso .chk{flex-direction:row;padding:0;color:var(--ink);font-size:13px}
+.pasos-l .paso .chk b{display:inline-block;min-width:14px;color:var(--muted);font:600 11px/1 "IBM Plex Mono",monospace}
+.pasos-l .paso input[type=date]{padding:5px 7px;font-size:12.5px}
+.pasos-l .paso small{grid-column:1/-1;color:var(--muted);font-size:11.5px;padding-left:22px}
+.pasos-l .paso.on small{color:var(--ok-ink)}
+.box ul.pasos-f{list-style:none;padding:0;margin:0}
+ul.pasos-f li{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:3px 0;border-top:1px solid var(--line);margin:0}
+ul.pasos-f li:first-child{border-top:0}
+ul.pasos-f li i{font-style:normal;color:var(--line-strong);text-align:center}
+ul.pasos-f li.on i{color:var(--open);font-weight:700}
+ul.pasos-f li small{color:var(--muted);font-size:11.5px;white-space:nowrap}
+ul.pasos-f li:not(.on) span{color:var(--muted)}
+.correo.rico{white-space:normal;font:13px/1.55 "IBM Plex Sans",sans-serif}
+.correo.rico>div{font:inherit !important}
+.correo.rico ul{margin-top:0;margin-bottom:0}
+/* el diálogo es una columna flexible y una caja con barra propia se encoge hasta desaparecer si no se le pone suelo */
+#corTxt{min-height:min(200px,30vh)}
+.cab-c{display:flex;flex-direction:column;gap:5px;font-size:12.5px}
+.cab-c>div{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.cab-c b{font-weight:600}
+.cab-c .dir{font:12px/1.5 "IBM Plex Mono",monospace;overflow-wrap:anywhere}
+.cab-c .sin{color:var(--muted)}
+.cor-env{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;color:var(--muted)}
+.cor-env.on{color:var(--ok-ink)}
+.pl-c{display:flex;flex-direction:column;gap:4px}
+.pl-et{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;font-size:12px;color:var(--muted)}
+.pl-et span:first-child{flex:1;color:var(--ink);font-weight:600}
+.pl-et small{font-weight:400;color:var(--muted)}
+form.edit .pl-c textarea{width:100%;box-sizing:border-box;min-height:0;font:12.5px/1.5 "IBM Plex Sans",sans-serif}
+form.edit label small{color:var(--muted);font-weight:400}
+table.cpm td.mp-td{padding:4px 3px;line-height:1.9}
+table.cpm td.mp-td .mp-c{display:inline-block;width:auto;max-width:150px;margin:1px;padding:2px 6px;border:1px solid transparent;border-radius:999px;font:600 10.5px/1.3 "IBM Plex Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+table.cpm td .mp-c.e-montada,.mp-ley .mp-c.e-montada{background:var(--ok-soft);color:var(--ok-ink)}
+table.cpm td .mp-c.e-montaje,.mp-ley .mp-c.e-montaje{background:var(--warn-soft);color:var(--warn-ink)}
+table.cpm td .mp-c.e-prevista,.mp-ley .mp-c.e-prevista{background:var(--surface-2);color:var(--muted)}
+table.cpm td .mp-c.e-no,.mp-ley .mp-c.e-no{background:var(--bad-soft);color:var(--bad-ink)}
+table.cpm td.mp-td button.mp-c:hover{border-color:currentColor}
+table.cpm td.mp-td.cp-p .mp-c{opacity:.7}
+table.cpm td.mp-td{vertical-align:top}
+table.cpm.mp tbody th{vertical-align:top;padding-top:8px}
+.mp-ley{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:11.5px;color:var(--muted);margin-top:8px}
+.mp-ley .mp-c{display:inline-block;padding:1px 6px;border:1px solid transparent;border-radius:999px;font:600 10px/1.3 "IBM Plex Mono",monospace;margin-right:4px}
+.cpm-w{overflow-x:auto;flex-shrink:0}
+.mp-nom{display:flex;flex-wrap:wrap;gap:3px 14px;font-size:11.5px;color:var(--muted)}
+.mp-nom b{color:var(--ink);font:600 10.5px/1.3 "IBM Plex Mono",monospace;margin-right:4px}
+.mp-h{margin:0;padding-left:18px} .mp-h li{margin:3px 0}
+.cor-tipo{display:flex;gap:6px;flex-wrap:wrap}
+.cor-tipo button{padding:6px 11px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface);font:500 12.5px/1 "IBM Plex Sans",sans-serif;color:var(--muted)}
+.cor-tipo button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.aviso-caja.suave{margin:0;background:var(--warn-soft);color:var(--warn-ink)}
+@media (max-width:720px){ #ix thead th:nth-last-child(2){display:table-cell} #ix thead th:nth-last-child(3){display:none} #corTxt{min-height:44vh} }
 </style>
 </head>
 <body>
@@ -660,11 +725,22 @@ form.edit .full{grid-column:1/-1}
       <option value="falta">Les falta algún dato del correo</option>
       <option value="cambios">Con cambios desde el archivo</option>
       <option value="nuevas">Añadidas a mano</option>
+      <optgroup label="Seguimiento del montaje">
+        <option value="p-0">Sin empezar</option>
+        <option value="p-gdp">Falta: petición en el Gestor</option>
+        <option value="p-compas">Falta: rutas del COMPAS</option>
+        <option value="p-recep">Falta: buzón o agenda</option>
+        <option value="p-prueba">Falta: prueba</option>
+        <option value="p-correo">Falta: correo a los equipos</option>
+        <option value="p-marcha">Falta: ponerla en marcha</option>
+        <option value="p-ok">Con los seis pasos hechos</option>
+      </optgroup>
     </select>
     <button class="btn mas" id="masItcr" title="Añadir una interconsulta regional">+ Añadir</button>
+    <button class="btn" id="mapaItcr" title="Qué hospital envía a cuál, en una cuadrícula">Quién deriva a quién</button>
     <button class="btn ghost" id="expItcr">Exportar (CSV)</button>
   </div>
-  <p class="help" id="iHelp">Interconsultas <b>entre hospitales</b>. Cada fila es una interconsulta regional y cada casilla dice si esa área la pide por la <b>vía actual, entre Selenes</b> (cuadrado sepia) y si ya la pide por el <b>Gestor de Peticiones</b> (cuadrado verde), la vía nueva. El hospital que la atiende aparece marcado y en el resumen. Pulsa un cuadrado para corregir el estado de esa área, o el resumen para abrir la ficha. Al final de cada fila, el sobre <b>✉</b> redacta el correo para los equipos y las flechas abren el circuito y las rutas del COMPAS.</p>
+  <p class="help" id="iHelp">Interconsultas <b>entre hospitales</b>. Cada fila es una interconsulta regional y cada casilla dice si esa área la pide por la <b>vía actual, entre Selenes</b> (cuadrado sepia) y si ya la pide por el <b>Gestor de Peticiones</b> (cuadrado verde), la vía nueva. El hospital que la atiende aparece marcado y en el resumen. Pulsa un cuadrado para corregir el estado de esa área, o el resumen para abrir la ficha. La columna <b>Montaje</b> lleva la cuenta de los seis pasos (Gestor, COMPAS, buzón, prueba, correo y en marcha): púlsala para apuntar lo que ya está hecho. Al final de cada fila, el sobre <b>✉</b> redacta el correo para los equipos y las flechas abren el circuito y las rutas del COMPAS.</p>
   <div class="legend" id="iLegend">
     <span><i class="sq sel open"></i> la pide hoy por Selene</span>
     <span><i class="sq sel"></i> no la pide por Selene</span>
@@ -813,7 +889,7 @@ function codigosDe(k) {
 const grupoDe = k => (catOv[k] && catOv[k].g) ? catOv[k].g : BYK[k].g;
 const grupos = () => { const s = [...BASE_GRUPOS, ...extraGrupos]; CAT.forEach(c => { const g = grupoDe(c.k); if (!s.includes(g)) s.push(g); }); return s; };
 
-const today = () => { const d = new Date(); return d.toISOString().slice(0, 10); };
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const fmt = iso => iso ? iso.split('-').reverse().join('/') : '';
 const fmtTs = ts => { if (!ts) return ''; const d = new Date(ts); return d.toLocaleString('es-ES', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); };
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -1564,6 +1640,46 @@ const telR = f => filaR(f).tel || '';
 const emisorR = f => filaR(f).emisor || '';
 const receptorR = f => filaR(f).receptor || '';
 
+
+// ---------------- seguimiento del montaje (10/11/2026) ----------------
+// Los pasos viven en la fila, en «pasos»: { gdp: { fecha, usuario, ts }, … }. El que no está, no se ha hecho.
+const PASOS = [['gdp', 'Petición creada en el Gestor', 'el Gestor'], ['compas', 'Rutas del COMPAS abiertas', 'el COMPAS'],
+  ['recep', 'Buzón o agenda creados', 'el buzón'], ['prueba', 'Prueba hecha', 'la prueba'],
+  ['correo', 'Correo enviado a los equipos', 'el correo'], ['marcha', 'En marcha', 'arrancar']];
+const pasosR = f => filaR(f).pasos || {};
+const pasoR = (f, k) => pasosR(f)[k] || null;
+const nPasos = f => PASOS.filter(p => pasoR(f, p[0])).length;
+const sigPaso = f => PASOS.find(p => !pasoR(f, p[0])) || null;
+
+// Texto fijo del correo y destinatarios: dos registros sueltos de ov[1], comunes a todas las líneas.
+// Van con la clave de una fila que no existe para que se publiquen y se fusionen como lo demás.
+const GKEY = { plant: 'r-_plantilla|fila', cont: 'r-_contactos|fila' };
+const GNOM = { _plantilla: 'Texto del correo', _contactos: 'Destinatarios del correo' };
+const PLANT_DEF = {
+  saludo: '',
+  obj: 'Implantar un ITC regional de {especialidad}',
+  uso: 'Se realizará a través del gestor de peticiones corporativo desde Selene.',
+  flujo: 'Creación de la petición → cumplimentación del formulario → adjunta documentos / imágenes → envía la solicitud.',
+  recBuz: 'La petición se recibe en el buzón de peticiones de Selene {buzon} del hospital de destino.',
+  recAge: 'La petición se recibe en la agenda {buzon} del hospital de destino.',
+  cita: 'Requiere cita en el hospital de destino.',
+  llamSi: 'Es obligatorio el contacto telefónico ({telefono}).\nLa llamada evita tener dependencia del buzón consultándolo activamente pero no lo excluye, se debe crear el buzón de peticiones en Selene.\nExiste también la opción de complemento vía correo de Selene, pero no sustituye la llamada.',
+  llamNo: 'No es obligatorio el contacto telefónico: la recepción se vigila en el buzón de peticiones de Selene, que debe estar creado.\nExiste también la opción de complemento vía correo de Selene.',
+  reg: 'Debe quedar registrado en ambos centros:\nHospital origen: petición y respuesta\nHospital destino: petición y respuesta',
+  campos: CAMPOS_R.join('\n'),
+  firma: '' };
+const PLANT_ET = [['saludo', 'Saludo, antes de todo', 1], ['obj', '1 · Objetivo del circuito'], ['uso', '2 · Uso del gestor de peticiones corporativo'],
+  ['flujo', '3 · Flujo de la solicitud'], ['recBuz', '4 · Recepción, cuando llega a un buzón'], ['recAge', '4 · Recepción, cuando llega a una agenda'],
+  ['cita', '4 · Línea que se añade si requiere cita'], ['llamSi', '5 · Comunicación, con llamada obligatoria'], ['llamNo', '5 · Comunicación, sin llamada obligatoria'],
+  ['reg', '6 · Registro de la información'], ['campos', 'Campos del formulario, uno por línea'], ['firma', 'Despedida y firma', 1]];
+const plantRec = () => ov[1][GKEY.plant] || {};
+const plantV = k => { const v = (plantRec().t || {})[k]; return typeof v === 'string' ? v : PLANT_DEF[k]; };
+const camposR = () => plantV('campos').split('\n').map(s => s.trim()).filter(Boolean);
+const contRec = () => ov[1][GKEY.cont] || {};
+const contH = a => String((contRec().h || {})[a] || '').trim();
+const contTec = () => String(contRec().tec || '').trim();
+const trozaDirs = s => String(s || '').split(/[;,\n]+/).map(x => x.trim()).filter(Boolean);
+
 // ---------------- filtros y tabla ----------------
 function enFiltroR(f, a) {
   const m = FI.modo; if (!m) return true;
@@ -1576,8 +1692,13 @@ function enFiltroR(f, a) {
 }
 function filaVisibleR(f) {
   if (FI.modo === 'nuevas') return esNuevaItcr(f.id);
+  if (F.q && !norm([f.n, f.id, f.svc, codR(f), (f.gdp || {}).cod || '', ((f.sel || {}).pruebas || []).join(' ')].join(' ')).includes(norm(F.q))) return false;
   if (FI.modo === 'falta') return correoItcr(f).falta.length > 0;
-  if (F.q && !norm([f.n, f.id, f.svc, (f.gdp || {}).cod || '', ((f.sel || {}).pruebas || []).join(' ')].join(' ')).includes(norm(F.q))) return false;
+  if (FI.modo && FI.modo.startsWith('p-')) {   // seguimiento del montaje: sin empezar, completo o le falta un paso
+    const n = nPasos(f), k = FI.modo.slice(2);
+    if (estadoR(f) === 'no' && !n) return false;
+    return k === '0' ? !n : k === 'ok' ? n === PASOS.length : !pasoR(f, k);
+  }
   if (FI.modo === 'llamada') return llamadaR(f);
   if (FI.modo === 'cita') return citaR(f);
   if (FI.modo === 'urgente') return urgenteR(f);
@@ -1592,11 +1713,11 @@ function renderItcr() {
   const as = F.a ? [Number(F.a)] : AREAS, rows = filasRVisibles();
   const cab = '<br><span style="font-weight:500;letter-spacing:0;text-transform:none"><span class="m">Selene</span> · <span class="t">GdP</span></span>';
   let h = '<thead><tr><th class="esp">Interconsulta regional</th>' + as.map(a => `<th title="${esc(HOS[a] ? HOS[a].n : '')}">Área ${a} · ${SIG(a)}${cab}</th>`).join('')
-    + `<th>Emiten${cab}</th><th class="res">Resumen y destino</th></tr>`;
+    + `<th>Emiten${cab}</th><th title="Los seis pasos del montaje: Gestor, COMPAS, buzón, prueba, correo y en marcha">Montaje</th><th class="res">Resumen y destino</th></tr>`;
   h += '<tr class="cnt"><th class="esp">en las filas visibles</th>' + as.map(a =>
     `<th><b class="m">${rows.filter(f => enFiltroR(f, a) && emiteSel(f, a)).length}</b> · <b class="t">${rows.filter(f => enFiltroR(f, a) && emiteGdp(f, a)).length}</b></th>`).join('')
-    + `<th>${rows.length} ITC-R</th><th class="res"></th></tr></thead><tbody>`;
-  if (!rows.length) h += `<tr><td colspan="${as.length + 3}" class="empty">Ninguna interconsulta coincide con el filtro.</td></tr>`;
+    + `<th>${rows.length} ITC-R</th><th>${rows.filter(f => pasoR(f, 'marcha')).length} en marcha</th><th class="res"></th></tr></thead><tbody>`;
+  if (!rows.length) h += `<tr><td colspan="${as.length + 4}" class="empty">Ninguna interconsulta coincide con el filtro.</td></tr>`;
   rows.forEach(f => { h += filaItcr(f, as); });
   $('#ix').innerHTML = h + '</tbody>';
   fijaCab('#ix');
@@ -1620,6 +1741,7 @@ function filaItcr(f, as) {
       + tagD + (rec ? '<i class="tg rec2" title="Este hospital recibe la interconsulta">recibe</i>' : '') + '</span></td>';
   });
   h += `<td class="tot"><span class="m">${AREAS.filter(a => emiteSel(f, a)).length}</span> · <span class="t">${AREAS.filter(a => emiteGdp(f, a)).length}</span> <span style="opacity:.6">de 9</span></td>`
+    + celdaPasos(f)
     + `<td class="res"><div class="res-in"><button type="button" data-resr="${f.id}" title="${esc(textoItcr(f))}">${resumenCortoItcr(f)}</button>`
     + `<button type="button" class="flechas sobre" data-corr="${f.id}" aria-label="Redactar el correo de ${esc(f.n)}" title="Redactar el correo para los equipos"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><rect x="1.6" y="3.4" width="12.8" height="9.2" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2.2 4.6 8 8.8l5.8-4.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`
     + `<button type="button" class="flechas" data-flur="${f.id}" aria-label="Circuito de ${esc(f.n)}" title="Ver el circuito de ${esc(f.n)}"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 5h9M8.6 2.4 11.6 5 8.6 7.6M14 11H5M7.4 8.4 4.4 11 7.4 13.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></td></tr>`;
@@ -1655,7 +1777,7 @@ function resumenItcr(f) {
   if (camb.length) L.push(['Corregido a mano', `${camb.length} casilla${camb.length === 1 ? '' : 's'} (${listaAreas(camb)}) difiere${camb.length === 1 ? '' : 'n'} del archivo`]);
   if (filaR(f).nota) L.push(['Nota del equipo', filaR(f).nota]);
   if (f.gdp && f.gdp.nota) L.push(['Aviso del archivo', f.gdp.nota]);
-  return L;
+  return L.map(([e, t]) => [e, String(t).trim().replace(/\.$/, '')]);   // el punto final lo pone quien lo pinta
 }
 const textoItcr = f => resumenItcr(f).map(([e, t]) => `${e}: ${t}.`).join(' ');
 function resumenCortoItcr(f) {
@@ -1684,7 +1806,8 @@ function renderKpisItcr() {
     k('deriv', 'Previstas', est.prevista, 'aún sin configurar') +
     k('au', 'Con llamada obligatoria', llam, 'hay que avisar por teléfono') +
     k('buz', 'Con cita en destino', cit, `${urg} admiten prioridad urgente`) +
-    k('sindest', 'Pendientes de migrar', rows.filter(f => f.sel && AREAS.some(a => emiteSel(f, a) && !emiteGdp(f, a))).length, 'interconsultas con áreas en Selene');
+    k('sindest', 'Pendientes de migrar', rows.filter(f => f.sel && AREAS.some(a => emiteSel(f, a) && !emiteGdp(f, a))).length, 'interconsultas con áreas en Selene') +
+    k('inp', 'En marcha', rows.filter(f => pasoR(f, 'marcha')).length, `${rows.filter(f => pasoR(f, 'correo')).length} con el correo enviado`);
   const partes = [`<b>${rows.length}</b> ${rows.length === 1 ? 'interconsulta regional' : 'interconsultas regionales'}`,
     F.a ? `<b>Área ${F.a} · ${SIG(Number(F.a))}</b>` : '<b>las 9 áreas</b>'];
   if (F.q) partes.push(`búsqueda «<b>${esc(F.q)}</b>»`);
@@ -1728,7 +1851,17 @@ function svgItcr(f) {
 
 // Las ventanas con tablas, gráficos o listas se abren anchas; los formularios se quedan
 // estrechos, que se leen mejor. En pantallas pequeñas manda el ancho de la pantalla.
-function abreDlg(ancha) { const d = $('#dlg'); d.classList.toggle('ancha', !!ancha); if (!d.open) d.showModal(); return d; }
+// Una ventana recién abierta, o que cambia de contenido, empieza arriba: el navegador recordaba el
+// desplazamiento de la anterior. Si solo se repinta la misma, se queda donde estaba.
+function abreDlg(ancha) {
+  const d = $('#dlg'), c = $('#dlgIn'), t = (c.querySelector('h2') || {}).textContent || '';
+  d.classList.toggle('ancha', !!ancha);
+  const nueva = !d.open || t !== abreDlg.tit;
+  abreDlg.tit = t;
+  if (!d.open) d.showModal();
+  if (nueva) c.scrollTop = 0;
+  return d;
+}
 
 // PORTAL DE RESPUESTAS (03/11/2026): dirección del servicio que recibe lo que marcan las
 // áreas y que devuelve, en JSON, todo lo recibido. Vacía, el informe sigue funcionando por
@@ -2330,6 +2463,7 @@ function openItcrFicha(id) {
     <h2>${esc(f.n)}</h2>
     <div class="meta"><span class="pill buz">${esc(f.svc)}</span><span class="pill ${EST_R[est][1]}">${EST_R[est][0]}</span><span>ITC-R · entre hospitales</span></div>
     <div class="box"><h3>Resumen</h3><ul class="res-l">${L.map(([e, t]) => `<li><b>${esc(e)}:</b> ${esc(t)}.</li>`).join('')}</ul></div>
+    ${cajaPasos(f)}
     <div class="box"><h3>Área por área</h3>
       <table class="fic"><thead><tr><th>Área</th><th>Selene</th><th>Gestor</th><th>Prueba configurada</th><th>Destino</th></tr></thead>
       <tbody>${AREAS.map(fila).join('')}</tbody></table></div>
@@ -2365,6 +2499,7 @@ function openItcrFicha(id) {
       <label>Quién lo registra <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
       <div class="actions">
         ${esNuevaItcr(id) ? '<button type="button" class="btn ghost" id="ifRetira">Retirar la interconsulta</button>' : ''}
+        <button type="button" class="btn ghost" id="ifDup" title="Añadir otra interconsulta regional partiendo de esta">Duplicar</button>
         <span class="spacer"></span>
         <button type="button" class="btn" id="ifCerrar">Cerrar</button>
         <button type="button" class="btn" id="ifFlujo">Ver el circuito</button>
@@ -2381,6 +2516,9 @@ function openItcrFicha(id) {
   $('#ifTodos').onclick = () => marca(true);
   $('#ifNada').onclick = () => marca(false);
   $('#dlgIn').querySelectorAll('[data-rutr]').forEach(b => b.onclick = () => { dlg.close(); setTimeout(() => openRutasItcr(id, () => openItcrFicha(id)), 60); });
+  $('#dlgIn').querySelectorAll('[data-pasr]').forEach(b => b.onclick = () => { dlg.close(); setTimeout(() => openPasosItcr(id, () => openItcrFicha(id)), 60); });
+  $('#dlgIn').querySelectorAll('[data-encr]').forEach(b => b.onclick = () => { dlg.close(); setTimeout(() => openCorreoItcr(id, 'tec'), 60); });
+  $('#ifDup').onclick = () => { dlg.close(); setTimeout(() => openAltaItcrDlg(id), 60); };
   $('#itcrForm').onsubmit = ev => {
     ev.preventDefault();
     const fd = new FormData(ev.target), usuario = String(fd.get('usuario') || '').trim();
@@ -2439,6 +2577,7 @@ function openItcrFlujo(id) {
   });
   $('#ifcCerrar').onclick = () => dlg.close();
   $('#dlgIn').querySelectorAll('[data-rutr]').forEach(b => b.onclick = () => { dlg.close(); setTimeout(() => openRutasItcr(id, () => openItcrFlujo(id)), 60); });
+  $('#dlgIn').querySelectorAll('[data-encr]').forEach(b => b.onclick = () => { dlg.close(); setTimeout(() => openCorreoItcr(id, 'tec'), 60); });
   $('#ifcFicha').onclick = () => { dlg.close(); openItcrFicha(id); };
 }
 
@@ -2464,7 +2603,8 @@ function cajaRutas(f) {
       <div style="margin-top:6px;color:var(--muted);font-size:12px">${act} ruta${act === 1 ? '' : 's'} abierta${act === 1 ? '' : 's'} de ${rs.length}. La <b>S</b> abre la ruta y la <b>N</b> la deja cerrada.</div>`
       : '<div style="color:var(--muted)">Todavía no hay rutas. Elige el hospital de destino y los de origen y se proponen solas.</div>'}
     ${av.length ? `<div class="aviso-caja">⚠ ${av.map(esc).join('. ')}.</div>` : ''}
-    <div style="margin-top:8px"><button type="button" class="btn" data-rutr="${f.id}">Editar las rutas del COMPAS</button></div></div>`;
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn" data-rutr="${f.id}">Editar las rutas del COMPAS</button>
+      <button type="button" class="btn ghost" data-encr="${f.id}">Redactar el encargo para quien configura</button></div></div>`;
 }
 function openRutasItcr(id, volver) {
   const f = BYI[id]; if (!f) return;
@@ -2540,67 +2680,450 @@ function openRutasItcr(id, volver) {
 }
 
 // ---------------- el correo a los equipos ----------------
-// Sale con la estructura acordada; lo que falta por rellenar se marca «entre comillas angulares».
+// Se compone por bloques para sacarlo dos veces: en texto llano y con formato, que es lo que se pega
+// en Outlook. Lo que falta por rellenar va «entre comillas angulares» y, con formato, resaltado.
+// La parte fija del texto sale de la plantilla compartida (plantV); los datos, de la ficha de cada línea.
+const escM = s => esc(s).replace(/\u0001([^\u0002]*)\u0002/g, '<span style="background:#FFE58A;color:#1a1a1a">«$1»</span>');
+const llanoM = s => String(s).replace(/\u0001([^\u0002]*)\u0002/g, '«$1»');
+function redactor() {
+  const B = [], falta = [];
+  return { B, falta,
+    pend: q => { if (!falta.includes(q)) falta.push(q); return `\u0001${q}\u0002`; },
+    tit: t => B.push(['tit', t]), sec: (t, v) => B.push(['sec', t, v || '']), kv: (k, v) => B.push(['kv', k, v]),
+    p: t => B.push(['p', t]), li: t => B.push(['li', t]), gap: () => B.push(['gap']) };
+}
+const saleTexto = (B, vin) => B.map(b => b[0] === 'gap' ? '' : b[0] === 'sec' ? (b[2] ? `${b[1]}: ${b[2]}` : b[1])
+  : b[0] === 'kv' ? `${b[1]}: ${b[2]}` : b[0] === 'li' ? (vin || '') + b[1] : b[1]).map(llanoM).join('\n');
+function saleHtml(B) {
+  const out = [];
+  let gap = false, ul = false;
+  B.forEach(b => {
+    if (b[0] === 'gap') { gap = true; return; }
+    const m = `margin:${gap ? '12pt' : '0'} 0 2pt 0`;
+    if (b[0] === 'li') {
+      if (!ul) { out.push(`<ul style="margin:${gap ? '12pt' : '0'} 0 2pt 0;padding-left:18pt">`); ul = true; }
+      out.push(`<li style="margin:0">${escM(b[1])}</li>`); gap = false; return;
+    }
+    if (ul) { out.push('</ul>'); ul = false; }
+    if (b[0] === 'tit') out.push(`<p style="${m};font-size:13pt"><b>${escM(b[1])}</b></p>`);
+    else if (b[0] === 'sec') out.push(`<p style="${m}"><b>${escM(b[1])}${b[2] ? ':' : ''}</b>${b[2] ? ' ' + escM(b[2]) : ''}</p>`);
+    else if (b[0] === 'kv') out.push(`<p style="${m}"><b>${escM(b[1])}:</b> ${escM(b[2])}</p>`);
+    else out.push(`<p style="${m}">${escM(b[1])}</p>`);
+    gap = false;
+  });
+  if (ul) out.push('</ul>');
+  return `<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.35">${out.join('')}</div>`;
+}
 function correoItcr(f) {
-  const o = origR(f), d = destUno(f), L = [], falta = [];
-  const pide = (v, q) => { if (v) return v; falta.push(q); return `«${q}»`; };
+  const R = redactor(), o = origR(f), d = destUno(f), rn = recepNR(f);
   const amb = circR(f).map(c => CIRC[c] || c), pri = prioR(f).map(p => PRIO[p] || p);
   const tit = `ITC R ${f.svc || f.id}${codR(f) ? ' · ' + codR(f) : ''}`;
-  L.push(tit, '');
-  L.push(`1. Objetivo del circuito: Implantar un ITC regional de ${f.n}`);
-  L.push(`Origen: ${o.length ? listaH(o) : pide('', 'hospitales de origen')}`);
-  L.push(`Destino: ${d ? nomE(d) : pide('', 'hospital de destino')}${f.gdp && f.gdp.destSvc ? ` · servicio ${f.gdp.destSvc}` : ''}`);
-  L.push(`Ámbitos: ${amb.length ? yLista(amb) : pide('', 'ámbitos')}`);
-  L.push(`Prioridad: ${pri.length ? yLista(pri) : pide('', 'prioridad')}`);
-  L.push(`Personal emisor: ${pide(emisorR(f), 'personal emisor')}`);
-  L.push(`Personal receptor: ${pide(receptorR(f), 'personal receptor')}`);
-  L.push('', '2. Uso del gestor de peticiones corporativo', 'Se realizará a través del gestor de peticiones corporativo desde Selene.');
-  L.push('', '3. Flujo de la solicitud', 'Creación de la petición → cumplimentación del formulario → adjunta documentos / imágenes → envía la solicitud.');
-  const rn = recepNR(f);
-  if (!rn) falta.push('nombre del buzón o de la agenda');
-  L.push('', '4. Recepción', recepR(f) === 'age'
-    ? `La petición se recibe en la agenda${rn ? ` «${rn}»` : ''} del hospital de destino.`
-    : `La petición se recibe en el buzón de peticiones de Selene${rn ? ` «${rn}»` : ''} del hospital de destino.`);
-  if (citaR(f)) L.push('Requiere cita en el hospital de destino.');
-  L.push('', '5. Comunicación obligatoria');
-  if (llamadaR(f)) {
-    L.push(`Es obligatorio el contacto telefónico${telR(f) ? ` (${telR(f)})` : ''}.`);
-    if (!telR(f)) falta.push('teléfono o busca del hospital de destino');
-    L.push('La llamada evita tener dependencia del buzón consultándolo activamente pero no lo excluye, se debe crear el buzón de peticiones en Selene.');
-    L.push('Existe también la opción de complemento vía correo de Selene, pero no sustituye la llamada.');
-  } else {
-    L.push('No es obligatorio el contacto telefónico: la recepción se vigila en el buzón de peticiones de Selene, que debe estar creado.');
-    L.push('Existe también la opción de complemento vía correo de Selene.');
-  }
-  L.push('', '6. Registro de la información', 'Debe quedar registrado en ambos centros:',
-    'Hospital origen: petición y respuesta', 'Hospital destino: petición y respuesta');
-  L.push('', 'Datos de la petición', `Código petición: ${pide(codR(f), 'código de petición')}`, `Descripción: ${descR(f)}`);
-  L.push('', 'Campos del formulario', ...CAMPOS_R);
-  return { asunto: `${tit} — ${descR(f)}`, texto: L.join('\n'), falta: [...new Set(falta)] };
+  // los comodines de la plantilla; un dato que falta solo se reclama si el texto lo usa
+  const sust = t => String(t).replace(/\{(especialidad|origen|destino|codigo|buzon|telefono)\}/g, (m, k) =>
+    k === 'especialidad' ? f.n
+    : k === 'origen' ? (o.length ? listaH(o) : R.pend('hospitales de origen'))
+    : k === 'destino' ? (d ? nomE(d) : R.pend('hospital de destino'))
+    : k === 'codigo' ? (codR(f) || R.pend('código de petición'))
+    : k === 'buzon' ? (rn ? `"${rn}"` : R.pend('nombre del buzón o de la agenda'))
+    : (telR(f) || R.pend('teléfono o busca del hospital de destino')));
+  const lineas = k => sust(plantV(k)).split('\n').map(s => s.trim()).filter(Boolean);
+  // un bloque de la plantilla, renglón a renglón; tras uno que acaba en dos puntos, lo que sigue va en lista
+  const bloque = (k, llano) => { let lista = false; lineas(k).forEach(l => { if (lista && !llano) R.li(l); else R.p(l); if (/:$/.test(l)) lista = true; }); };
+  if (lineas('saludo').length) { bloque('saludo', true); R.gap(); }
+  R.tit(tit); R.gap();
+  const ob = lineas('obj');
+  R.sec('1. Objetivo del circuito', ob[0] || ''); ob.slice(1).forEach(l => R.p(l));
+  R.kv('Origen', o.length ? listaH(o) : R.pend('hospitales de origen'));
+  R.kv('Destino', (d ? nomE(d) : R.pend('hospital de destino')) + (f.gdp && f.gdp.destSvc ? ` · servicio ${f.gdp.destSvc}` : ''));
+  R.kv('Ámbitos', amb.length ? yLista(amb) : R.pend('ámbitos'));
+  R.kv('Prioridad', pri.length ? yLista(pri) : R.pend('prioridad'));
+  R.kv('Personal emisor', emisorR(f) || R.pend('personal emisor'));
+  R.kv('Personal receptor', receptorR(f) || R.pend('personal receptor'));
+  // un apartado que se ha dejado en blanco en la plantilla no sale, y los demás se renumeran
+  let n = 1;
+  const apdo = (t, ...ks) => { if (!ks.some(k => lineas(k).length)) return; R.gap(); R.sec(`${++n}. ${t}`); ks.forEach(k => bloque(k)); };
+  apdo('Uso del gestor de peticiones corporativo', 'uso');
+  apdo('Flujo de la solicitud', 'flujo');
+  apdo('Recepción', recepR(f) === 'age' ? 'recAge' : 'recBuz', ...(citaR(f) ? ['cita'] : []));
+  apdo('Comunicación obligatoria', llamadaR(f) ? 'llamSi' : 'llamNo');
+  apdo('Registro de la información', 'reg');
+  R.gap(); R.sec('Datos de la petición'); R.kv('Código petición', codR(f) || R.pend('código de petición')); R.kv('Descripción', descR(f));
+  const cs = camposR();
+  if (cs.length) { R.gap(); R.sec('Campos del formulario'); cs.forEach(c => R.li(c)); }
+  if (lineas('firma').length) { R.gap(); bloque('firma', true); }
+  return { asunto: `${tit} — ${descR(f)}`, texto: saleTexto(R.B), html: saleHtml(R.B), falta: R.falta };
 }
-function openCorreoItcr(id) {
+
+// ---------------- el encargo para quien configura ----------------
+// La misma línea vista desde quien tiene que montarla: qué crear en el Gestor, qué rutas abrir en
+// el COMPAS y dónde se recibe. Cada apartado dice si su paso del seguimiento ya está hecho.
+const rutaLarga = x => `${rutaTxtH(x)} · ${nomE(x.o)} → ${nomE(x.d)}`;
+function difRutas(f) {   // qué cambia lo corregido a mano respecto a las rutas del archivo
+  const man = rutasOvR(f); if (!man || !(f.sel && f.sel.rutas.length)) return [];
+  const arch = rutasArch(f), kk = x => `${x.o}|${x.d}`, out = [];
+  man.forEach(x => {
+    const a = arch.find(y => kk(y) === kk(x));
+    if (!a) out.push(`Crear ${x.on ? 'y abrir' : 'cerrada'}: ${rutaLarga(x)}`);
+    else if (a.on !== x.on) out.push(`${x.on ? 'Abrir' : 'Cerrar'}: ${rutaLarga(x)}`);
+  });
+  arch.forEach(a => { if (!man.some(y => kk(y) === kk(a))) out.push(`Quitar: ${rutaLarga(a)}`); });
+  return out;
+}
+function encargoItcr(f) {
+  const R = redactor(), o = origR(f), d = destUno(f), rn = recepNR(f), rs = rutasR(f), cs = camposR();
+  const amb = circR(f).map(c => CIRC[c] || c), pri = prioR(f).map(p => PRIO[p] || p);
+  const hecho = k => { const p = pasoR(f, k); return p ? ` · hecho el ${fmt(p.fecha)}` : ''; };
+  const tit = `Configuración · ITC R ${f.svc || f.id}${codR(f) ? ' · ' + codR(f) : ''}`;
+  const nomRec = rn ? `"${rn}"` : R.pend('nombre del buzón o de la agenda');
+  R.tit(tit);
+  R.p(`Para dejar montada la interconsulta regional de ${f.n} por el Gestor de Peticiones de Selene hace falta lo siguiente.`);
+  R.gap(); R.sec('1. Petición en el Gestor de Peticiones' + hecho('gdp'));
+  R.kv('Código de petición', codR(f) || R.pend('código de petición'));
+  R.kv('Descripción', descR(f));
+  R.kv('Ámbitos desde los que se pide', amb.length ? yLista(amb) : R.pend('ámbitos'));
+  R.kv('Prioridad', pri.length ? yLista(pri) : R.pend('prioridad'));
+  if (cs.length) R.kv('Campos del formulario', cs.join(', '));
+  R.gap(); R.sec('2. Direccionamiento del COMPAS' + hecho('compas'));
+  R.kv('Hospitales que la piden', o.length ? listaH(o) : R.pend('hospitales de origen'));
+  R.kv('Hospital que la atiende', (d ? nomE(d) : R.pend('hospital de destino')) + (f.gdp && f.gdp.destSvc ? ` · servicio ${f.gdp.destSvc}` : ''));
+  const ab = rs.filter(x => x.on), ce = rs.filter(x => !x.on), dif = difRutas(f), av = avisosRutas(f, rs);
+  if (!rs.length) R.kv('Rutas', R.pend('rutas del COMPAS'));
+  if (ab.length) { R.p(`Rutas que deben quedar abiertas (${ab.length}):`); ab.forEach(x => R.li(rutaLarga(x))); }
+  if (ce.length) { R.p(`Rutas que deben quedar cerradas (${ce.length}):`); ce.forEach(x => R.li(rutaLarga(x))); }
+  if (dif.length) { R.p(`Cambios respecto al archivo del ${fmt(ITCR.fecha)}:`); dif.forEach(t => R.li(t)); }
+  if (av.length) { R.p('A revisar antes de configurarlo:'); av.forEach(t => R.li(t)); }
+  R.gap(); R.sec('3. Recepción en el hospital de destino' + hecho('recep'));
+  R.p(`${recepR(f) === 'age' ? 'Crear la agenda' : 'Crear el buzón de peticiones de Selene'} ${nomRec} en ${d ? nomE(d) : 'el hospital de destino'}.`);
+  if (citaR(f)) R.p('La petición requiere cita en el hospital de destino.');
+  R.p(llamadaR(f) ? `Lleva llamada obligatoria al hospital de destino: ${telR(f) || R.pend('teléfono o busca del hospital de destino')}.`
+    : 'No lleva llamada obligatoria: la recepción se vigila en el buzón.');
+  R.gap(); R.sec('4. Personal');
+  R.kv('Quién la envía', emisorR(f) || R.pend('personal emisor'));
+  R.kv('Quién la recibe', receptorR(f) || R.pend('personal receptor'));
+  R.gap(); R.sec('5. Prueba' + hecho('prueba'));
+  const op = o.find(a => a !== d) || o[0];   // la prueba, mejor desde un hospital que no sea el que la atiende
+  R.p(`Enviar una petición de prueba desde ${op ? SIG(op) : 'un hospital de origen'} y comprobar que llega ${recepR(f) === 'age' ? 'a la agenda' : 'al buzón'} de ${d ? SIG(d) : 'destino'} y que la respuesta vuelve al hospital que la pidió.`);
+  return { asunto: `${tit} — ${descR(f)}`, texto: saleTexto(R.B, '- '), html: saleHtml(R.B), falta: R.falta };
+}
+
+// Copia con formato: primero el portapapeles moderno (HTML y texto a la vez); si el navegador o el
+// marco del artefacto no lo dejan, se copia una selección; y si tampoco, el texto llano.
+function copiaSel(t) {   // el texto llano por la vía antigua, para cuando el portapapeles moderno está vetado
+  try {
+    const a = document.createElement('textarea'), antes = document.activeElement;
+    a.value = t; a.setAttribute('readonly', '');
+    a.style.cssText = 'position:fixed;left:-9999px;top:0';
+    ($('#dlg').open ? $('#dlg') : document.body).appendChild(a);
+    a.select();
+    const ok = document.execCommand('copy');
+    a.remove();
+    if (antes && antes.focus) antes.focus();
+    return ok;
+  } catch (e) { return false; }
+}
+async function copiaRico(html, texto) {
+  try {
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([texto], { type: 'text/plain' }) })]);
+      return 'rico';
+    }
+  } catch (e) {}
+  try {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff;color:#1a1a1a';
+    t.innerHTML = html;
+    $('#dlg').appendChild(t);   // dentro de la ventana abierta: fuera de ella no se deja seleccionar
+    const s = getSelection(), rg = document.createRange();
+    rg.selectNodeContents(t); s.removeAllRanges(); s.addRange(rg);
+    const ok = document.execCommand('copy');
+    s.removeAllRanges(); t.remove();
+    if (ok) return 'rico';
+  } catch (e) {}
+  try { await navigator.clipboard.writeText(texto); return 'plano'; } catch (e) {}
+  return copiaSel(texto) ? 'plano' : '';
+}
+async function copiaLlano(t, ok) {
+  try { await navigator.clipboard.writeText(t); toast(ok); }
+  catch (e) { toast(copiaSel(t) ? ok : 'No se ha podido copiar: selecciónalo y cópialo con Ctrl+C.'); }
+}
+function openCorreoItcr(id, tipo) {
   const f = BYI[id]; if (!f) return;
-  const c = correoItcr(f), todo = `Asunto: ${c.asunto}\n\n${c.texto}`;
+  const tec = tipo === 'tec', c = tec ? encargoItcr(f) : correoItcr(f), todo = `Asunto: ${c.asunto}\n\n${c.texto}`;
+  const hs = [...new Set([...origR(f), ...destinosR(f)])].sort((x, y) => x - y);
+  const dirs = tec ? trozaDirs(contTec()) : [...new Set(hs.flatMap(a => trozaDirs(contH(a))))];
+  const sin = tec ? [] : hs.filter(a => !contH(a)), env = pasoR(f, 'correo');
   $('#dlgIn').innerHTML = `
-    <h2>Correo para los equipos</h2>
+    <h2>${tec ? 'Encargo para quien configura' : 'Correo para los equipos'}</h2>
     <div class="meta"><span>${esc(f.n)}</span><span class="pill ${EST_R[estadoR(f)][1]}">${EST_R[estadoR(f)][0]}</span><span>${destUno(f) ? 'lo atiende ' + esc(SIG(destUno(f))) : 'sin destino'}</span></div>
-    ${c.falta.length ? `<div class="aviso-caja">Falta por rellenar en la ficha: ${c.falta.map(esc).join(', ')}. En el texto sale «entre comillas angulares» para que lo veas.</div>` : ''}
-    <pre class="correo" id="corTxt">${esc(todo)}</pre>
+    <div class="cor-tipo"><button type="button" data-cort="eq" aria-pressed="${!tec}">Para los equipos</button><button type="button" data-cort="tec" aria-pressed="${tec}">Para quien configura</button></div>
+    <div class="box cab-c">
+      <div><b>Para:</b> ${dirs.length ? `<span class="dir">${esc(dirs.join('; '))}</span><button type="button" class="lnk" id="corPara">copiar</button>`
+        : `<span class="sin">${tec ? 'sin contacto técnico guardado' : 'sin destinatarios guardados'}</span>`}
+        <button type="button" class="lnk" id="corCont">${dirs.length ? 'cambiar' : 'añadir'} destinatarios</button>
+        ${dirs.length && !window.claude ? `<a class="lnk" href="mailto:${encodeURIComponent(dirs.join(',')).replace(/%40/g, '@').replace(/%2C/g, ',')}?subject=${encodeURIComponent(c.asunto)}">abrir en el correo</a>` : ''}</div>
+      ${sin.length && dirs.length ? `<div class="sin">Sin contacto guardado: ${esc(listaSig(sin))}.</div>` : ''}
+      <div><b>Asunto:</b> <span>${esc(c.asunto)}</span><button type="button" class="lnk" id="corAsu">copiar</button></div>
+    </div>
+    ${c.falta.length ? `<div class="aviso-caja" style="margin:0">Falta por rellenar en la ficha: ${c.falta.map(esc).join(', ')}. En el texto sale resaltado y «entre comillas angulares» para que lo veas.</div>` : ''}
+    <div class="correo rico" id="corTxt" style="margin:0">${c.html}</div>
+    ${tec ? '' : `<div class="cor-env${env ? ' on' : ''}">${env
+      ? `<span>✓ Correo enviado el ${fmt(env.fecha)}${env.usuario ? ' · lo apuntó ' + esc(env.usuario) : ''}.</span><button type="button" class="lnk" id="corPasos">ver el seguimiento</button>`
+      : '<span>Cuando lo hayas mandado, apúntalo en el seguimiento:</span><button type="button" class="btn" id="corEnv">Marcar como enviado</button>'}</div>`}
     <div class="actions">
       <button type="button" class="btn ghost" id="corFicha">Completar en la ficha</button>
+      ${tec ? '' : '<button type="button" class="btn ghost" id="corPlant">Cambiar el texto</button>'}
       <span class="spacer"></span>
       <button type="button" class="btn" id="corCerrar">Cerrar</button>
       <button type="button" class="btn" id="corBaja">Descargar .txt</button>
-      <button type="button" class="btn primary" id="corCopia">Copiar</button>
+      <button type="button" class="btn" id="corCopia">Copiar sin formato</button>
+      <button type="button" class="btn primary" id="corRico">Copiar con formato</button>
     </div>`;
-  const dlg = abreDlg(true);
+  const dlg = abreDlg(true), aqui = () => openCorreoItcr(id, tipo);
+  const salta = fn => { dlg.close(); setTimeout(fn, 60); };
+  $('#dlgIn').querySelectorAll('[data-cort]').forEach(b => b.onclick = () => openCorreoItcr(id, b.dataset.cort));
   $('#corCerrar').onclick = () => dlg.close();
-  $('#corFicha').onclick = () => { dlg.close(); setTimeout(() => openItcrFicha(id), 60); };
-  $('#corBaja').onclick = () => offer(`ITC-R ${f.svc || f.id} · correo.txt`, todo, 'text/plain;charset=utf-8');
-  $('#corCopia').onclick = async () => {
-    try { await navigator.clipboard.writeText(todo); toast('Correo copiado: pégalo en el mensaje.'); }
-    catch (e) { const t = $('#corTxt'), s = getSelection(), rg = document.createRange(); rg.selectNodeContents(t); s.removeAllRanges(); s.addRange(rg); toast('Selecciónalo y cópialo con Ctrl+C.'); }
+  $('#corFicha').onclick = () => salta(() => openItcrFicha(id));
+  $('#corCont').onclick = () => salta(() => openContactosItcr(aqui));
+  const cp = $('#corPara'); if (cp) cp.onclick = () => copiaLlano(dirs.join('; '), 'Destinatarios copiados: pégalos en «Para».');
+  $('#corAsu').onclick = () => copiaLlano(c.asunto, 'Asunto copiado.');
+  const pl = $('#corPlant'); if (pl) pl.onclick = () => salta(() => openPlantillaItcr(aqui));
+  const ps = $('#corPasos'); if (ps) ps.onclick = () => salta(() => openPasosItcr(id, aqui));
+  const ev = $('#corEnv'); if (ev) ev.onclick = () => {
+    const usuario = $('#userName').value.trim();
+    if (!usuario) { salta(() => openPasosItcr(id, aqui, 'correo')); return; }
+    if (guardaPasos(f, { correo: today() }, usuario, today(), '', 'Correo apuntado como enviado')) aqui();
   };
+  $('#corBaja').onclick = () => offer(`ITC-R ${f.svc || f.id} · ${tec ? 'encargo' : 'correo'}.txt`, todo, 'text/plain;charset=utf-8');
+  $('#corCopia').onclick = () => copiaLlano(todo, 'Copiado sin formato, con el asunto en la primera línea.');
+  $('#corRico').onclick = async () => {
+    const r = await copiaRico(c.html, c.texto);
+    toast(r === 'rico' ? 'Copiado con formato: pégalo en el cuerpo del mensaje. El asunto se copia aparte.'
+      : r === 'plano' ? 'Este navegador solo deja copiar el texto llano: ya lo tienes copiado.'
+      : 'No se ha podido copiar: selecciónalo y cópialo con Ctrl+C.');
+  };
+}
+
+// ---------------- seguimiento del montaje: los seis pasos ----------------
+// Cada paso guarda cuándo se hizo y quién lo apuntó, dentro del registro de la fila (pasos).
+// Marcar «En marcha» da la línea por montada; apuntar cualquier otro paso la saca de «Prevista».
+function guardaPasos(f, cambios, usuario, fecha, nota, msg) {
+  const r = filaR(f), ts = new Date().toISOString(), pasos = { ...(r.pasos || {}) }, ent = [];
+  let arranca = false, para = false;
+  PASOS.forEach(([k, et]) => {
+    if (!(k in cambios)) return;
+    const v = cambios[k], antes = pasos[k];
+    if (v && (!antes || antes.fecha !== v)) {
+      pasos[k] = { fecha: v, usuario, ts };
+      ent.push({ accion: 'paso-si', fecha, usuario, nota: et + (v !== fecha ? ` (el ${fmt(v)})` : ''), ts });
+      if (k === 'marcha' && !antes) arranca = true;
+    } else if (!v && antes) {
+      delete pasos[k];
+      ent.push({ accion: 'paso-no', fecha, usuario, nota: et, ts });
+      if (k === 'marcha') para = true;
+    }
+  });
+  if (!ent.length) return false;
+  if (nota) ent[0].nota += ' — ' + nota;
+  const est = estadoR(f);
+  const nEst = arranca && est !== 'montada' ? 'montada' : para && est === 'montada' ? 'montaje'
+    : est === 'prevista' && Object.keys(pasos).length ? 'montaje' : '';
+  if (nEst) ent.push({ accion: 'estado', fecha, usuario, nota: `Pasa a «${EST_R[nEst][0]}» al apuntar el seguimiento`, ts });
+  persistCells(1, { [ikey(f.id, 'fila')]: { ...r, pasos, ...(nEst ? { estado: nEst } : {}), fecha, usuario, ts,
+    hist: [...ent, ...(r.hist || [])].slice(0, 60) } }, msg || 'Seguimiento guardado');
+  return true;
+}
+function openPasosItcr(id, volver, pre) {
+  const f = BYI[id]; if (!f) return;
+  const est = estadoR(f);
+  $('#dlgIn').innerHTML = `
+    <h2>Seguimiento del montaje</h2>
+    <div class="meta"><span>${esc(f.n)}</span><span class="pill ${EST_R[est][1]}">${EST_R[est][0]}</span><span>${nPasos(f)} de ${PASOS.length} pasos hechos</span></div>
+    <p style="margin:0;color:var(--muted);font-size:12.5px">Marca lo que ya está hecho y cuándo. No hace falta ir en orden. Al marcar «En marcha» la línea pasa a «Montada», y al apuntar cualquier otro paso deja de estar «Prevista».</p>
+    <form class="edit" id="pasForm">
+      <div class="box pasos-l full">${PASOS.map(([k, et], i) => { const p = pasoR(f, k), on = !!p || pre === k; return `
+        <div class="paso${p ? ' on' : ''}">
+          <label class="chk"><input type="checkbox" name="p-${k}"${on ? ' checked' : ''}> <b>${i + 1}</b> ${esc(et)}</label>
+          <input type="date" name="f-${k}" value="${p ? p.fecha : on ? today() : ''}" max="${today()}" aria-label="Fecha de: ${esc(et)}">
+          ${p ? `<small>Hecho el ${fmt(p.fecha)}${p.usuario ? ' · lo apuntó ' + esc(p.usuario) : ''}</small>` : ''}
+        </div>`; }).join('')}</div>
+      <label class="full">Quién lo apunta <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
+      <textarea name="nota" placeholder="Observaciones (opcional): con quién se ha hecho, qué queda pendiente…"></textarea>
+      <div class="actions"><span class="spacer"></span>
+        <button type="button" class="btn" id="pasCancel">Cancelar</button>
+        <button type="submit" class="btn primary">Guardar</button></div>
+    </form>`;
+  const dlg = abreDlg(true), form = $('#pasForm');
+  const cerrar = () => { dlg.close(); if (volver) setTimeout(volver, 60); };
+  $('#pasCancel').onclick = cerrar;
+  form.addEventListener('change', e => {   // la casilla y su fecha van juntas
+    const m = /^([pf])-(.+)$/.exec(e.target.name || ''); if (!m) return;
+    const c = form.elements['p-' + m[2]], d = form.elements['f-' + m[2]];
+    if (m[1] === 'p') d.value = c.checked ? (d.value || today()) : '';
+    else if (d.value) c.checked = true;
+  });
+  form.onsubmit = ev => {
+    ev.preventDefault();
+    const fd = new FormData(form), usuario = quienDe(form);
+    if (!usuario) { toast('Indica quién lo apunta'); return; }
+    const cambios = {};
+    PASOS.forEach(([k]) => { cambios[k] = fd.get('p-' + k) ? (fd.get('f-' + k) || today()) : null; });
+    if (!guardaPasos(f, cambios, usuario, today(), String(fd.get('nota') || '').trim())) { toast('No has cambiado nada'); return; }
+    cerrar();
+  };
+}
+function cajaPasos(f) {
+  const sig = sigPaso(f);
+  return `<div class="box"><h3>Seguimiento del montaje · ${nPasos(f)} de ${PASOS.length}</h3>
+    <ul class="pasos-f">${PASOS.map(([k, et]) => { const p = pasoR(f, k); return `<li${p ? ' class="on"' : ''}><i>${p ? '✓' : '○'}</i><span>${esc(et)}</span><small>${p ? fmt(p.fecha) + (p.usuario ? ' · ' + esc(p.usuario) : '') : sig && sig[0] === k ? 'es lo siguiente' : ''}</small></li>`; }).join('')}</ul>
+    <div style="margin-top:8px"><button type="button" class="btn" data-pasr="${f.id}">Apuntar pasos</button></div></div>`;
+}
+function celdaPasos(f) {
+  const n = nPasos(f), sig = sigPaso(f), no = estadoR(f) === 'no' && !n;
+  const tx = no ? 'no procede' : !n ? 'sin empezar' : !sig ? 'completo' : `toca ${sig[2]}`;
+  const tit = PASOS.map(([k, et]) => { const p = pasoR(f, k); return `${p ? '✓' : '○'} ${et}${p ? ' · ' + fmt(p.fecha) : ''}`; }).join('\n');
+  return `<td class="mont"><button type="button" class="pasos${no ? ' no' : ''}" data-pasr="${f.id}" title="${esc(tit)}" aria-label="Seguimiento del montaje de ${esc(f.n)}: ${n} de ${PASOS.length} pasos hechos">
+    <span class="seg">${PASOS.map(([k]) => `<i${pasoR(f, k) ? ' class="on"' : ''}></i>`).join('')}</span>
+    <span class="tx">${no ? '' : `<b>${n}/${PASOS.length}</b> · `}${tx}</span></button></td>`;
+}
+
+// ---------------- el texto del correo, una sola vez para todas las líneas ----------------
+// Se guarda en el estado compartido solo lo que se aparta del texto original (PLANT_DEF).
+function openPlantillaItcr(volver) {
+  const rec = plantRec(), t0 = rec.t || {};
+  const filas = v => Math.min(8, Math.max(2, String(v).split('\n').length + 1));
+  const mono = t => `<span class="mono">{${t}}</span>`;
+  $('#dlgIn').innerHTML = `
+    <h2>Texto del correo</h2>
+    <div class="meta"><span>ITC-R · entre hospitales</span><span>vale para todas las líneas</span>${rec.fecha ? `<span>cambiado el ${fmt(rec.fecha)}${rec.usuario ? ' por ' + esc(rec.usuario) : ''}</span>` : ''}</div>
+    <p style="margin:0;color:var(--muted);font-size:12.5px">Es la parte fija del correo a los equipos: lo que cambies aquí sale en el de todas las interconsultas regionales. Los datos de cada una (origen, destino, ámbitos, código…) se siguen sacando de su ficha.</p>
+    <p style="margin:0;color:var(--muted);font-size:12.5px">Puedes escribir ${['especialidad', 'origen', 'destino', 'codigo', 'buzon', 'telefono'].map(mono).join(', ')}: se cambian por el dato de cada línea. Lo que vaya debajo de un renglón acabado en dos puntos sale como lista. Si dejas un apartado en blanco, desaparece del correo y los demás se renumeran.</p>
+    <form class="edit" id="plForm">
+      ${PLANT_ET.map(([k, et, opc]) => { const v = plantV(k); return `
+      <div class="pl-c full"><div class="pl-et"><span>${esc(et)}${opc ? ' <small>· opcional</small>' : ''}${typeof t0[k] === 'string' ? ' <small>· cambiado</small>' : ''}</span><button type="button" class="lnk" data-plo="${k}">texto original</button></div>
+        <textarea name="${k}" rows="${filas(v)}" aria-label="${esc(et)}">${esc(v)}</textarea></div>`; }).join('')}
+      <label class="full">Quién lo cambia <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="plTodo">Volver todo al texto original</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="plCancel">Cancelar</button>
+        <button type="submit" class="btn primary">Guardar</button></div>
+    </form>`;
+  const dlg = abreDlg(true), form = $('#plForm');
+  const cerrar = () => { dlg.close(); if (volver) setTimeout(volver, 60); };
+  $('#plCancel').onclick = cerrar;
+  form.querySelectorAll('[data-plo]').forEach(b => b.onclick = () => { form.elements[b.dataset.plo].value = PLANT_DEF[b.dataset.plo]; });
+  $('#plTodo').onclick = () => { PLANT_ET.forEach(([k]) => { form.elements[k].value = PLANT_DEF[k]; }); toast('Texto original puesto: pulsa Guardar para dejarlo así.'); };
+  form.onsubmit = ev => {
+    ev.preventDefault();
+    const fd = new FormData(form), usuario = quienDe(form);
+    if (!usuario) { toast('Indica quién lo cambia'); return; }
+    const limpia = v => String(v || '').replace(/\r\n?/g, '\n').split('\n').map(x => x.trimEnd()).join('\n').trim();
+    const t = {};
+    PLANT_ET.forEach(([k]) => { const v = limpia(fd.get(k)); if (v !== limpia(PLANT_DEF[k])) t[k] = v; });
+    const cam = PLANT_ET.filter(([k]) => (k in t ? t[k] : null) !== (typeof t0[k] === 'string' ? t0[k] : null));
+    if (!cam.length) { toast('No has cambiado nada'); return; }
+    const ts = new Date().toISOString(), fecha = today();
+    persistCells(1, { [GKEY.plant]: { t, fecha, usuario, ts,
+      hist: [{ accion: 'plant', fecha, usuario, nota: 'Cambia: ' + cam.map(x => x[1]).join('; '), ts }, ...(rec.hist || [])].slice(0, 60) } }, 'Texto del correo guardado');
+    cerrar();
+  };
+}
+
+// ---------------- a quién se le manda: un contacto por hospital ----------------
+function openContactosItcr(volver) {
+  const rec = contRec();
+  $('#dlgIn').innerHTML = `
+    <h2>Destinatarios del correo</h2>
+    <div class="meta"><span>ITC-R · entre hospitales</span><span>se guardan una vez y valen para todas las líneas</span></div>
+    <p style="margin:0;color:var(--muted);font-size:12.5px">Pon la dirección a la que hay que escribir en cada hospital. Si son varias, sepáralas con punto y coma. El correo de cada interconsulta junta las de sus hospitales de origen y la del que la atiende.</p>
+    <div class="aviso-caja suave">Estas direcciones se guardan con el cuadro y las ve cualquiera que tenga la contraseña. Mejor un buzón de servicio o una lista de distribución que la dirección personal de alguien.</div>
+    <form class="edit" id="ctForm">
+      ${AREAS.map(a => `<label>${esc(nomH(a))} <input type="text" name="h-${a}" value="${esc(contH(a))}" placeholder="Dirección o direcciones" autocomplete="off" spellcheck="false"></label>`).join('')}
+      <label class="full">Quien configura el Gestor y el COMPAS <small>· para el encargo técnico</small> <input type="text" name="tec" value="${esc(contTec())}" placeholder="Dirección o direcciones" autocomplete="off" spellcheck="false"></label>
+      <label class="full">Quién lo registra <input type="text" name="usuario" value="${esc($('#userName').value)}" placeholder="Tu nombre" required></label>
+      <div class="actions"><span class="spacer"></span>
+        <button type="button" class="btn" id="ctCancel">Cancelar</button>
+        <button type="submit" class="btn primary">Guardar</button></div>
+    </form>`;
+  const dlg = abreDlg(true), form = $('#ctForm');
+  const cerrar = () => { dlg.close(); if (volver) setTimeout(volver, 60); };
+  $('#ctCancel').onclick = cerrar;
+  form.onsubmit = ev => {
+    ev.preventDefault();
+    const fd = new FormData(form), usuario = quienDe(form);
+    if (!usuario) { toast('Indica quién lo registra'); return; }
+    const lee = n => trozaDirs(fd.get(n)), h = {}, cam = [];
+    const mal = [...AREAS.map(a => 'h-' + a), 'tec'].flatMap(lee).find(d => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d));
+    if (mal) { toast(`«${mal}» no parece una dirección de correo`); return; }
+    AREAS.forEach(a => { const v = lee('h-' + a).join('; '); if (v) h[a] = v; if (v !== contH(a)) cam.push(SIG(a)); });
+    const tec = lee('tec').join('; ');
+    if (tec !== contTec()) cam.push('quien configura');
+    if (!cam.length) { toast('No has cambiado nada'); return; }
+    const ts = new Date().toISOString(), fecha = today();
+    persistCells(1, { [GKEY.cont]: { h, tec, fecha, usuario, ts,
+      hist: [{ accion: 'contactos', fecha, usuario, nota: 'Cambia: ' + cam.join(', '), ts }, ...(rec.hist || [])].slice(0, 60) } }, 'Destinatarios guardados');
+    cerrar();
+  };
+}
+
+// ---------------- quién deriva a quién ----------------
+// Las ITC-R en una cuadrícula: en la fila, el hospital que la envía; en la columna, el que la atiende.
+const MP = { via: 'gdp' };
+const MP_VIA = { gdp: ['Por el Gestor', 'la vía nueva'], sel: ['Por Selene', 'la vía de hoy'], todo: ['Por cualquiera de las dos', 'Selene o Gestor'] };
+function openMapaItcr() {
+  const envia = (f, a) => MP.via === 'gdp' ? emiteGdp(f, a) : MP.via === 'sel' ? emiteSel(f, a) : (emiteGdp(f, a) || emiteSel(f, a));
+  const filas = IFILAS.slice();
+  const M = {}, cel = (o, d) => (M[o + '|' + d] || (M[o + '|' + d] = []));
+  const sinDest = [], varios = [], fuera = [];
+  filas.forEach(f => {
+    const os = AREAS.filter(a => envia(f, a));
+    if (!os.length) { fuera.push(f); return; }
+    const ds = new Set();
+    os.forEach(a => destArea(f, a).forEach(d => { ds.add(d); cel(a, d).push(f); }));
+    if (!ds.size) sinDest.push(f); else if (ds.size > 1) varios.push(f);
+  });
+  // la etiqueta es el código del servicio; si no lo tiene, o si dos líneas lo comparten (Neurología y Teleictus), va el nombre
+  const cod = f => f.svc || (f.id.startsWith('X-') ? '' : f.id), veces = {};
+  filas.forEach(f => { if (cod(f)) veces[cod(f)] = (veces[cod(f)] || 0) + 1; });
+  const conCod = f => !!cod(f) && veces[cod(f)] === 1;
+  const eti = f => conCod(f) ? cod(f) : f.n;
+  const chip = f => `<button type="button" class="mp-c e-${estadoR(f)}" data-mapf="${f.id}" title="${esc(f.n)} · ${EST_R[estadoR(f)][0]}">${esc(eti(f))}</button>`;
+  const lin = (as, fn) => new Set(as.flatMap(fn).map(f => f.id)).size;
+  const otros = a => AREAS.filter(x => x !== a);
+  const nEnv = a => lin(otros(a), d => M[a + '|' + d] || []), nAti = d => lin(otros(d), a => M[a + '|' + d] || []);
+  const total = lin(AREAS, a => otros(a).flatMap(d => M[a + '|' + d] || []));
+  const nom = fs => yLista(fs.map(f => f.n));
+  const enCuad = filas.filter(f => conCod(f) && Object.values(M).some(fs => fs.includes(f)));   // las que salen con su código
+  const huecos = [];
+  if (sinDest.length) huecos.push(`<b>Sin hospital de destino:</b> ${esc(nom(sinDest))}. No salen en la cuadrícula hasta que lo pongas en su ficha.`);
+  if (varios.length) huecos.push(`<b>Atendidas en más de un hospital:</b> ${esc(nom(varios))}.`);
+  const solos = AREAS.filter(a => !nEnv(a) && !nAti(a)), noEnv = AREAS.filter(a => !nEnv(a) && nAti(a)), noAti = AREAS.filter(a => nEnv(a) && !nAti(a));
+  if (solos.length) huecos.push(`<b>Ni envían ni atienden:</b> ${esc(listaSig(solos))}.`);
+  if (noEnv.length) huecos.push(`<b>Atienden pero no envían nada fuera:</b> ${esc(listaSig(noEnv))}.`);
+  if (noAti.length) huecos.push(`<b>Envían pero no atienden nada de otros:</b> ${esc(listaSig(noAti))}.`);
+  if (fuera.length) huecos.push(`<b>No van ${MP.via === 'gdp' ? 'todavía por el Gestor' : MP.via === 'sel' ? 'por Selene' : 'por ninguna vía'}:</b> ${esc(nom(fuera))}.`);
+  $('#dlgIn').innerHTML = `
+    <h2>Quién deriva a quién</h2>
+    <div class="meta"><span>ITC-R · entre hospitales</span><span>${MP_VIA[MP.via][0].toLowerCase()} · ${MP_VIA[MP.via][1]}</span><span>${total} de ${filas.length} líneas salen de su hospital</span></div>
+    <div class="chips" style="display:flex;flex-wrap:wrap;flex-shrink:0;padding:0">${Object.entries(MP_VIA).map(([k, v]) => `<button type="button" class="chip" data-mpv="${k}" aria-pressed="${MP.via === k}">${v[0]}</button>`).join('')}</div>
+    <p class="help" style="margin:0">En cada fila, el hospital que envía; en cada columna, el que atiende. Cada etiqueta es una interconsulta regional, con el color de su estado. Pulsa una para abrir su ficha.</p>
+    <div class="cpm-w"><table class="cpm mp"><thead><tr><th></th>${AREAS.map(h => `<th title="${esc(nomH(h))}">${SIG(h)}</th>`).join('')}<th>envía</th></tr></thead>
+      <tbody>${AREAS.map(a => `<tr><th title="${esc(nomH(a))}">${SIG(a)}</th>${AREAS.map(d => {
+        const fs = M[a + '|' + d] || [];
+        return fs.length ? `<td class="mp-td${a === d ? ' cp-p' : ''}">${fs.map(chip).join('')}</td>` : `<td class="${a === d ? 'cp-p' : 'cp-0'}">${a === d ? '' : '·'}</td>`;
+      }).join('')}<th class="cp-t">${nEnv(a) || '·'}</th></tr>`).join('')}</tbody>
+      <tfoot><tr><th>atiende</th>${AREAS.map(d => `<th>${nAti(d) || '·'}</th>`).join('')}<th>${total}</th></tr></tfoot></table></div>
+    <div class="mp-ley">${['montada', 'montaje', 'prevista', 'no'].map(e => `<span><span class="mp-c e-${e}">${filas.filter(f => estadoR(f) === e).length}</span>${EST_R[e][0]}</span>`).join('')}<span>En la diagonal, lo que un hospital se atiende a sí mismo: no cuenta en los totales.</span></div>
+    ${enCuad.length ? `<div class="mp-nom">${enCuad.map(f => `<span><b>${esc(cod(f))}</b>${esc(f.n)}</span>`).join('')}</div>` : ''}
+    ${huecos.length ? `<div class="box"><h3>Huecos</h3><ul class="mp-h">${huecos.map(t => `<li>${t}</li>`).join('')}</ul></div>` : ''}
+    <div class="actions"><span class="spacer"></span>
+      <button type="button" class="btn" id="mpInforme">Informe para imprimir</button>
+      <button type="button" class="btn primary" id="mpCerrar">Cerrar</button></div>`;
+  const dlg = abreDlg(true);
+  $('#mpCerrar').onclick = () => dlg.close();
+  $('#dlgIn').querySelectorAll('[data-mpv]').forEach(b => b.onclick = () => { MP.via = b.dataset.mpv; openMapaItcr(); });
+  $('#dlgIn').querySelectorAll('[data-mapf]').forEach(b => b.onclick = () => { dlg.close(); setTimeout(() => openItcrFicha(b.dataset.mapf), 60); });
+  $('#mpInforme').onclick = () => informeDeDlg('Quién deriva a quién · ITC-R', `${MP_VIA[MP.via][0]} (${MP_VIA[MP.via][1]}) · ${total} de ${filas.length} líneas salen de su hospital`, `itcr-derivaciones-${today()}.html`);
 }
 
 // ---------------- casilla ----------------
@@ -2665,7 +3188,7 @@ function histItcr() {
     if (!kk.startsWith('r-') || !r || !Array.isArray(r.hist)) return;
     const [id, t] = kk.slice(2).split('|');
     const f = BYI[id];
-    r.hist.forEach(hh => out.push({ ...hh, k: kk, e: (f ? f.n : id) + (t === 'fila' ? '' : ` · Área ${t}`), g: 'ITC-R', a: t === 'fila' ? 0 : Number(t), m: 'itcr' }));
+    r.hist.forEach(hh => out.push({ ...hh, k: kk, e: (f ? f.n : GNOM[id] || id) + (t === 'fila' ? '' : ` · Área ${t}`), g: 'ITC-R', a: t === 'fila' ? 0 : Number(t), m: 'itcr' }));
   }));
   return out;
 }
@@ -3142,11 +3665,13 @@ function openAltaInpDlg() {
 }
 
 // ---------------- + en ITC-R: interconsulta regional nueva ----------------
-function openAltaItcrDlg() {
+function openAltaItcrDlg(baseId) {
   $('#dlgIn').innerHTML = `
     <h2>Añadir una interconsulta regional</h2>
     <p style="margin:0;color:var(--muted);font-size:12.5px">Nace por el Gestor de Peticiones. Si además existe hoy entre Selenes, se marca después en sus casillas.</p>
     <form class="edit" id="altaItcr">
+      <label class="full">Partir de otra ITC-R <small>· copia el destino, quién la pide, los ámbitos, la prioridad, la llamada, la cita y el personal</small>
+        <select name="base"><option value="">No, empezar en blanco</option>${IFILAS.map(f => `<option value="${esc(f.id)}"${f.id === baseId ? ' selected' : ''}>${esc(f.n)}</option>`).join('')}</select></label>
       <label class="full">Nombre <input type="text" name="n" placeholder="p. ej. Interconsulta Regional Cardiología" required></label>
       <label>Servicio <input type="text" name="svc" placeholder="p. ej. CAR (opcional)"></label>
       <label>Código del Gestor <input type="text" name="cod" placeholder="ITCRxxx (opcional)"></label>
@@ -3165,6 +3690,16 @@ function openAltaItcrDlg() {
     ${cajaRetiradas('itcr')}`;
   const dlg = abreDlg(); enlazaRetiradas();
   $('#arCancel').onclick = () => dlg.close();
+  const form = $('#altaItcr');
+  const rellena = b => {   // no se copian el nombre, el servicio ni el código: son lo que distingue a la nueva
+    if (!b) return;
+    const marca = (n, vs) => form.querySelectorAll(`input[name=${n}]`).forEach(c => { c.checked = vs.map(String).includes(c.value); });
+    if (destUno(b)) form.elements.dest.value = destUno(b);
+    marca('orig', origR(b)); marca('circ', circR(b)); marca('prio', prioR(b));
+    form.elements.llamada.checked = llamadaR(b); form.elements.cita.checked = citaR(b);
+  };
+  form.elements.base.onchange = e => rellena(BYI[e.target.value]);
+  rellena(BYI[baseId]);
   $('#altaItcr').onsubmit = ev => {
     ev.preventDefault();
     const fd = new FormData(ev.target), usuario = quienDe(ev.target);
@@ -3178,10 +3713,12 @@ function openAltaItcrDlg() {
     guardaAlta('itcr', id, { n, svc: String(fd.get('svc') || '').trim().toUpperCase(), cod, dest, estado, orig,
       circ: fd.getAll('circ'), prio: fd.getAll('prio'), cita: !!fd.get('cita'), destSvc: String(fd.get('svc') || '').trim().toUpperCase() },
       'alta', `ITC-R nueva hacia ${SIG(dest)}${orig.length ? ', la piden ' + listaAreas(orig) : ''}`, usuario, fecha, nota);
-    if (fd.get('llamada')) {
+    const b = BYI[fd.get('base')] || null, llam = !!fd.get('llamada');
+    if (llam || b) {   // del modelo se trae también el personal y el modo de recepción; el teléfono, el buzón y el código, no
       const ts = new Date().toISOString();
-      persistCells(1, { [ikey(id, 'fila')]: { estado, dest, llamada: true, cita: !!fd.get('cita'), nota, fecha, usuario, ts,
-        hist: [{ accion: 'llam-si', fecha, usuario, nota: '', ts }] } });
+      const copia = b ? { ...(emisorR(b) ? { emisor: emisorR(b) } : {}), ...(receptorR(b) ? { receptor: receptorR(b) } : {}), ...(recepR(b) !== 'buz' ? { recep: recepR(b) } : {}) } : {};
+      persistCells(1, { [ikey(id, 'fila')]: { estado, dest, ...(llam ? { llamada: true } : {}), cita: !!fd.get('cita'), ...copia, nota, fecha, usuario, ts,
+        hist: [...(b ? [{ accion: 'datos', fecha, usuario, nota: `Duplicada de ${b.n}`, ts }] : []), ...(llam ? [{ accion: 'llam-si', fecha, usuario, nota: '', ts }] : [])] } });
     }
     dlg.close();
   };
@@ -4063,7 +4600,8 @@ const ACC = { abrir: ['Apertura', 'ap'], cerrar: ['Cierre', 'ci'], obra: ['Pasa 
   estado: ['Cambia el estado', 'au'], 'llam-si': ['Pasa a necesitar llamada', 'au'], 'llam-no': ['Deja de necesitar llamada', 'rs'],
   'cita-si': ['Pasa a requerir cita', 'au'], 'cita-no': ['Deja de requerir cita', 'rs'], rut: ['Cambia el direccionamiento', 'au'],
   orig: ['Cambian los hospitales de origen', 'au'], datos: ['Datos del montaje', 'nota'],
-  alta: ['Alta a mano', 'ap'], retirada: ['Retirada', 'ci'], restaurada: ['Vuelve al cuadro', 'ap'] };
+  alta: ['Alta a mano', 'ap'], retirada: ['Retirada', 'ci'], restaurada: ['Vuelve al cuadro', 'ap'],
+  'paso-si': ['Paso hecho', 'ap'], 'paso-no': ['Paso desmarcado', 'ci'], plant: ['Texto del correo', 'nota'], contactos: ['Destinatarios del correo', 'nota'] };
 function renderReg() {
   if ($('#viewRegistro').hidden) return;
   let es = allEntries(R.base);
@@ -4424,7 +4962,7 @@ $('#expCot').onclick = () => {
 $('#sync').onclick = openSyncDlg;
 $('#masMapa').onclick = openAltaMapaDlg;
 if (INP) $('#masInp').onclick = openAltaInpDlg; else $('#masInp').hidden = true;
-if (ITCR) $('#masItcr').onclick = openAltaItcrDlg;
+if (ITCR) { $('#masItcr').onclick = () => openAltaItcrDlg(); $('#mapaItcr').onclick = openMapaItcr; }
 $('#btnCab').onclick = () => {
   const plegado = document.body.classList.toggle('plegado');
   $('#btnCab').setAttribute('aria-expanded', String(!plegado));
@@ -4521,6 +5059,7 @@ if (ITCR) {
   $('#ix').addEventListener('click', e => {
     const sq = e.target.closest('button.sq'); if (sq) { openItcrDlg(sq.dataset.i, Number(sq.dataset.a)); return; }
     const co = e.target.closest('button[data-corr]'); if (co) { openCorreoItcr(co.dataset.corr); return; }
+    const pa = e.target.closest('button[data-pasr]'); if (pa) { openPasosItcr(pa.dataset.pasr); return; }
     const fl = e.target.closest('button[data-flur]'); if (fl) { openItcrFlujo(fl.dataset.flur); return; }
     const rs = e.target.closest('button[data-resr]'); if (rs) { openItcrFicha(rs.dataset.resr); }
   });
@@ -4529,11 +5068,13 @@ if (ITCR) {
     const rows = [['Interconsulta', 'Servicio', 'Estado vía nueva', 'Hospital que atiende', 'Hospitales de origen', 'Ámbitos', 'Prioridad',
       'Código de petición', 'Descripción', 'Personal emisor', 'Personal receptor', 'Recepción', 'Buzón o agenda',
       'Llamada obligatoria', 'Teléfono o busca', 'Requiere cita', 'Rutas del COMPAS', 'Le falta para el correo',
+      'Pasos hechos', ...PASOS.map(x => x[1]),
       ...as.flatMap(a => [`A${a} Selene`, `A${a} Gestor`]), 'Resumen']];
     filasRVisibles().forEach(f => rows.push([f.n, f.svc, EST_R[estadoR(f)][0], destinosR(f).map(SIG).join(' + '), origR(f).map(SIG).join(' '),
       circR(f).map(c => CIRC[c] || c).join(' '), prioR(f).map(x => PRIO[x] || x).join(' '), codR(f), descR(f), emisorR(f), receptorR(f),
       recepR(f) === 'age' ? 'Agenda' : 'Buzón', recepNR(f), llamadaR(f) ? 'S' : 'N', telR(f), citaR(f) ? 'S' : 'N',
       rutasR(f).map(x => rutaTxtH(x)).join(' '), correoItcr(f).falta.join('; '),
+      `${nPasos(f)} de ${PASOS.length}`, ...PASOS.map(x => { const q = pasoR(f, x[0]); return q ? fmt(q.fecha) : ''; }),
       ...as.flatMap(a => [emiteSel(f, a) ? 'S' : 'N', emiteGdp(f, a) ? 'S' : 'N']), textoItcr(f)]));
     offer(`itc-r-${today()}.csv`, csv(rows), 'text/csv;charset=utf-8');
   };
